@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<!-- VERSION 2.1.0 - SYNC FIX -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KARAOKE PARTY | Premium Experience</title>
+    <link rel="icon" type="image/png" href="../Assets/icon.png">
+    <link rel="stylesheet" href="index.css?v=3.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Driver.js Tour -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css" />
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
+
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+
+    <!-- ─── Host Splash Login (Agora como Modal/Overlay) ─── -->
+    <div id="hostAuthOverlay" style="display: flex; opacity: 1;">
+        <div class="host-auth-container">
+            <div class="auth-close" onclick="closeHostLogin()"><i class="fas fa-times"></i></div>
+            <img src="../Assets/logo.png" alt="Logo" class="host-auth-logo">
+            <h1>CABINE DO DJ</h1>
+            <p>Faça login para gerenciar sua festa.</p>
+
+            <div class="trial-login-badge">
+                <i class="fas fa-gift"></i> 30 MINUTOS GRÁTIS LIBERADOS
+            </div>
+
+            <div class="host-auth-methods">
+                <button class="btn-host-google" id="btnHostLogin">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G">
+                    Entrar com Google
+                </button>
+
+                <div class="auth-separator">
+                    <span>ou use e-mail do DJ</span>
+                </div>
+
+                <div class="auth-form" id="hostAuthForm">
+                    <div class="auth-input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="hostAuthEmail" placeholder="E-mail do DJ">
+                    </div>
+                    <div class="auth-input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="hostAuthPassword" placeholder="Sua senha">
+                    </div>
+                    <div class="auth-forgot" onclick="hostForgotPassword()">Esqueci minha senha</div>
+                    <button class="btn-auth-submit" id="btnHostAuthSubmit" onclick="handleHostEmailAuth()">ENTRAR NA
+                        CABINE</button>
+                </div>
+
+                <div class="auth-switch" id="hostAuthSwitch">
+                    Novo na plataforma? <span onclick="toggleHostAuthMode()">Solicitar Acesso / Criar Conta</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main_wrapper" class="dashboard" style="display: none;">
+        <!-- Header -->
+        <header class="header panel">
+            <div class="header-left">
+                <img src="../Assets/logo.png" alt="Logo" class="main-logo">
+            </div>
+            <div class="header-center">
+                <h1 class="brand-title">KARAOKE PARTY</h1>
+                <div class="status-indicator">
+                    <span class="dot" style="background: #00ff00;"></span>
+                    ONLINE
+                </div>
+            </div>
+            <div class="header-right">
+                <button id="btnSettings" class="btn-icon" title="Configurações"><i class="fas fa-cog"></i></button>
+            </div>
+        </header>
+
+        <!-- Sidebar Left: Catálogo (Full Height) -->
+        <aside class="sidebar-search panel active-tab" id="tab-catalog">
+            <div class="catalog-header">
+                <h3>🎵 Catálogo</h3>
+                <button id="btnShuffle" class="btn-small" title="Música Aleatória"><i
+                        class="fas fa-random"></i></button>
+            </div>
+            <div class="search-box">
+                <input type="text" id="songSearch" placeholder="Busque por artista, música ou código...">
+            </div>
+            <div class="song-list" id="songList"></div>
+        </aside>
+
+        <!-- Center: Video Area & Compact Controlás -->
+        <main class="main-player panel" id="playerContainer">
+            <!-- Top Overlays -->
+            <div id="codeEntryOverlay" class="code-overlay">
+                <div class="code-box">
+                    <span class="code-label">CÓDIGO:</span>
+                    <span id="codeDisplay" class="code-digits">_ _ _ _ _</span>
+                    <div id="codeSongInfo" class="code-song-name"></div>
+                </div>
+            </div>
+
+            <div id="fsQueueOverlay" class="fs-queue-box" style="display:none"></div>
+
+            <div class="qr-fullscreen-box">
+                <div id="qrcode-fs"></div>
+                <div class="qr-fs-label">ESCANEAR CATÁLOGO</div>
+            </div>
+
+            <div id="topInfoBox" class="floating-info-box" style="display:none">
+                <div class="info-label">CANTANDO AGORA</div>
+                <h1 id="topInfoTitle">SELECIONE UMA MÚSICA</h1>
+                <p id="topInfoArtist">O PALCO É SEU!</p>
+            </div>
+
+            <div class="video-container" id="player">
+                <div class="placeholder-msg">AGUARDANDO PRÓXIMO CANTOR...</div>
+            </div>
+
+            <div class="current-info">
+                <h1>SELECIONE UMA MÚSICA</h1>
+                <p>O PALCO É SEU!</p>
+            </div>
+
+            <!-- Botão de Minimizar (Voltar para Abas) no Mobile -->
+            <button class="btn-minimize-player" onclick="toggleMobilePlayer(false)">
+                <i class="fas fa-th-large"></i> GERENCIAR FESTA
+            </button>
+
+            <!-- Integrated Compact Controlás -->
+            <div class="compact-controls-wrapper">
+                <div class="controls compact-panel" id="mainControls">
+                    <div class="control-section left">
+                        <button class="btn-control" onclick="restartSong()" title="Recomeçar (Home)"><i
+                                class="fas fa-redo"></i></button>
+                        <div class="divider"></div>
+                        <div class="tone-control">
+                            <button class="btn-mini" onclick="changeTone(-0.05)" title="Diminuir Tom"><i
+                                    class="fas fa-minus"></i></button>
+                            <span class="control-label">TOM</span>
+                            <button class="btn-mini" onclick="changeTone(0.05)" title="Aumentar Tom"><i
+                                    class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="control-section center">
+                        <button class="btn-main btn-play" onclick="togglePlay()" title="Play/Pause (Space)"><i
+                                class="fas fa-play"></i></button>
+                        <button class="btn-control btn-stop" onclick="showScore()" title="Parar/Nota (Esc)"><i
+                                class="fas fa-stop"></i></button>
+                        <button class="btn-control btn-next" onclick="skipSong()" title="Pular (PageDown)"><i
+                                class="fas fa-step-forward"></i></button>
+                    </div>
+                    <div class="control-section right">
+                        <button class="btn-mini btn-fs-toggle" onclick="toggleFullscreen()" title="Tela Cheia (F)"><i
+                                class="fas fa-expand"></i></button>
+                        <div class="divider"></div>
+                        <div class="volume-control">
+                            <button class="btn-mini" onclick="changeVolume(-0.1)" title="Baixar Volume"><i
+                                    class="fas fa-minus"></i></button>
+                            <span class="control-label"><i class="fas fa-volume-up"></i> VOLUME</span>
+                            <button class="btn-mini" onclick="changeVolume(0.1)" title="Aumentar Volume"><i
+                                    class="fas fa-plus"></i></button>
+                            <input type="range" id="volRange" min="0" max="1" step="0.1" value="1"
+                                oninput="setVideoVolume(this.value)" style="display:none">
+                        </div>
+                        <div class="divider"></div>
+                        <button class="btn-control" id="btnHelp" title="Ajuda/Atalhos"><i
+                                class="fas fa-keyboard"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screensaver movido para dentro do player para funcionar em Fullscreen -->
+            <div id="screensaver" class="screensaver-layer" style="display:none"></div>
+
+            <!-- Display de Votação da Galera (Vibe) - Movido para HTML Estático -->
+            <div id="publicScoreDisplay" class="public-score-display" style="display:none;">
+                <div class="vibe-header">
+                    <span class="vibe-label">VIBE DA GALERA</span>
+                    <span id="publicScoreVal" class="vibe-value">0.0</span>
+                </div>
+                <div class="vibe-bar-bg">
+                    <div id="vibeBarInner" class="vibe-bar-fill"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Atalhos Sempre Visíveis -->
+        <div class="hotkey-bar">
+            <span><kbd>Espaço</kbd> Play/Pause</span>
+            <span><kbd>Del</kbd> Nota</span>
+            <span><kbd>[ ]</kbd> Tom</span>
+            <span><kbd>- +</kbd> Volume</span>
+            <span><kbd>Home</kbd> Reiniciar</span>
+            <span><kbd>F</kbd> Fullscreen</span>
+            <span><kbd>ESC</kbd> Sair</span>
+        </div>
+
+        <!-- Barra de Navegação Mobile (Fixa na base) -->
+        <nav class="mobile-tab-nav">
+            <button class="tab-btn active" id="btn-tab-catalog" onclick="switchMobileTab('catalog')">
+                <i class="fas fa-search"></i>
+                <span>Catálogo</span>
+            </button>
+            <button class="tab-btn" id="btn-tab-queue" onclick="switchMobileTab('queue')">
+                <i class="fas fa-list-ol"></i>
+                <span>Ver Fila</span>
+            </button>
+            <button class="tab-btn" onclick="toggleMobilePlayer(true)">
+                <i class="fas fa-tv"></i>
+                <span>Tela Cheia</span>
+            </button>
+        </nav>
+
+        <!-- Sidebar Right: Queue & QR en la base -->
+        <aside class="sidebar-queue panel" id="tab-queue">
+            <div class="queue-header">
+                <h3>🔥 Próximos Cantores</h3>
+            </div>
+            <div class="queue-list" id="queueList"></div>
+
+            <div class="qr-sidebar-box">
+                <div class="room-code-badge" id="hostRoomCode"
+                    style="color:var(--accent-primary); font-weight:900; letter-spacing:3px; margin-bottom:10px; font-size:1.1rem;">
+                    SALA: -----</div>
+                <div class="qr-container" id="qrcode"></div>
+                <div class="qr-label">ESCANEAR CATÁLOGO</div>
+                <div class="promo-badge-static">📱 PEÇA PELO CELULAR</div>
+            </div>
+        </aside>
+
+        <!-- Custom Modals -->
+        <div id="customModal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 id="modalTitle">Título</h2>
+                <div id="modalBody"></div>
+                <div class="modal-footer">
+                    <button id="modalCancel" class="btn-modal secondary">CANCELAR</button>
+                    <button id="modalConfirm" class="btn-modal primary">CONFIRMAR</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal Specific -->
+        <div id="settingsModal" class="modal-overlay">
+            <div class="modal-content settings-content">
+                <h2>⚙️ Configurações do Sistema</h2>
+                <div class="settings-body">
+                    <div class="setting-item">
+                        <label>🖼️ Fotos para Proteção de Tela:</label>
+                        <div class="photo-upload-container">
+                            <label class="photo-input-btn">
+                                <i class="fas fa-upload"></i> ADICIONAR FOTOS
+                                <input type="file" id="setPhotosInput" multiple accept="image/*" style="display:none">
+                            </label>
+                            <p style="font-size:0.65rem; opacity:0.5;">Dica: Use fotos horizontais (1920x1080) para
+                                cobrir toda a tela.</p>
+                            <div id="photoPreviewGrid" class="photo-preview-grid"></div>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="setAutoFullscreen">
+                            Tela cheia automática (ao clicar na tela)
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>Música Ambiente (YouTube Link):</label>
+                        <input type="text" id="setAmbientUrl" placeholder="Ex: https://www.youtube.com/watch?v=..."
+                            class="full-width">
+                        <small>Deixe em branco para usar o padrão (Lounge Instrumental)</small>
+                    </div>
+                    <div class="setting-item">
+                        <label>Inatividade para Proteção de Tela:</label>
+                        <select id="setScreensaverTime"
+                            style="width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:white; padding:10px; border-radius:8px; margin-top:10px;">
+                            <option value="30000">30 Segundos (Padrão)</option>
+                            <option value="60000">1 Minuto</option>
+                            <option value="120000">2 Minutos</option>
+                            <option value="300000">5 Minutos</option>
+                            <option value="0">Nunca (Manter Vibe/Clipe)</option>
+                        </select>
+                        <small>O carrossel de fotos aparece automaticamente após este tempo sem uso.</small>
+                    </div>
+
+                    <!-- NÃOVA SEÇÃO: PONTUAÇÃO -->
+                    <div class="setting-section">
+                        <div class="setting-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="setEnableScore" checked>
+                                <strong>Habilitar Pontuação</strong>
+                                <span class="score-range-hint">mín=0 máx=100</span>
+                            </label>
+                        </div>
+
+                        <div class="score-options-grid">
+                            <div class="score-mode-choice">
+                                <label class="radio-label">
+                                    <input type="radio" name="scoreMode" value="random" id="modeRandom">
+                                    Aleatória
+                                </label>
+                                <div class="sub-setting">
+                                    <span>Menãor Pontuação Aleatória:</span>
+                                    <input type="number" id="setMinRandomScore" value="75" min="0" max="100">
+                                </div>
+                            </div>
+
+                            <div class="score-mode-choice">
+                                <label class="radio-label">
+                                    <input type="radio" name="scoreMode" value="mic" id="modeMic" checked>
+                                    A partir do Microfone
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="difficulty-section" id="difficultySection">
+                            <label>Grau de Dificuldade da Pontuação (Microfone):</label>
+                            <div class="difficulty-radios">
+                                <label class="diff-btn"><input type="radio" name="difficulty"
+                                        value="super_easy"><span>Super Fácil</span></label>
+                                <label class="diff-btn"><input type="radio" name="difficulty"
+                                        value="very_easy"><span>Muito Fácil</span></label>
+                                <label class="diff-btn"><input type="radio" name="difficulty"
+                                        value="easy"><span>Fácil</span></label>
+                                <label class="diff-btn"><input type="radio" name="difficulty" value="nãormal"
+                                        checked><span>Padrão</span></label>
+                                <label class="diff-btn"><input type="radio" name="difficulty"
+                                        value="hard"><span>Difícil</span></label>
+                            </div>
+                            <!-- VU METRO DE CALIBRAÇÃO -->
+                            <div class="calib-container">
+                                <div class="calib-label">Volume do Microfone: <span id="calibVolVal">0</span></div>
+                                <div class="calib-bar-bg">
+                                    <div id="calibBar" class="calib-bar-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-item"
+                        style="border-color: #ff4444; background: rgba(255,0,0,0.05); cursor: pointer;"
+                        onclick="logoutHost()">
+                        <label style="color: #ff4444; justify-content: center; cursor: pointer;"><i
+                                class="fas fa-sign-out-alt"></i> DESCONECTAR DA CABINE (LOGOUT)</label>
+                    </div>
+                    <div class="setting-item"
+                        style="border-color: #00f2ff; background: rgba(0,242,255,0.05); cursor: pointer; margin-top: 10px;"
+                        onclick="startHostTour(true)">
+                        <label style="color: #00f2ff; justify-content: center; cursor: pointer;"><i
+                                class="fas fa-route"></i> REFAZER TUTORIAL DA CABINE</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="settingsClose" class="btn-modal secondary">FECHAR</button>
+                    <button id="settingsSave" class="btn-modal primary">SALVAR</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hotkey Legend -->
+        <div id="hotkeyLegend" class="hotkey-legend">
+            <h3>⌨️ Teclas de Atalho</h3>
+            <div><strong>Espaço</strong> Play / Pause</div>
+            <div><strong>Delete</strong> Para a música e d nãota</div>
+            <div><strong>[ e ]</strong> Ajustar Tom (-/+)</div>
+            <div><strong>- e +</strong> Ajustar Volume (-/+)</div>
+            <div><strong>, (vírgula)</strong> Forçar Nota 100</div>
+            <div><strong>Home</strong> Reiniciar Música</div>
+            <div><strong>F</strong> Entrar/Sair Tela Cheia</div>
+            <div><strong>ESC</strong> Cancelar código / Sair Tela Cheia nativa</div>
+        </div>
+    </div>
+
+
+    <!-- Modal de Período de Teste Expirado (Trial) -->
+    <div id="trialExpiredModal" class="modal-overlay" style="display:none; z-index:999999;">
+        <div class="modal-content"
+            style="max-width:450px; text-align:center; padding:40px; border:2px solid var(--accent-primary);">
+            <i class="fas fa-hourglass-end"
+                style="font-size:4rem; color:var(--accent-primary); margin-bottom:25px; filter:drop-shadow(0 0 15px rgba(217,70,239,0.5));"></i>
+            <h2 style="font-family:'Montserrat',sans-serif; font-weight:900; letter-spacing:2px; margin-bottom:15px;">
+                PERÍODO DE TESTE ENCERRADO</h2>
+            <p style="color:rgba(255,255,255,0.7); line-height:1.6; margin-bottom:30px;">
+                Vocêê aproveitou seus 30 minutos de degustação! <br>
+                Para continuar usando o sistema sem limites e ter acesso a todas as funcionalidades exclusivas, entre em
+                contato conosco.
+            </p>
+
+            <a href="https://wa.me/5521967192554?text=Olá!%20Testei%20o%20Karaoke%20Party%20e%20gostaria%20de%20saber%20mais%20sobre%20os%20planos%20para%20liberar%20meu%20acesso."
+                target="_blank"
+                style="display:flex; align-items:center; justify-content:center; gap:12px; background:#25D366; color:white; padding:18px; border-radius:15px; text-decoration:none; font-weight:900; font-size:1.1rem; box-shadow:0 10px 30px rgba(37,211,102,0.3); transition:0.3s;">
+                <i class="fab fa-whatsapp" style="font-size:1.5rem;"></i>
+                LIBERAR MEU ACESSO AGORA
+            </a>
+
+            <div style="margin-top:25px;">
+                <button onclick="auth.signOut().then(()=>location.reload())"
+                    style="background:none; border:none; color:rgba(255,255,255,0.4); text-decoration:underline; cursor:pointer; font-size:0.8rem;">Fazer
+                    Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Banner de Tempo de Trial (Discreto) -->
+    <div id="trialTimerBanner"
+        style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); padding:8px 20px; border-radius:30px; border:1px solid var(--accent-primary); z-index:2000; align-items:center; gap:15px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+        <div
+            style="width:10px; height:10px; background:var(--accent-primary); border-radius:50%; animation: pulse 1.5s infinite;">
+        </div>
+        <span style="font-size:0.8rem; font-weight:700; color:white; letter-spacing:1px;">MODO DEGUSTAÇÃO: <span
+                id="trialTimeRemaining">30:00</span> RESTANTES</span>
+    </div>
+
+    <script src="qrcode.min.js"></script>
+    <script src="app.js?v=2.6" defer></script>
+    <script src="tour-host.js" defer></script>
+</body>
+
+</html>

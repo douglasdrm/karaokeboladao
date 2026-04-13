@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KARAOKE PARTY | A Melhor Experiência de Karaokê Online</title>
+    <meta name="description" content="Transforme sua festa com o Karaoke Party! Sistema 100% online com controle pelo celular, pedidos via QR Code e catálogo gigante.">
+    
+    <link rel="icon" type="image/png" href="Assets/icon.png">
+    <link rel="stylesheet" href="App/index.css?v=4.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="landing-page-root">
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <!-- ─── Landing Page Premium ─── -->
+    <section id="landingPage">
+        <!-- Hero Section -->
+        <div class="hero">
+            <div class="hero-content">
+                <img src="Assets/logo.png" alt="Logo" class="hero-logo">
+                <h1 class="hero-title">TRANSFORME SEU EVENTO EM UM <span class="highlight">SHOW PROFISSIONAL</span></h1>
+                <p class="hero-subtitle">
+                    O sistema de Karaokê mais completo do Brasil. <br>
+                    Mais de 19 mil músicas em Full HD com controle total pelo smartphone.
+                </p>
+                <div class="hero-btns">
+                    <button class="btn-primary" onclick="window.location.href='App/mobile.html'">
+                        <div class="btn-content">
+                            <span class="btn-label">LISTA DE MÚSICAS</span>
+                            <span class="btn-sublabel">Área do Cantor</span>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button class="btn-secondary" onclick="window.location.href='App/index.html'">
+                        <div class="btn-content">
+                            <span class="btn-label">KARAOKÊ</span>
+                            <span class="btn-sublabel">Teste grátis ou faça login</span>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <p style="margin-top: 15px; font-size: 0.8rem; opacity: 0.5; text-align: center;">
+                    * Ideal para festas particulares, aniversários e encontros em família.
+                </p>
+            </div>
+            
+            <div class="hero-badges">
+                <div class="badge-item"><i class="fas fa-check-circle"></i> +19k Músicas FHD</div>
+                <div class="badge-item"><i class="fas fa-check-circle"></i> Controle p/ Celular</div>
+                <div class="badge-item"><i class="fas fa-check-circle"></i> Sem Aparelhos Caros</div>
+            </div>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="features-section">
+            <h2 class="section-title">POR QUE ESCOLHER O <span class="highlight">KARAOKE PARTY</span>?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h3>Controle Remoto</h3>
+                    <p>Seus convidados pedem músicas, veem a letra e votam direto do smartphone.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-music"></i>
+                    <h3>Catálogo Gigante</h3>
+                    <p>Milhares de músicas atualizadas, com busca instantânea por artista ou código.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-sliders-h"></i>
+                    <h3>Controle de Tom</h3>
+                    <p>Aumente ou diminua a tonalidade da música em tempo real para o cantor.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-star"></i>
+                    <h3>Vibe da Galera</h3>
+                    <p>Sistema de votação interativo que gera uma nota média baseada na opinião do público.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Seção de Planos (Pricing) -->
+        <section class="pricing-section">
+            <h2 class="section-title">ESCOLHA O SEU <span class="highlight">PLANO</span></h2>
+            <p style="opacity: 0.6; margin-top: 10px;">Encontre o plano perfeito para o seu evento ou festa temática.</p>
+            
+            <div class="pricing-grid">
+                <!-- Avulso 8h -->
+                <div class="plan-card">
+                    <h3>AVULSO 8H</h3>
+                    <p>Ideal para um evento único</p>
+                    <div class="price">R$ 25<span>/8 horas</span></div>
+                    <div class="savings">Pagamento único</div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> Todas as funções VIP</li>
+                        <li><i class="fas fa-check"></i> Expira em 8 horas</li>
+                        <li><i class="fas fa-check"></i> Sem renovação</li>
+                        <li><i class="fas fa-check"></i> Suporte via Web</li>
+                    </ul>
+                    <button class="btn-plan" onclick="startCheckout('avulso8h')">ASSINAR AGORA</button>
+                </div>
+                <!-- Casual -->
+                <div class="plan-card">
+                    <h3>CASUAL</h3>
+                    <p>Usa quando quer, sem compromisso</p>
+                    <div class="price">R$ 40<span>/mês</span></div>
+                    <div class="savings">Cancela quando quiser</div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> Salas ilimitadas</li>
+                        <li><i class="fas fa-check"></i> +19k músicas FHD</li>
+                        <li><i class="fas fa-check"></i> Pedidos pelo celular</li>
+                        <li><i class="fas fa-check"></i> Pontuação + Votação</li>
+                    </ul>
+                    <button class="btn-plan" onclick="startCheckout('casual')">ASSINAR AGORA</button>
+                </div>
+
+                <!-- Festa -->
+                <div class="plan-card recommended">
+                    <div class="plan-badge">Recomendado</div>
+                    <h3>FESTA</h3>
+                    <p>Paga trimestral, usa nas festas do ano</p>
+                    <div class="price">R$ 99<span>/trimestre</span></div>
+                    <div class="savings">= R$ 33/mês (-17%)</div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> <strong>Tudo do Casual</strong></li>
+                        <li><i class="fas fa-check"></i> Suporte via WhatsApp</li>
+                        <li><i class="fas fa-check"></i> Ideal para datas festivas</li>
+                        <li><i class="fas fa-check"></i> Acesso prioritário</li>
+                    </ul>
+                    <button class="btn-plan" onclick="startCheckout('festa')">ASSINAR AGORA</button>
+                </div>
+
+                <!-- Anual -->
+                <div class="plan-card">
+                    <h3>ANUAL</h3>
+                    <p>Paga uma vez, esquece o ano todo</p>
+                    <div class="price">R$ 349<span>/ano</span></div>
+                    <div class="savings">= R$ 29/mês (-27%)</div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> <strong>Tudo do Festa</strong></li>
+                        <li><i class="fas fa-check"></i> Suporte prioritário</li>
+                        <li><i class="fas fa-check"></i> Melhor custo-benefício</li>
+                        <li><i class="fas fa-check"></i> Sem surpresas</li>
+                    </ul>
+                    <button class="btn-plan" onclick="startCheckout('anual')">ASSINAR AGORA</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Mobile/QR -->
+        <div class="mobile-experience">
+            <div class="mobile-text">
+                <h2>EXPERIÊNCIA <span class="highlight">MOBILE COMPLETA</span></h2>
+                <p>Chega de pastas de papel e filas no DJ. Com um simples QR Code, todos na festa têm o catálogo na palma da mão.</p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-qrcode"></i> Leitor de QR Code integrado.</li>
+                    <li><i class="fas fa-heart"></i> Salve suas músicas favoritas.</li>
+                    <li><i class="fas fa-history"></i> Histórico de canções cantadas.</li>
+                </ul>
+            </div>
+            <div class="mobile-mockup">
+                <div class="mockup-screen">
+                    <img src="Assets/logo.png" style="width: 40px; margin-bottom: 10px;">
+                    <div class="mockup-line"></div>
+                    <div class="mockup-line shorter"></div>
+                    <div class="mockup-btn">PEDIR MÚSICA</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA Final -->
+        <div class="cta-banner">
+            <h2>PRONTO PARA DAR UM <span class="highlight">UP NA SUA FESTA</span>?</h2>
+            <p>Teste agora gratuitamente por 30 minutos e veja a mágica acontecer.</p>
+            <button class="btn-primary large" onclick="window.location.href='App/index.html'">
+                <i class="fas fa-bolt"></i> COMEÇAR TESTE GRÁTIS DE 30 MIN
+            </button>
+            <p style="margin-top: 20px; font-size: 0.9rem; opacity: 0.7; text-align: center;">
+                Dúvidas? <a href="https://wa.me/5521967192554" target="_blank" style="color: #d946ef; text-decoration: none; font-weight: bold;">Fale conosco no WhatsApp</a>
+            </p>
+        </div>
+    </section>
+
+    <footer style="padding: 40px; text-align: center; opacity: 0.3; font-size: 0.8rem; border-top: 1px solid rgba(255,255,255,0.05);">
+        KARAOKE PARTY SaaS &copy; 2026 - karaoke.unodev.com.br
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-functions-compat.js"></script>
+
+    <script>
+        // Configuração idêntica ao App
+        const firebaseConfig = {
+            apiKey: "AIzaSyCnZ8hoE3NGNx2t490Yw12AxlCqVjSguig",
+            authDomain: "karaoke-party-online.firebaseapp.com",
+            databaseURL: "https://karaoke-party-online-default-rtdb.firebaseio.com",
+            projectId: "karaoke-party-online",
+            storageBucket: "karaoke-party-online.firebasestorage.app",
+            messagingSenderId: "1059879567957",
+            appId: "1:1059879567957:web:d4cb88563b39fe08934adc"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const functions = firebase.functions();
+
+        async function startCheckout(planId) {
+            let user = auth.currentUser;
+            
+            // 1. Se não estiver logado, tenta o login via Google
+            if (!user) {
+                try {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    localStorage.setItem("checkoutPlan", planId); await auth.signInWithRedirect(provider); return;
+                } catch (loginError) {
+                    console.error("Erro no Login:", loginError);
+                    alert("Para assinar, você precisa estar logado.");
+                    return;
+                }
+            }
+
+            // 2. Chama a Cloud Function para criar a sessão do Stripe
+            const btn = document.querySelector(`button[onclick="startCheckout('${planId}')"]`);
+            
+            try {
+                if (btn) {
+                    btn.innerText = "CARREGANDO...";
+                    btn.disabled = true;
+                }
+
+                const createCheckoutSession = functions.httpsCallable('createCheckoutSession');
+                const result = await createCheckoutSession({ uid: user.uid, planId: planId });
+                
+                // 3. Redireciona para o Stripe
+                window.location.href = result.data.url;
+            } catch (error) {
+                console.error("Erro no Checkout:", error);
+                alert("Erro ao iniciar pagamento: " + error.message);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = "ASSINAR AGORA";
+                }
+            }
+        }
+
+        // --- NOVO: Auto-disparo após Login ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const savedPlan = localStorage.getItem("checkoutPlan");
+                if (urlParams.get('action') === 'checkout') {
+                    const planId = urlParams.get('plan');
+                    setTimeout(() => startCheckout(planId), 1000);
+                } else if (savedPlan) {
+                    localStorage.removeItem("checkoutPlan");
+                    setTimeout(() => startCheckout(savedPlan), 1000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
+
