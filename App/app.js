@@ -126,6 +126,29 @@
 
     let subscriptionData = null; // Novo: Detalhes da assinatura (expiração, plano)
 
+    const hostMemePhrases = [
+        "Receba! [Nome] tá vindo pro palco com a luva de pedreiro do karaokê!",
+        "Esquece tudo! [Nome] vai mostrar como se faz agora.",
+        "Calma, Calabreso! Respira que o show do(a) [Nome] vai começar!",
+        "O inimigo da timidez chegou: [Nome], o palco é seu!",
+        "Vem, [Nome]! O Brasil tá vendo e eu também tô vendo!",
+        "Segura a emoção que lá vem a lenda: [Nome] no microfone!",
+        "Disseram que não ia ter show hoje... mentiram! Olha o(a) [Nome] vindo aí!",
+        "[Nome], não é o Rock in Rio, mas a plateia tá esperando!",
+        "Atenção: nível de talento aumentando. [Nome] subindo no palco!",
+        "Prepara o celular pra gravar que o(a) [Nome] vai brilhar agora!",
+        "Brota, [Nome]! O microfone tá no ponto e a galera tá no pique!",
+        "Solta a voz, [Nome]! Mostra que aqui não tem iniciante!",
+        "É agora ou nunca, [Nome]! O palco tá liberado, chega mais!",
+        "[Nome] vindo pro palco... É o brabo(a) tem nome!",
+        "Pega a visão: [Nome] vai dar aula de canto agora!",
+        "O próximo cantor é [Nome]. Quem tiver coração fraco, se prepare!",
+        "A produção avisou que o(a) [Nome] é profissional. Vamos conferir!",
+        "Sai da frente que o(a) [Nome] tá vindo com tudo!",
+        "Alô, gravadoras! Fiquem de olho no(a) [Nome] agora!",
+        "Chamando o dono da voz: [Nome], sua hora chegou!"
+    ];
+
     let activeUsers = {};
 
     let recentSingers = JSON.parse(localStorage.getItem('recentSingers') || '[]');
@@ -272,7 +295,8 @@
 
                     title: m.titulo,
 
-                    lyrics: m.inicioletra
+                    lyrics: m.inicioletra,
+                    estilo: m.estilo || 'Pop'
 
                 }));
 
@@ -422,6 +446,15 @@
                         const adminBtn = document.getElementById('adminMenuBtn'); 
                         if (adminBtn) adminBtn.style.display = 'block'; 
                     }
+                    showToast(`🎤 Bem-vindo de volta, ${hostUser.displayName.split(' ')[0]}!`);
+                    
+                    // Carrega estatísticas e personalização do DJ
+                    db.ref(`users/${hostUser.uid}`).on('value', snap => {
+                        const data = snap.val() || {};
+                        hostUser.djName = data.djName || '';
+                        hostUser.logoURL = data.logoURL || '';
+                        hostUser.stats = data.stats || { totalSongsPlayed: 0 };
+                    });
 
                     checkSubscriptionAndStartRoom();
                 } catch (e) {
@@ -1016,8 +1049,11 @@
         document.getElementById('setMinRandomScore').value = settings.minRandomScore || 75;
 
         const diffRadio = modal.querySelector(`input[name="difficulty"][value="${settings.difficulty || 'normal'}"]`);
-
         if (diffRadio) diffRadio.checked = true;
+
+        // CAMPOS DE PERSONALIZAÇÃO (v16)
+        document.getElementById('setDjName').value = hostUser.djName || "";
+        document.getElementById('setLogoUrl').value = hostUser.logoURL || "";
 
         renderPhotoPreviews(); // Mostra fotos salvas
 
@@ -1100,6 +1136,11 @@
             difficulty
 
         };
+
+        // SALVA PERSONALIZAÇÃO NO FIREBASE (v16)
+        const djName = document.getElementById('setDjName').value.trim();
+        const logoURL = document.getElementById('setLogoUrl').value.trim();
+        db.ref(`users/${hostUser.uid}`).update({ djName, logoURL });
 
         localStorage.setItem('karaokeSettings', JSON.stringify(settings));
 
@@ -1590,13 +1631,13 @@
                 // Salva nos recentes se for manual e não "Surpresa"
 
                 if (finalName !== 'Cantor Surpresa' && !Object.values(activeUsers).find(u => u.name === finalName)) {
-
                     updateRecentSingers(finalName);
-
                 }
+                
+                // INCREMENTA HORÁRIO DE PICO (v16)
+                incrementPeakHour();
 
                 enqueue({ ...song, singer: finalName, time: Date.now() }, playNow);
-
             }, chipsData);
 
         }
@@ -1716,13 +1757,13 @@
             }
 
             if (name !== 'Cantor Surpresa' && !Object.values(activeUsers).find(u => u.name === name)) {
-
                 updateRecentSingers(name);
-
             }
 
-            enqueue({ ...song, singer: name, time: Date.now() }, playNow);
+            // INCREMENTA HORÁRIO DE PICO (v16)
+            incrementPeakHour();
 
+            enqueue({ ...song, singer: name, time: Date.now() }, playNow);
         }
 
         document.getElementById('compactSingerForm')?.remove();
@@ -1798,9 +1839,51 @@
         // 7. Aplicar de volta à fila global e renderizar
 
         const finalQueue = currentSong ? [currentSong, ...restOfQueue] : restOfQueue;
+        queue = finalQueue;
 
-        queue.splice(0, queue.length, ...finalQueue);
+        renderQueue();
 
+    }
+
+    // ─── Estatísticas e Dashboard de Inteligência ──────────────────────────────────
+    function updateDJStats(song, score) {
+        if (!hostUser) return;
+        const statsRef = db.ref(`users/${hostUser.uid}/stats`);
+        
+        statsRef.transaction(current => {
+            const stats = current || { totalSongsPlayed: 0, genres: {}, records: [], peakHours: {} };
+            
+            // 1. Contador Global
+            stats.totalSongsPlayed = (stats.totalSongsPlayed || 0) + 1;
+
+            // 2. Contador de Gêneros
+            if (song && song.estilo) {
+                const genre = song.estilo;
+                if (!stats.genres) stats.genres = {};
+                stats.genres[genre] = (stats.genres[genre] || 0) + 1;
+            }
+
+            // 3. Sistema de Recordes (Hall da Fama)
+            if (!stats.records) stats.records = [];
+            stats.records.push({
+                singer: song.singer || 'Anônimo',
+                song: song.title || '—',
+                score: score,
+                timestamp: Date.now()
+            });
+            // Ordena e mantém os 10 melhores
+            stats.records.sort((a,b) => b.score - a.score);
+            stats.stats_records = stats.records.slice(0, 10);
+
+            return stats;
+        });
+    }
+
+    function incrementPeakHour() {
+        if (!hostUser) return;
+        const hour = new Date().getHours();
+        const peakRef = db.ref(`users/${hostUser.uid}/stats/peakHours/${hour}`);
+        peakRef.transaction(count => (count || 0) + 1);
     }
 
     function enqueue(entry, playNow) {
@@ -1888,11 +1971,45 @@
 
     function playNext() {
         try {
-
             if (queue.length === 0) return;
-
             const current = queue[0];
 
+            // CHAMADA DE CANTOR MEME (v16)
+            // Se já estivermos no meio da música (ex: vindo de um crash), não chama de novo
+            if (isPlaying) { 
+                startVideoPlay(current);
+            } else {
+                showComingNext(current.singer, () => startVideoPlay(current));
+            }
+        } catch (err) {
+            console.error("Erro em playNext:", err);
+        }
+    }
+
+    function showComingNext(singerName, onComplete) {
+        if (!playerArea) playerArea = document.getElementById('player');
+        
+        const phraseTemplate = hostMemePhrases[Math.floor(Math.random() * hostMemePhrases.length)];
+        const finalPhrase = phraseTemplate.replace('[Nome]', singerName.toUpperCase());
+        
+        playerArea.innerHTML = `
+            <div class="coming-next-overlay">
+                <div class="cn-badge">PRÓXIMO SHOW</div>
+                <div class="cn-phrase">${finalPhrase}</div>
+                <div class="cn-spinner"></div>
+            </div>
+        `;
+        
+        // Efeito Sonoro (Opcional - usando o de suspense curto ou high)
+        playSfx('high'); 
+
+        setTimeout(() => {
+            onComplete();
+        }, 5000); // 5 segundos de fama no telão
+    }
+
+    function startVideoPlay(current) {
+        try {
             // Auto-expandir player no mobile ao começar música
             if (window.innerWidth <= 900) {
                 toggleMobilePlayer(true);
@@ -2424,6 +2541,9 @@
             `;
 
                 playSfx(sfxKey);
+
+                // ATUALIZA ESTATÍSTICAS DO DJ (v16)
+                updateDJStats(queue[0], finalScore);
 
                 setTimeout(() => finishSong(), 8000);
 
