@@ -22,10 +22,14 @@ exports.createCheckoutSession = onCall(
         }
 
         const plans = {
-            'casual': { name: 'Plano Casual', price: 4000, days: 30, mode: 'payment' },
-            'festa': { name: 'Plano Festa', price: 9900, days: 90, mode: 'payment' },
-            'anual': { name: 'Plano Anual', price: 34900, days: 365, mode: 'payment' },
-            'avulso8h': { name: 'Avulso 8h', price: 2500, hours: 8, mode: 'payment' }
+            'avulso3h':   { name: 'Avulso 3h',         price: 1000,  hours: 3,   mode: 'payment' },
+            'avulso8h':   { name: 'Avulso 8h',         price: 1500,  hours: 8,   mode: 'payment' },
+            'avulso24h':  { name: 'Avulso 24h',        price: 2500,  hours: 24,  mode: 'payment' },
+            'avulso48h':  { name: 'Avulso 48h',        price: 3500,  hours: 48,  mode: 'payment' },
+            'casual':     { name: 'Plano Casual',      price: 4000,  days: 30,   mode: 'payment' },
+            'festa':      { name: 'Plano Festa',       price: 9900,  days: 90,   mode: 'payment' },
+            'semestral':  { name: 'Plano Semestral',   price: 18900, days: 180,  mode: 'payment' },
+            'anual':      { name: 'Plano Anual',       price: 34900, days: 365,  mode: 'payment' }
         };
 
         const plan = plans[planId];
@@ -95,7 +99,11 @@ exports.stripeWebhook = onRequest(
                     expirationDate = Date.now() + (hours * 60 * 60 * 1000);
                 }
 
-                const planNames = { casual: 'Casual', festa: 'Festa', anual: 'Anual', avulso8h: 'Avulso 8h' };
+                const planNames = {
+                    casual: 'Casual', festa: 'Festa', semestral: 'Semestral', anual: 'Anual',
+                    avulso3h: 'Avulso 3h', avulso8h: 'Avulso 8h',
+                    avulso24h: 'Avulso 24h', avulso48h: 'Avulso 48h'
+                };
 
                 await admin.database().ref(`users/${uid}/subscription`).update({
                     active: true,

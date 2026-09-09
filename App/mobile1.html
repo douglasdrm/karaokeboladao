@@ -2862,7 +2862,7 @@
                 .catch(err => console.error('Erro no PWA:', err));
         }
 
-        // 2. Função de Notificação Nativa
+        // 2. Função de Notificação Nativa (Ajustada)
         function triggerSystemNotification(title, body) {
             // Vibração direta na tela
             if ('vibrate' in navigator) {
@@ -2883,6 +2883,11 @@
                 }
             }
         }
+        // Teste automático ao abrir: dispara após 3 segundos
+        setTimeout(() => {
+            console.log("🧪 Testando envio de notificação...");
+            triggerSystemNotification('🎤 TESTE DE NOTIFICAÇÃO', 'Se você leu isso, a notificação funcionou!');
+        }, 3000);
     </script>
 
 </body>

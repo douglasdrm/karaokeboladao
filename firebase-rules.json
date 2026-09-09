@@ -1,44 +1,80 @@
 {
   "rules": {
+    ".read": "auth != null && auth.token.email === 'douglasdrm@gmail.com'",
+    ".write": "auth != null && auth.token.email === 'douglasdrm@gmail.com'",
+
+    "config": {
+      ".read": "true",
+      ".write": "auth != null && auth.token.email === 'douglasdrm@gmail.com'"
+    },
+
+    "catalog_chunks": {
+      ".read": "true",
+      ".write": "auth != null && auth.token.email === 'douglasdrm@gmail.com'"
+    },
+
+    "feedback": {
+      ".read": "auth != null && auth.token.email === 'douglasdrm@gmail.com'",
+      ".write": "auth != null"
+    },
+
     "salas": {
+      ".read": "false",
+      ".write": "false",
       "$room_id": {
         ".read": "auth != null",
+        ".write": "auth != null && auth.token.email === 'douglasdrm@gmail.com'",
         "info": {
-          ".write": "auth != null && (!data.exists() || data.child('hostId').val() === auth.uid)"
-        },
-        "pedidos": {
-          ".write": "auth != null",
-          "$pedido_id": {
-            ".validate": "newData.hasChildren(['id', 'singer', 'timestamp'])"
-          }
+          ".read": "auth != null",
+          ".write": "auth != null"
         },
         "active_users": {
-          "$user_id": {
-            ".write": "auth.uid === $user_id"
+          ".read": "auth != null",
+          "$uid": {
+            ".read": "auth != null",
+            ".write": "auth != null && auth.uid === $uid"
           }
         },
-
+        "pedidos": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "queue_v13": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "queue_sync": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
         "now_playing": {
+          ".read": "auth != null",
           ".write": "auth != null",
           "votes": {
-            "$user_id": {
-              ".write": "auth != null && auth.uid === $user_id"
+            "$uid": {
+              ".read": "auth != null",
+              ".write": "auth != null && auth.uid === $uid"
             }
           }
         },
-        "queue_v13": {
+        "last_score": {
+          ".read": "auth != null",
           ".write": "auth != null"
+        },
+        "reactions": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          ".indexOn": ["timestamp"]
         }
       }
     },
+
     "users": {
-      ".read": "auth.token.email === 'douglasdrm@gmail.com'",
-      "$user_id": {
-        ".read": "auth.uid === $user_id || auth.token.email === 'douglasdrm@gmail.com'",
-        ".write": "auth.uid === $user_id || auth.token.email === 'douglasdrm@gmail.com'",
-        "subscription": {
-          ".write": "auth.token.email === 'douglasdrm@gmail.com'"
-        }
+      ".read": "auth != null && auth.token.email === 'douglasdrm@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'douglasdrm@gmail.com'",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
       }
     }
   }

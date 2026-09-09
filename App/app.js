@@ -51,6 +51,9 @@
     let isDestroyingAmbient = false;
 
     let currentVotes = {}; // Armazena votos por usuário da música atual (v9)
+    let currentDedometro = {}; // Armazena votos like/dislike do Dedômetro (Novo!)
+    let sessionRanking = []; // Armazena os melhores da noite (v20)
+    let currentVolume = parseFloat(localStorage.getItem('djVolume') || '0.7');
 
     // ─── Cloud Media Settings ─────────────────────────────────────────────────────
 
@@ -60,7 +63,7 @@
 
     // Deixe vazio ("") para buscar localmente na hospedagem atual.
 
-    const CDN_BASE_URL = "https://f005.backblazeb2.com/file/karaoke-midia/Musicas/";
+    const CDN_BASE_URL = "https://media.unodev.com.br/file/karaoke-midia/Musicas/";
 
     // ─── Settings State ───────────────────────────────────────────────────────────
 
@@ -69,6 +72,8 @@
         autoFullscreen: false,
 
         ambientUrl: "",
+
+        playIntroCall: true,
 
         screensaverTimeout: 30000,
 
@@ -85,6 +90,7 @@
     let trialUsedMs = 0;
 
     let trialTimer = null;
+    let premiumTimer = null;
 
     const TRIAL_LIMIT_MS = 1800000; // 30 Minutos
 
@@ -156,17 +162,12 @@
     // ─── Sound Banks ──────────────────────────────────────────────────────────────
 
     const sounds = {
-
         suspense: "../SFX/Dando_nota.mp3",
-
         low: "../SFX/Nota_baixa.mp3",
-
         med: "../SFX/Nota_media.mp3",
-
         high: "../SFX/Nota_alta.mp3",
-
-        max: "../SFX/Nota_maxima.mp3"
-
+        max: "../SFX/Nota_maxima.mp3",
+        applause: "../SFX/Aplausos.mp3"
     };
 
     const scorePhrases = {
@@ -277,42 +278,72 @@
 
         modal = document.getElementById('customModal');
 
-        // Carregar catálogo
+        // Carregar catálogo dinâmico (v17)
+        // Sincronização Fragmentada de Elite (v22 - Míssil)
+        if (songList) songList.innerHTML = "<div style='padding:20px; color:var(--text-muted);' id='syncMsg'><i class='fas fa-sync fa-spin'></i> Carregando catálogo...</div>";
 
-        if (songList) songList.innerHTML = "<div style='padding:20px; color:var(--accent-primary);'>Carregando catálogo...</div>";
+        db.ref('config/catalog').on('value', async snap => {
+            const config = snap.val();
+            if (!config) return;
 
-        fetch('songs.json')
+            try {
+                const totalChunks = config.totalChunks || 0;
+                const mode = config.mode || 'legacy';
 
-            .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+                if (mode === 'fragmented' && totalChunks > 0) {
+                    console.log(`Detectado catálogo fragmentado: ${totalChunks} partes.`);
 
-            .then(data => {
+                    const promises = [];
+                    for (let i = 0; i < totalChunks; i++) {
+                        promises.push(db.ref(`catalog_chunks/part_${i}`).once('value').then(s => s.val()));
+                    }
 
-                catalog = data.musicas.map(m => ({
+                    const results = await Promise.all(promises);
+                    const allSongs = results.flat().filter(s => s !== null);
 
-                    id: String(m.codigo).padStart(5, '0'),
+                    processCatalogData(allSongs);
+                    console.log(`Catálogo sincronizado: ${allSongs.length} músicas`);
+                } else if (config.url) {
+                    // Fallback para modo Storage Legacy se necessário
+                    const blob = await firebase.storage().ref('songs.json').getBlob();
+                    const text = await blob.text();
+                    const data = JSON.parse(text);
+                    processCatalogData(data.musicas);
+                    console.log(`Catálogo Legacy: ${data.musicas.length} músicas`);
+                }
 
-                    artist: m.artista,
+                const msg = document.getElementById('syncMsg');
+                if (msg) msg.remove();
+            } catch (err) {
+                console.warn("Falha na sincronização fragmentada:", err);
+                loadLocalFallback();
+            }
+        });
 
-                    title: m.titulo,
+        // showSyncToast removido - sincronização silenciosa
 
-                    lyrics: m.inicioletra,
-                    estilo: m.estilo || 'Pop'
+        function processCatalogData(musicas) {
+            catalog = musicas.map(m => ({
+                id: String(m.codigo).padStart(5, '0'),
+                artist: m.artista,
+                title: m.titulo,
+                lyrics: m.inicioletra,
+                estilo: m.estilo || 'Pop',
+                idioma: m.idioma || 'BRA'
+            }));
+            renderSongs(catalog.slice(0, 50));
+            initSearchUI();
+        }
 
-                }));
-
-                renderSongs(catalog.slice(0, 50));
-
-                initSearchUI();
-
-            })
-
-            .catch(err => {
-
-                console.error("Erro ao carregar catálogo:", err);
-
-                if (songList) songList.innerHTML = "<div style='color:red;padding:20px;'>ERRO: songs.json não encontrado</div>";
-
-            });
+        function loadLocalFallback() {
+            fetch('songs.json')
+                .then(r => r.json())
+                .then(data => processCatalogData(data.musicas))
+                .catch(err => {
+                    console.error("Erro fatal no catálogo:", err);
+                    if (songList) songList.innerHTML = "<div style='color:red;padding:20px;'>ERRO: Falha ao carregar catálogo.</div>";
+                });
+        }
 
         // Autenticação do Host (Firebase)
 
@@ -345,9 +376,9 @@
         window.addEventListener('mousemove', resetAllTimers);
         window.addEventListener('mousedown', resetAllTimers);
         window.addEventListener('touchstart', resetAllTimers);
-        window.addEventListener('keydown', (e) => { 
-            resetAllTimers(); 
-            handleHotkey(e); 
+        window.addEventListener('keydown', (e) => {
+            resetAllTimers();
+            handleHotkey(e);
         });
 
 
@@ -371,11 +402,19 @@
 
         initSettingsUI();
 
-        initAmbientPlayer();
+        try {
+            initAmbientPlayer();
+        } catch (e) {
+            console.warn("⚠️ Player ambiente bloqueado ou falhou:", e);
+        }
 
         // Auto-Fullscreen Trigger (Clique na Tela)
 
         document.addEventListener('click', () => {
+            // Garante que o AudioContext seja retomado em qualquer interação (Autoplay Policy)
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
 
             if (settings.autoFullscreen && !document.fullscreenElement && !document.webkitFullscreenElement) {
 
@@ -392,6 +431,12 @@
         }, { once: false });
 
         initMobileTabs();
+
+        // Inicializa o slider de volume com o volume salvo
+        const volRangeInput = document.getElementById('volRange');
+        if (volRangeInput) {
+            volRangeInput.value = currentVolume;
+        }
     });
 
     // ─── Host Authentication Logic ────────────────────────────────────────────────
@@ -441,19 +486,22 @@
                         lastLogin: firebase.database.ServerValue.TIMESTAMP
                     }).catch(err => console.warn("Erro ao atualizar perfil do Host:", err));
 
-                    checkSubscriptionStatus(user.uid);
-                    if (user.email === 'douglasdrm@gmail.com') { 
-                        const adminBtn = document.getElementById('adminMenuBtn'); 
-                        if (adminBtn) adminBtn.style.display = 'block'; 
+                    // FIX: checkSubscriptionStatus não existe — usar checkSubscriptionAndStartRoom
+                    if (user.email === 'douglasdrm@gmail.com') {
+                        const adminBtn = document.getElementById('adminMenuBtn');
+                        if (adminBtn) adminBtn.style.display = 'block';
                     }
-                    showToast(`🎤 Bem-vindo de volta, ${hostUser.displayName.split(' ')[0]}!`);
-                    
-                    // Carrega estatísticas e personalização do DJ
+                    // FIX: displayName pode ser null em alguns provedores
+                    const firstName = (hostUser.displayName || safeName).split(' ')[0];
+                    showToast(`🎤 Bem-vindo de volta, ${firstName}!`);
+
+                    // Carrega estatísticas e personalização do DJ (v17)
                     db.ref(`users/${hostUser.uid}`).on('value', snap => {
                         const data = snap.val() || {};
                         hostUser.djName = data.djName || '';
-                        hostUser.logoURL = data.logoURL || '';
+                        hostUser.logoBase64 = data.logoBase64 || '';
                         hostUser.stats = data.stats || { totalSongsPlayed: 0 };
+                        updateDJUI();
                     });
 
                     checkSubscriptionAndStartRoom();
@@ -478,26 +526,43 @@
 
         });
 
+        // FIX iOS Safari: detectar iPhone/iPad para usar Popup em vez de Redirect
+        // O Safari bloqueia cookies de 3rd-party (ITP), quebrando signInWithRedirect
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
         if (btnGoogle) {
             btnGoogle.onclick = () => {
+                // Usar Popup por padrão para máxima confiabilidade visual
                 auth.signInWithPopup(googleProvider).catch(err => {
-                    console.error("Erro no Login Popup:", err);
-                    if (err.code === 'auth/popup-closed-by-user') {
-                        alert("O login foi cancelado. Por favor, mantenha o popup aberto até o final.");
-                    } else {
-                        // Fallback para redirect se o popup for bloqueado agressivamente
-                        auth.signInWithRedirect(googleProvider);
+                    console.error("Erro no Login Google:", err);
+                    if (err.code === 'auth/popup-blocked') {
+                        alert("O popup de login foi bloqueado. Por favor, permita popups para este site.");
+                    } else if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+                        alert("Erro ao fazer login: " + err.message);
                     }
                 });
             };
         }
 
+        // Processar resultado de redirect ao voltar da tela de login Google (apenas não-iOS)
+        if (!isIOS) {
+            auth.getRedirectResult().then(result => {
+                if (result && result.user) {
+                    console.log("✅ Login por redirect bem-sucedido:", result.user.email);
+                }
+            }).catch(err => {
+                if (err.code && err.code !== 'auth/no-auth-event') {
+                    console.warn("⚠️ Erro ao processar redirect de login:", err.code);
+                }
+            });
+        }
 
     }
 
     let isHostSignUpMode = false;
 
-    window.toggleHostAuthMode = function() {
+    window.toggleHostAuthMode = function () {
 
         isHostSignUpMode = !isHostSignUpMode;
 
@@ -521,7 +586,7 @@
 
     }
 
-    window.handleHostEmailAuth = function() {
+    window.handleHostEmailAuth = function () {
 
         const email = document.getElementById('hostAuthEmail').value.trim();
 
@@ -552,7 +617,7 @@
 
     }
 
-    window.hostForgotPassword = function() {
+    window.hostForgotPassword = function () {
 
         const email = document.getElementById('hostAuthEmail').value.trim();
 
@@ -567,14 +632,8 @@
     }
 
     async function checkSubscriptionAndStartRoom() {
-
-        // Busca status da assinatura E tempo de trial não Firebase
-
         db.ref('users/' + hostUser.uid).once('value', (snap) => {
-
             const userData = snap.val() || {};
-            
-            // 0. VERIFICAÇÃO DE BANIMENTO
             if (userData.isBanned) {
                 alert("ACESSO NEGADO: Sua conta foi suspensa por violação dos termos de uso.");
                 logoutHost();
@@ -585,74 +644,62 @@
             trialUsedMs = userData.trialUsedMs || 0;
             const hasWhatsapp = !!userData.whatsapp;
 
-            // 1. Se tiver assinatura ativa (via checkSubscriptionStatus global ou local check)
-
             if (isPremium || (sub && (sub.active === true || sub.status === 'active') && sub.expiresAt > Date.now())) {
-
                 isPremium = true;
-
                 subscriptionData = sub;
-
-                openStartRoomModal(false, hasWhatsapp); // VIP: Sem Trial
-
-            }
-
-            // 2. Se não tiver assinatura, verifica o Trial
-
-            else {
+                startPremiumCountdown();
+                openStartRoomModal(false, hasWhatsapp);
+            } else {
+                const isRealPlan = sub && sub.plan && sub.plan !== 'Free Trial' && sub.plan !== 'Gratuito';
+                if (isRealPlan) {
+                    const modal = document.getElementById('trialExpiredModal');
+                    if (modal) {
+                        modal.style.display = 'flex';
+                        const title = modal.querySelector('h2');
+                        const text = modal.querySelector('p');
+                        const btnCancel = document.getElementById('modalCancel');
+                        if (title) title.innerText = "ASSINATURA EXPIRADA";
+                        if (text) text.innerHTML = `Seu plano <strong>${sub.plan}</strong> chegou ao fim. <br>Para continuar usando a Cabine do DJ sem interrupções, renove seu acesso agora.`;
+                        if (btnCancel) btnCancel.style.display = 'none';
+                    }
+                    return;
+                }
 
                 if (trialUsedMs >= TRIAL_LIMIT_MS) {
-
-                    // TRIAL ESGOTADO
-
                     document.getElementById('trialExpiredModal').style.display = 'flex';
-
-                    const btnCancel = document.getElementById('modalCancel');
-
-                    if (btnCancel) btnCancel.style.display = 'none';
-
                 } else {
-
-                    // AINDA TEM TRIAL - Avisa e entra
-
-                    openStartRoomModal(true);
-
+                    openStartRoomModal(true, hasWhatsapp);
                 }
-
-                // Se for novo sem sub, cria o registro inicial
 
                 if (!sub) {
-
                     db.ref('users/' + hostUser.uid + '/subscription').set({
-
                         active: false,
-
                         status: 'trial',
-
                         plan: 'Free Trial',
-
                         requestDate: firebase.database.ServerValue.TIMESTAMP
-
                     });
-
                 }
-
             }
-
         });
-
     }
 
     function openStartRoomModal(isTrial = false, hasWhatsapp = false) {
-        const rawName = hostUser.displayName || hostUser.email.split('@')[0] || "DJ";
+        const rawName = hostUser.displayName || (hostUser.email ? hostUser.email.split('@')[0] : "DJ");
         const firstName = rawName.split(' ')[0].toUpperCase();
         const title = isTrial ? "MODO DEGUSTAÇÃO (30 MINUTOS)" : `BEM-VINDO AO COMANDO, ${firstName}`;
         const subText = isTrial ? "<p style='color:#ffaa00; font-size:0.8rem; margin-bottom:10px;'>Você ainda possui tempo de teste gratuito. Aproveite!</p>" : "";
+        const currentAmbient = settings.ambientUrl || "";
 
         let modalHTML = `
             ${subText}
             <div style="margin-bottom:15px; text-align:left;">Dê um nome para a sua sala de hoje:</div>
             <input type="text" id="newRoomName" placeholder="Ex: Aniversário do Douglas" autofocus style="width:100%; padding:15px; border-radius:15px; background:rgba(255,255,255,0.05); border:1px solid var(--accent-primary); color:white; text-align:center; margin-bottom:20px;">
+
+            <div style="margin-bottom:8px; text-align:left; font-size:0.9rem;">
+                <i class="fab fa-youtube" style="color:#ff0000; margin-right:6px;"></i> Música Ambiente da Tela de Descanso:
+            </div>
+            <input type="text" id="newRoomAmbientUrl" placeholder="Ex: https://www.youtube.com/watch?v=..." value="${currentAmbient}" style="width:100%; padding:12px 15px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); color:white; font-size:0.85rem; margin-bottom:6px;">
+            <p style="font-size:0.7rem; opacity:0.6; text-align:left; margin-bottom:20px;">Link do YouTube para a tela de descanso. Deixe em branco para o padrão.</p>
         `;
 
         if (!hasWhatsapp) {
@@ -674,8 +721,18 @@
                 return;
             }
 
-            const rawName = hostUser.displayName || hostUser.email.split('@')[0] || "DJ";
+            const rawName = hostUser.displayName || (hostUser.email ? hostUser.email.split('@')[0] : "DJ");
             currentRoomName = name || "Festa de " + rawName.split(' ')[0];
+
+            // Atualiza e persiste a Música Ambiente configurada na tela inicial
+            const ambientInput = document.getElementById('newRoomAmbientUrl');
+            if (ambientInput) {
+                const newAmbient = ambientInput.value.trim();
+                settings.ambientUrl = newAmbient;
+                localStorage.setItem('karaokeSettings', JSON.stringify(settings));
+                const setAmbientElem = document.getElementById('setAmbientUrl');
+                if (setAmbientElem) setAmbientElem.value = newAmbient;
+            }
 
             if (whatsapp) {
                 db.ref('users/' + hostUser.uid + '/whatsapp').set(whatsapp);
@@ -683,91 +740,144 @@
 
             if (isTrial) startTrialCountdown();
             startRoom(currentRoomName);
+
+            // Inicia música ambiente se não houver reprodução ativa e fila vazia
+            if (!isPlaying && queue.length === 0) {
+                checkAmbientMusic();
+            }
         });
     }
 
     let hasAlerted5Min = false;
 
     function startTrialCountdown() {
-
         if (isPremium) {
-
             console.log("🎤 Usuário Premium detectado. Ignorando Trial Timer.");
-
             return;
-
         }
 
-        console.log("â ³ Iniciando contador de Trial...");
+        console.log("⏳ Iniciando contador de Trial...");
 
         const banner = document.getElementById('trialTimerBanner');
-
         const timeText = document.getElementById('trialTimeRemaining');
 
         if (banner) banner.style.display = 'flex';
-
         if (trialTimer) clearInterval(trialTimer);
 
         trialTimer = setInterval(() => {
-
             trialUsedMs += 5000;
-
             const remaining = Math.max(0, TRIAL_LIMIT_MS - trialUsedMs);
-
             const mins = Math.floor(remaining / 60000);
-
             const secs = Math.floor((remaining % 60000) / 1000);
-
             const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
 
             if (timeText) {
-
                 timeText.innerText = timeStr;
-
                 // Alerta discreto aos 5 minutos
-
                 if (mins === 5 && secs <= 5 && !hasAlerted5Min) {
-
                     hasAlerted5Min = true;
-
                     showToast("Atenção: Seu tempo de teste gratuito vence em 5 minutos!");
-
                     banner.style.animation = "pulse-warning 1s infinite";
-
                     banner.style.borderColor = "#ffaa00";
-
                 }
-
                 // Alerta crítico ao 1 minuto
-
                 if (mins === 1 && secs <= 5) {
-
                     banner.style.animation = "pulse-danger 0.5s infinite";
-
                     banner.style.borderColor = "#ff4444";
-
                 }
-
             }
 
             if (trialUsedMs % 30000 === 0 || remaining <= 0) {
-
                 db.ref('users/' + hostUser.uid + '/trialUsedMs').set(trialUsedMs);
-
             }
 
             if (remaining <= 0) {
-
                 clearInterval(trialTimer);
-
                 document.getElementById('trialExpiredModal').style.display = 'flex';
-
                 if (typeof stopSong === 'function') stopSong();
+            }
+        }, 5000);
+    }
 
+    // NOVO: Contador Regressivo para Usuários Premium (v22)
+    function startPremiumCountdown() {
+        if (!isPremium || !subscriptionData || !subscriptionData.expiresAt) return;
+
+        console.log("💎 Iniciando monitor de assinatura Premium...");
+        const banner = document.getElementById('premiumTimerBanner');
+        const timeText = document.getElementById('premiumTimeRemaining');
+
+        if (premiumTimer) clearInterval(premiumTimer);
+
+        premiumTimer = setInterval(() => {
+            const now = Date.now();
+            const remaining = subscriptionData.expiresAt - now;
+
+            if (remaining <= 0) {
+                clearInterval(premiumTimer);
+                alert("⚠️ SEU TEMPO DE ACESSO EXPIROU!\nA cabine será desconectada.");
+                location.reload();
+                return;
             }
 
-        }, 5000);
+            const totalHours = (subscriptionData.expiresAt - subscriptionData.lastUpdate) / 3600000;
+            const isShortPlan = totalHours <= 48;
 
+            if (isShortPlan || remaining < (2 * 60 * 60 * 1000)) {
+                if (banner && banner.style.display !== 'flex') banner.style.display = 'flex';
+                if (timeText) {
+                    const h = Math.floor(remaining / 3600000);
+                    const m = Math.floor((remaining % 3600000) / 60000);
+                    const s = Math.floor((remaining % 60000) / 1000);
+                    if (h > 0) {
+                        timeText.innerText = `${h}h ${String(m).padStart(2, '0')}m`;
+                    } else {
+                        timeText.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                    }
+                }
+            } else {
+                if (banner) banner.style.display = 'none';
+            }
+        }, 1000);
+    }
+
+    // NOVO: Modal de Detalhes da Assinatura (v22)
+    window.openSubscriptionModal = function () {
+        const modal = document.getElementById('subscriptionModal');
+        const content = document.getElementById('subDetailsContent');
+        if (!modal || !content) return;
+
+        if (!isPremium || !subscriptionData) {
+            content.innerHTML = `
+                <div style="color:#ff4444; margin-bottom:15px;"><i class="fas fa-times-circle" style="font-size:2rem;"></i></div>
+                <h3 style="margin-bottom:10px;">Sem Assinatura Ativa</h3>
+                <p style="font-size:0.9rem; opacity:0.7;">Você está usando o Modo de Degustação Gratuito.</p>
+            `;
+        } else {
+            const expDate = new Date(subscriptionData.expiresAt).toLocaleString('pt-BR');
+            const now = Date.now();
+            const remaining = subscriptionData.expiresAt - now;
+            let timeLabel = "";
+            if (remaining > 0) {
+                const days = Math.floor(remaining / 86400000);
+                const hours = Math.floor((remaining % 86400000) / 3600000);
+                if (days > 0) timeLabel = `${days} dias e ${hours}h restantes`;
+                else timeLabel = `${hours}h e ${Math.floor((remaining % 3600000) / 60000)}min restantes`;
+            }
+            content.innerHTML = `
+                <div style="color:#ffd700; margin-bottom:15px;"><i class="fas fa-crown" style="font-size:3rem; filter:drop-shadow(0 0 10px rgba(255,215,0,0.5));"></i></div>
+                <h3 style="margin-bottom:5px; color:#ffd700;">PLANO ${subscriptionData.plan.toUpperCase()}</h3>
+                <p style="font-size:1.1rem; font-weight:700; margin-bottom:15px;">ATIVO ✅</p>
+                <div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:10px;">
+                    <div style="font-size:0.8rem; opacity:0.6;">Expira em:</div>
+                    <div style="font-weight:600;">${expDate}</div>
+                    <div style="font-size:0.85rem; color:#00f2ff; margin-top:5px;">${timeLabel}</div>
+                </div>
+            `;
+        }
+        modal.style.display = 'flex';
+        const settingsModal = document.getElementById('settingsModal');
+        if (settingsModal) settingsModal.style.display = 'none';
     }
 
     function startRoom(name) {
@@ -790,13 +900,18 @@
 
         localStorage.removeItem('recentSingers');
 
-        // Gera código de sala único (v13)
-
-        // Usamos 5 caracteres aleatórios para evitar conflitos entre diferentes festas.
-
-        currentRoomCode = Math.random().toString(36).substr(2, 5).toUpperCase();
-
-        localStorage.setItem('lastRoomCode', currentRoomCode);
+        // Gera ou recupera código de sala (v23)
+        const savedCode = localStorage.getItem('lastRoomCode');
+        if (savedCode && savedCode.length === 5) {
+            currentRoomCode = savedCode;
+        } else {
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ2346789";
+            currentRoomCode = "";
+            for (let i = 0; i < 5; i++) {
+                currentRoomCode += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            localStorage.setItem('lastRoomCode', currentRoomCode);
+        }
 
         // Salva info da sala não Firebase
 
@@ -851,6 +966,7 @@
         startMobilePolling();
 
         startActiveUsersListener();
+        initReactionListener();
 
         // Solicita acesso ao microfone (Host)
 
@@ -942,8 +1058,15 @@
 
         if (qrFs && typeof QRCode !== 'undefined') {
 
-            try { qrFs.innerHTML = ''; new QRCode(qrFs, { text: mobileUrl, width: 90, height: 90, colorDark: "#000000", colorLight: "#ffffff" }); } catch (e) { }
+            try { qrFs.innerHTML = ''; new QRCode(qrFs, { text: mobileUrl, width: 120, height: 120, colorDark: "#000000", colorLight: "#ffffff" }); } catch (e) { }
 
+        }
+
+        // Exibe código da sala em texto (alternativa ao QR para projetores)
+        const roomCodeEl = document.getElementById('qrRoomCodeFs');
+        if (roomCodeEl && currentRoomCode) {
+            roomCodeEl.innerHTML = `<span style="opacity:0.6;font-size:9px;font-weight:400;display:block;margin-bottom:2px;letter-spacing:1px;">CÓDIGO DA SALA</span>${currentRoomCode}`;
+            roomCodeEl.style.display = 'block';
         }
 
     }
@@ -992,6 +1115,10 @@
 
         }
 
+        if (settings.playIntroCall === undefined) {
+            settings.playIntroCall = true;
+        }
+
     }
 
     function jsonParseSafe(str) {
@@ -1034,6 +1161,9 @@
 
         document.getElementById('setAutoFullscreen').checked = settings.autoFullscreen || false;
 
+        const introCallInput = document.getElementById('setPlayIntroCall');
+        if (introCallInput) introCallInput.checked = settings.playIntroCall !== false;
+
         document.getElementById('setAmbientUrl').value = settings.ambientUrl || "";
 
         document.getElementById('setScreensaverTime').value = settings.screensaverTimeout || 30000;
@@ -1051,9 +1181,10 @@
         const diffRadio = modal.querySelector(`input[name="difficulty"][value="${settings.difficulty || 'normal'}"]`);
         if (diffRadio) diffRadio.checked = true;
 
-        // CAMPOS DE PERSONALIZAÇÃO (v16)
+        // CAMPOS DE PERSONALIZAÇÃO (v17)
         document.getElementById('setDjName').value = hostUser.djName || "";
-        document.getElementById('setLogoUrl').value = hostUser.logoURL || "";
+        const logoStatus = document.getElementById('logoStatus');
+        if (hostUser.logoBase64 && logoStatus) logoStatus.innerText = "✅ Logo carregada e persistente.";
 
         renderPhotoPreviews(); // Mostra fotos salvas
 
@@ -1105,6 +1236,8 @@
 
         const autoFs = document.getElementById('setAutoFullscreen').checked;
 
+        const playIntro = document.getElementById('setPlayIntroCall') ? document.getElementById('setPlayIntroCall').checked : (settings.playIntroCall !== false);
+
         const ambient = document.getElementById('setAmbientUrl').value;
 
         const ssTimeout = parseInt(document.getElementById('setScreensaverTime').value);
@@ -1123,6 +1256,8 @@
 
             autoFullscreen: autoFs,
 
+            playIntroCall: playIntro,
+
             ambientUrl: ambient,
 
             screensaverTimeout: ssTimeout,
@@ -1137,10 +1272,12 @@
 
         };
 
-        // SALVA PERSONALIZAÇÃO NO FIREBASE (v16)
+        // SALVA PERSONALIZAÇÃO NO FIREBASE (v17)
         const djName = document.getElementById('setDjName').value.trim();
-        const logoURL = document.getElementById('setLogoUrl').value.trim();
-        db.ref(`users/${hostUser.uid}`).update({ djName, logoURL });
+        db.ref(`users/${hostUser.uid}`).update({
+            djName,
+            logoBase64: hostUser.logoBase64 || ""
+        });
 
         localStorage.setItem('karaokeSettings', JSON.stringify(settings));
 
@@ -1165,13 +1302,18 @@
         if (!document.fullscreenElement) {
 
             if (container.requestFullscreen) {
-
-                container.requestFullscreen().catch(err => console.warn(err));
-
+                container.requestFullscreen().then(() => {
+                    if (screen.orientation && screen.orientation.lock) {
+                        screen.orientation.lock('landscape').catch(() => { });
+                    }
+                }).catch(() => { });
             } else if (container.webkitRequestFullscreen) {
-
                 container.webkitRequestFullscreen();
-
+                setTimeout(() => {
+                    if (screen.orientation && screen.orientation.lock) {
+                        screen.orientation.lock('landscape').catch(() => { });
+                    }
+                }, 500);
             }
 
         } else {
@@ -1318,6 +1460,63 @@
 
     }
 
+    // NOVA FUNÇÃO: Upload de Logo (v17)
+    function handleLogoUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 512000) { // 500KB
+            alert("Erro: A logo deve ter no máximo 500KB para não sobrecarregar o painel.");
+            e.target.value = "";
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            hostUser.logoBase64 = ev.target.result;
+            const status = document.getElementById('logoStatus');
+            if (status) status.innerText = "✅ Logo pronta! Não esqueça de SALVAR.";
+            updateDJUI();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // NOVA FUNÇÃO: Atualiza Identidade Visual (v17)
+    function updateDJUI() {
+        if (!hostUser) return;
+
+        // 1. Stats na Cabine
+        const statSongs = document.getElementById('djStatSongs');
+        const statGenre = document.getElementById('djStatGenre');
+        if (statSongs) statSongs.innerText = hostUser.stats?.totalSongsPlayed || 0;
+        if (statGenre) {
+            const genres = hostUser.stats?.genres || {};
+            const topGenre = Object.keys(genres).reduce((a, b) => genres[a] > genres[b] ? a : b, "---");
+            statGenre.innerText = topGenre.toUpperCase();
+        }
+
+        // 2. Nome DJ no Rodapé
+        const footer = document.getElementById('djFooter');
+        const footerName = document.getElementById('djFooterName');
+        const safeDjName = hostUser.djName || hostUser.displayName || "DJ";
+        if (footer && footerName) {
+            footerName.innerText = safeDjName;
+            footer.style.display = hostUser.djName ? 'flex' : 'none';
+        }
+
+        // 3. Logo/Watermark
+        const watermark = document.getElementById('djWatermark');
+        if (watermark) {
+            watermark.innerHTML = hostUser.logoBase64 ? `<img src="${hostUser.logoBase64}" alt="Logo Profile">` : '';
+        }
+
+        // 4. Logo no Screensaver
+        const ss = document.getElementById('screensaver');
+        if (ss && hostUser.logoBase64) {
+            // Injeta no canto ou centro do screensaver opcionalmente
+        }
+    }
+
     function saveScreensaverImages() {
 
         // Tenta salvar, mas limita se o localStorage estiver cheio (~5MB)
@@ -1391,13 +1590,23 @@
     }
 
     function playSfx(key) {
+        if (!sounds[key]) {
+            console.error("❌ [SFX] Chave não encontrada:", key);
+            return;
+        }
+        if (ambientVideo && !ambientVideo.paused) return;
+        if (currentAudio) {
+            try { currentAudio.pause(); } catch (e) { }
+            currentAudio = null;
+        }
 
-        if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-
+        console.log("🎵 [SFX] Tentando carregar:", sounds[key]);
         currentAudio = new Audio(sounds[key]);
-
-        currentAudio.play().catch(e => console.warn("Erro SFX:", e));
-
+        currentAudio.play().then(() => {
+            console.log("🔊 [SFX] Tocando agora:", key);
+        }).catch(e => {
+            console.warn("⚠️ [SFX] Bloqueio do navegador ou arquivo ausente:", key, e.message);
+        });
     }
 
     function formatTime(seconds) {
@@ -1507,7 +1716,22 @@
         });
 
         updateFullscreenQueue();
+        updateWaitTimeUI();
+    }
 
+    function updateWaitTimeUI() {
+        const el = document.getElementById('queueWaitTime');
+        if (!el) return;
+
+        if (queue.length <= 1) {
+            el.style.display = 'none';
+            return;
+        }
+
+        // Média de 4 min por música (descontando quem já está no palco)
+        const totalMinutes = (queue.length - 1) * 4;
+        el.innerText = `⏳ ESPERA ESTIMADA: ${totalMinutes} MIN`;
+        el.style.display = 'inline-block';
     }
 
     // ─── Search & Shuffle UI ──────────────────────────────────────────────────────
@@ -1633,7 +1857,7 @@
                 if (finalName !== 'Cantor Surpresa' && !Object.values(activeUsers).find(u => u.name === finalName)) {
                     updateRecentSingers(finalName);
                 }
-                
+
                 // INCREMENTA HORÁRIO DE PICO (v16)
                 incrementPeakHour();
 
@@ -1849,10 +2073,10 @@
     function updateDJStats(song, score) {
         if (!hostUser) return;
         const statsRef = db.ref(`users/${hostUser.uid}/stats`);
-        
+
         statsRef.transaction(current => {
             const stats = current || { totalSongsPlayed: 0, genres: {}, records: [], peakHours: {} };
-            
+
             // 1. Contador Global
             stats.totalSongsPlayed = (stats.totalSongsPlayed || 0) + 1;
 
@@ -1872,7 +2096,7 @@
                 timestamp: Date.now()
             });
             // Ordena e mantém os 10 melhores
-            stats.records.sort((a,b) => b.score - a.score);
+            stats.records.sort((a, b) => b.score - a.score);
             stats.stats_records = stats.records.slice(0, 10);
 
             return stats;
@@ -1961,12 +2185,18 @@
     function skipSong() {
         if (queue.length === 0) return;
         const video = document.getElementById('mainVideo');
-        if (video) { video.onended = null; video.pause(); }
-        if (typeof audioSource !== 'undefined' && audioSource) { audioSource.disconnect(); audioSource = null; }
-        queue.shift();
-        syncQueue();
-        renderQueue();
-        playNext();
+        if (video) {
+            video.onended = null;
+            try { video.pause(); } catch (e) { }
+        }
+        if (typeof audioSource !== 'undefined' && audioSource) {
+            try { audioSource.disconnect(); } catch (e) { }
+            audioSource = null;
+        }
+
+        // Pula para a próxima música imediatamente sem dar nota
+        // finishSong já cuida de isPlaying=false, queue.shift(), renderQueue() e playNext()
+        finishSong();
     }
 
     function playNext() {
@@ -1975,8 +2205,8 @@
             const current = queue[0];
 
             // CHAMADA DE CANTOR MEME (v16)
-            // Se já estivermos no meio da música (ex: vindo de um crash), não chama de novo
-            if (isPlaying) { 
+            // Se já estivermos no meio da música (ex: vindo de um crash) ou chamada desativada, não chama de novo
+            if (isPlaying || settings.playIntroCall === false) {
                 startVideoPlay(current);
             } else {
                 showComingNext(current.singer, () => startVideoPlay(current));
@@ -1988,10 +2218,10 @@
 
     function showComingNext(singerName, onComplete) {
         if (!playerArea) playerArea = document.getElementById('player');
-        
+
         const phraseTemplate = hostMemePhrases[Math.floor(Math.random() * hostMemePhrases.length)];
         const finalPhrase = phraseTemplate.replace('[Nome]', singerName.toUpperCase());
-        
+
         playerArea.innerHTML = `
             <div class="coming-next-overlay">
                 <div class="cn-badge">PRÓXIMO SHOW</div>
@@ -1999,576 +2229,479 @@
                 <div class="cn-spinner"></div>
             </div>
         `;
-        
-        // Efeito Sonoro (Opcional - usando o de suspense curto ou high)
-        playSfx('high'); 
 
-        setTimeout(() => {
-            onComplete();
-        }, 5000); // 5 segundos de fama no telão
+        // CHAMADA DE CANTOR ROBUSTA (v23)
+        const sfxArray = ['Chamada_1.mp3', 'Chamada_2.mp3', 'Chamada_3.mp3'];
+        const randomSfx = sfxArray[Math.floor(Math.random() * sfxArray.length)];
+        const audioUrl = `../SFX/${randomSfx}`;
+        console.log("[SFX] Iniciando chamada do próximo cantor:", audioUrl);
+        let callAudio = new Audio(audioUrl);
+        let audioDone = false;
+
+        const finalizeCall = () => {
+            if (audioDone) return;
+            audioDone = true;
+            console.log("[SFX] Chamada finalizada.");
+            const overlay = document.querySelector('.coming-next-overlay');
+            if (overlay) overlay.classList.add('fade-out');
+            setTimeout(() => {
+                if (overlay) overlay.remove();
+                onComplete();
+            }, 500);
+        };
+
+        callAudio.onended = finalizeCall;
+        callAudio.onerror = () => {
+            console.warn("[SFX] Falha ao carregar .mp3, tentando .MP3...");
+            const fallback = new Audio(`../SFX/${randomSfx.replace('.mp3', '.MP3')}`);
+            fallback.onended = finalizeCall;
+            fallback.onerror = () => {
+                console.warn("[SFX] Falha ao carregar .MP3, tentando chamada_1.mp3...");
+                const fallbackFinal = new Audio(`../SFX/chamada_1.mp3`);
+                fallbackFinal.onended = finalizeCall;
+                fallbackFinal.onerror = () => {
+                    console.error("[SFX] Falha crítica: Nenhum arquivo de chamada encontrado.");
+                    setTimeout(finalizeCall, 3000);
+                };
+                fallbackFinal.play().catch(e => {
+                    setTimeout(finalizeCall, 3000);
+                });
+            };
+            fallback.play().catch(e => {
+                console.warn("[SFX] Play bloqueado pelo navegador:", e);
+                setTimeout(finalizeCall, 3000);
+            });
+        };
+
+        callAudio.play().catch(e => {
+            console.warn("[SFX] Erro ao tocar chamada inicial:", e);
+            // Se o navegador bloquear o autoplay, seguimos o fluxo após um delay
+            setTimeout(finalizeCall, 4000);
+        });
+
+        // Segurança Máxima: 10 segundos
+        setTimeout(finalizeCall, 10000);
     }
 
     function startVideoPlay(current) {
         try {
-            // Auto-expandir player no mobile ao começar música
-            if (window.innerWidth <= 900) {
+            if (window.innerWidth <= 1024) {
                 toggleMobilePlayer(true);
             }
 
-            // Debug Visual
-
-            updateDebugInfo(`â ¯ï¸  Iniciando: ${current.id} (${current.title})`);
-
-            // Referências DOM
+            updateDebugInfo(`▶️ Iniciando: ${current.id} (${current.title})`);
 
             if (!playerArea) playerArea = document.getElementById('player');
-
             if (!topInfoTitle) topInfoTitle = document.getElementById('topInfoTitle');
-
             if (!topInfoArtist) topInfoArtist = document.getElementById('topInfoArtist');
-
             if (!topInfoBox) topInfoBox = document.getElementById('topInfoBox');
 
             isPlaying = true;
-
-            stopAmbientMusic(); // Garante silêncio ambiente ao começar o show
-
+            stopAmbientMusic();
             forcedScore = null;
 
-            // v14: Auto-Fullscreen on Play
-
             if (settings.autoFullscreen && !document.fullscreenElement) {
-
                 const container = document.getElementById('playerContainer');
-
                 if (container) {
-
                     (container.requestFullscreen || container.webkitRequestFullscreen)?.call(container).catch(() => { });
-
                 }
-
             }
-
-            // Atualiza UI de topo
 
             if (topInfoTitle) topInfoTitle.innerText = current.title;
-
             if (topInfoArtist) topInfoArtist.innerText = `${current.artist} — ${current.singer.toUpperCase()}`;
-
             if (topInfoBox) topInfoBox.style.display = 'block';
 
-            // Sincroniza Firebase
-
             if (currentRoomCode) {
-
                 db.ref('salas/' + currentRoomCode + '/now_playing').set({
-
                     title: current.title, artist: current.artist, singer: current.singer, playing: true
-
                 });
-
-                // Limpa votos anteriores e ouve novos
-
                 currentVotes = {};
-
                 db.ref('salas/' + currentRoomCode + '/now_playing/votes').on('value', snap => {
-
                     currentVotes = snap.val() || {};
-
                     updatePublicScoreUI();
-
                 });
-
+                currentDedometro = {};
+                db.ref('salas/' + currentRoomCode + '/now_playing/dedometro').on('value', snap => {
+                    currentDedometro = snap.val() || {};
+                    updateDedometroUI();
+                });
             }
 
-            // Gera URL do Backblaze
-
             const videoId = String(current.id).padStart(5, '0');
-
             const baseUrl = CDN_BASE_URL || (window.location.origin + "/Musicas/");
-
             const videoUrl = baseUrl + videoId + ".mp4";
 
-            updateDebugInfo(`🎤“¡ Carregando: ${videoId}.mp4`);
-
-            // Injeta HTML do Vídeo
-
             playerArea.innerHTML = `
+                <div class="video-overlay-banner">
+                    <div class="banner-left"><img src="../Assets/logo.png" alt="Logo"></div>
+                    <div class="banner-right"><span>A MELHOR<br>EXPERIÊNCIA<br>DE KARAOKÊ</span></div>
+                </div>
+                <div id="micBadge" class="mic-active-badge">MIC ATIVO</div>
+                
+                <video id="mainVideo" width="100%" height="100%" autoplay playsinline crossorigin="anonymous" preload="metadata">
+                    <source src="${videoUrl}" type="video/mp4">
+                </video>
 
-            <div class="video-overlay-banner">
+                <div id="autoplayFallback" class="autoplay-fallback" onclick="handleAutoplayFallback()">
+                    <i class="fas fa-play-circle"></i>
+                    <p>O navegador bloqueou o áudio.<br>Clique aqui para começar!</p>
+                </div>
 
-                <div class="banner-left"><img src="../Assets/logo.png" alt="Logo"></div>
-
-                <div class="banner-right"><span>A MELHOR<br>EXPERIÊNCIA<br>DE KARAOKÊ</span></div>
-
-            </div>
-
-            <div class="vu-meter-container"><div id="vuBar" class="vu-meter-bar"></div></div>
-
-            <div id="micBadge" class="mic-active-badge">MIC ATIVO</div>
-
-            <video id="mainVideo" width="100%" height="100%" autoplay playsinline crossorigin="anonymous">
-
-                <source src="${videoUrl}" type="video/mp4">
-
-            </video>
-
-            <div class="progress-time-display" id="progressTime">00:00 / 00:00</div>
-
-            <div class="progress-container" id="progressContainer"><div class="progress-bar-inner" id="progressBar"></div></div>
-
-        `;
+                <div class="progress-time-display" id="progressTime">00:00 / 00:00</div>
+                <div class="progress-container" id="progressContainer"><div class="progress-bar-inner" id="progressBar"></div></div>
+            `;
 
             const video = document.getElementById('mainVideo');
+            const loader = document.getElementById('playerLoading');
+            const fallback = document.getElementById('autoplayFallback');
 
             if (video) {
+                video.volume = currentVolume;
+                // Inicia o vídeo o mais rápido possível
+                video.play().then(() => {
+                    if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+                    // Delay para estabilidade antes de conectar processamento de áudio (Pitch Shift)
+                    setTimeout(() => {
+                        setupAudioNodes(video);
+                    }, 350);
+                }).catch(err => {
+                    console.warn("Autoplay bloqueado.", err);
+                    if (fallback) fallback.style.display = 'flex';
+                });
 
-                video.onplaying = () => updateDebugInfo(`âœ… TOCANDO: ${videoId}.mp4`);
+                video.onplaying = () => {
+                    if (fallback) fallback.style.display = 'none';
+                    updateDebugInfo(`✅ TOCANDO: ${videoId}.mp4`);
+                };
 
                 video.onerror = () => {
-
-                    updateDebugInfo(`â Œ ERRO CDN: ${videoId}.mp4 (404 ou CORS)`);
-
+                    updateDebugInfo(`❌ ERRO CDN: ${videoId}.mp4`);
                     setTimeout(showScore, 3000);
-
                 };
 
                 video.ontimeupdate = () => {
-
                     const prog = document.getElementById('progressBar');
-
-                    const time = document.getElementById('progressTime');
-
                     if (prog) prog.style.width = (video.currentTime / video.duration * 100) + '%';
-
+                    const time = document.getElementById('progressTime');
                     if (time) time.innerText = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
-
                 };
 
                 video.onended = () => showScore();
-
-                // Ativa processamento de udio para Pitch Shifting
-
-                setupAudioNãodes(video);
-
             }
-
         } catch (err) {
-
-            updateDebugInfo(`🎤’¥ ERRO SCRIPT: ${err.message}`);
-
-            console.error("Erro em playNext:", err);
-
+            console.error("Erro em startVideoPlay:", err);
         }
-
     }
 
     // ─── Audio Routing & Pitch Shifting ──────────────────────────────────────────
 
-    function setupAudioNãodes(video) {
-
+    function setupAudioNodes(video) {
         if (!audioContext) {
-
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
         }
-
         if (audioSource) {
-
             audioSource.disconnect();
-
         }
-
         audioSource = audioContext.createMediaElementSource(video);
-
-        // Pitch Shifter Implementation (Jungle algorithm style)
-
         pitchShifter = createPitchShifter(audioContext);
-
         pitchShifter.setPitchOffset(currentPitch);
-
         audioSource.connect(pitchShifter.input);
-
         pitchShifter.output.connect(audioContext.destination);
 
+        // Força a ativação do áudio caso o contexto esteja suspenso
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
     }
 
+    window.handleAutoplayFallback = function () {
+        const video = document.getElementById('mainVideo');
+        const fallback = document.getElementById('autoplayFallback');
+        if (video) {
+            video.play().catch(e => console.error("Falha ao forçar play:", e));
+            if (audioContext) audioContext.resume();
+        }
+        if (fallback) fallback.style.display = 'none';
+    };
+
     function createPitchShifter(context) {
-
-        const delayTime = 0.100; // 100ms is smoother for voice
-
         const input = context.createGain();
-
         const output = context.createGain();
 
+        const delayTime = 0.100; // 100ms is smoother for voice
         const delay1 = context.createDelay(0.2);
-
         const delay2 = context.createDelay(0.2);
-
         const g1 = context.createGain();
-
         const g2 = context.createGain();
 
         input.connect(delay1);
-
         input.connect(delay2);
-
         delay1.connect(g1);
-
         delay2.connect(g2);
-
         g1.connect(output);
-
         g2.connect(output);
 
         // Buffers for modulation (pre-calculated for perfect phase)
-
         const bufferLen = context.sampleRate; // 1 second
-
         const ramp1 = context.createBuffer(1, bufferLen, context.sampleRate);
-
         const ramp2 = context.createBuffer(1, bufferLen, context.sampleRate);
-
         const fade1Buf = context.createBuffer(1, bufferLen, context.sampleRate);
-
         const fade2Buf = context.createBuffer(1, bufferLen, context.sampleRate);
 
         const r1 = ramp1.getChannelData(0);
-
         const r2 = ramp2.getChannelData(0);
-
         const f1 = fade1Buf.getChannelData(0);
-
         const f2 = fade2Buf.getChannelData(0);
 
         for (let i = 0; i < bufferLen; i++) {
-
             const x1 = i / bufferLen;
-
             const x2 = (x1 + 0.5) % 1.0; // 180 degrees shift
-
             r1[i] = x1;
-
             r2[i] = x2;
-
             // Equal power crossfade
-
             f1[i] = Math.sqrt(0.5 * (1.0 + Math.cos(2.0 * Math.PI * x1 + Math.PI)));
-
             f2[i] = Math.sqrt(0.5 * (1.0 + Math.cos(2.0 * Math.PI * x2 + Math.PI)));
-
         }
 
         const mod1 = context.createBufferSource();
-
         const mod2 = context.createBufferSource();
-
         const fade1 = context.createBufferSource();
-
         const fade2 = context.createBufferSource();
 
         mod1.buffer = ramp1;
-
         mod2.buffer = ramp2;
-
         fade1.buffer = fade1Buf;
-
         fade2.buffer = fade2Buf;
-
         mod1.loop = mod2.loop = fade1.loop = fade2.loop = true;
 
         const modGain1 = context.createGain();
-
         const modGain2 = context.createGain();
-
-        const offsetNãode = context.createConstantSource();
-
-        offsetNãode.start();
+        const offsetNode = context.createConstantSource();
+        offsetNode.start();
 
         mod1.connect(modGain1);
-
         mod2.connect(modGain2);
-
         modGain1.connect(delay1.delayTime);
-
         modGain2.connect(delay2.delayTime);
-
-        offsetNãode.connect(delay1.delayTime);
-
-        offsetNãode.connect(delay2.delayTime);
+        offsetNode.connect(delay1.delayTime);
+        offsetNode.connect(delay2.delayTime);
 
         fade1.connect(g1.gain);
-
         fade2.connect(g2.gain);
 
         mod1.start();
-
         mod2.start();
-
         fade1.start();
-
         fade2.start();
 
         return {
-
             input,
-
             output,
-
             setPitchOffset: (pitch) => {
-
                 const shift = 1.0 - pitch;
-
                 if (shift > 0) {
-
                     modGain1.gain.setTargetAtTime(delayTime, context.currentTime, 0.01);
-
                     modGain2.gain.setTargetAtTime(delayTime, context.currentTime, 0.01);
-
-                    offsetNãode.offset.setTargetAtTime(0, context.currentTime, 0.01);
-
+                    offsetNode.offset.setTargetAtTime(0, context.currentTime, 0.01);
                 } else {
-
                     modGain1.gain.setTargetAtTime(-delayTime, context.currentTime, 0.01);
-
                     modGain2.gain.setTargetAtTime(-delayTime, context.currentTime, 0.01);
-
-                    offsetNãode.offset.setTargetAtTime(delayTime, context.currentTime, 0.01);
-
+                    offsetNode.offset.setTargetAtTime(delayTime, context.currentTime, 0.01);
                 }
-
                 const modRate = Math.abs(shift) / delayTime;
-
                 const t = context.currentTime;
-
                 mod1.playbackRate.setTargetAtTime(modRate, t, 0.01);
-
                 mod2.playbackRate.setTargetAtTime(modRate, t, 0.01);
-
                 fade1.playbackRate.setTargetAtTime(modRate, t, 0.01);
-
                 fade2.playbackRate.setTargetAtTime(modRate, t, 0.01);
-
             }
-
         };
-
     }
 
     // ─── Scoring ──────────────────────────────────────────────────────────────────
 
     function showScore(forceScore = null) {
+        console.log("📊 [SCORE] showScore iniciado");
 
-        const video = document.getElementById('mainVideo');
+        // Parar vídeo
+        try {
+            const video = document.getElementById('mainVideo');
+            if (video) { video.onended = null; video.pause(); }
+        } catch (e) { }
 
-        if (video) { video.onended = null; video.pause(); }
+        try {
+            if (audioSource) { audioSource.disconnect(); audioSource = null; }
+        } catch (e) { }
 
-        // Don't close audioContext entirely if we want to reuse it, 
-
-        // but we can suspend or disconnect nãodes
-
-        if (audioSource) { audioSource.disconnect(); audioSource = null; }
-
-        pitchShifter = null;
-
-        currentPitch = 1.0; // Reset pitch for next song
-
-        const singer = queue[0]?.singer || "Convidado";
-
-        // NOVO SISTEMA DE PONTUAÇÃO (v15 - CONFIGURÁVEL)
-
-        let finalScore;
-        let base = 80; // Valor padrão para evitar ReferenceError fora do modo mic
-
-        if (typeof forcedScore === 'number') {
-
-            finalScore = forcedScore;
-
-        } else if (typeof forceScore === 'number') {
-
-            finalScore = forceScore;
-
-        } else if (settings.enableScore === false) {
-
-            finalScore = 0;
-
-        } else {
-
-            if (settings.scoreMode === 'random') {
-
-                // MODO ALEATÓRIO: Respeita o mínimo configurado
-
-                const min = settings.minRandomScore || 75;
-
-                finalScore = min + Math.floor(Math.random() * (101 - min));
-
-            } else {
-
-                // MODO MICROFONE: Base generosa recalibrada + Volume Sensível
-                base = 70 + Math.floor(Math.random() * 10);
-
-                // Fatores de Dificuldade (Sensibilidade)
-
-                const diffFactors = {
-
-                    'super_easy': 1.6,
-
-                    'very_easy': 1.3,
-
-                    'easy': 1.15,
-
-                    'normal': 1.0,
-
-                    'hard': 0.8
-
-                };
-
-                const factor = diffFactors[settings.difficulty || 'normal'];
-
-                // Bônus de Volume: normalizado para aprox 140 de média não mic
-
-                let volBonus = Math.floor(((maxVolume * factor) / 140) * 20);
-
-                finalScore = base + volBonus;
-
-            }
-
-            // --- COMPOSIÇÃO COM VOTOS DA GALERA (30% de influência) ---
-
-            const voteEntries = Object.values(currentVotes);
-
-            if (voteEntries.length > 0) {
-
-                const avgVote = voteEntries.reduce((a, b) => a + (b.stars || 0), 0) / voteEntries.length;
-
-                const publicBonus = (avgVote / 5) * 100; // Converte 1-5 para 0-100
-
-                // Composição: 70% Sistema, 30% Galera
-                finalScore = Math.round((finalScore * 0.7) + (publicBonus * 0.3));
-                if (isNaN(finalScore)) finalScore = Math.floor(base); 
-            }
-
-            // Garantia final: Se por qualquer motivo finalScore for NaN ou undefined, usa a base
-            if (isNaN(finalScore) || finalScore === undefined) finalScore = Math.floor(base || 80);
-
-
-            // Se a nota for >= 94, chance de virar 100 (Efeito 'Mito')
-
-            if (finalScore >= 94) {
-
-                const jackpot = Math.random() < 0.2;
-
-                finalScore = jackpot ? 100 : (96 + Math.floor(Math.random() * 3));
-
-            }
-
+        // Função local para tocar som SEM depender de playSfx
+        function _playSound(path) {
+            try {
+                const a = new Audio(path);
+                a.volume = 1.0;
+                a.play().catch(e => console.warn('[SCORE SFX] Bloqueado:', path, e.message));
+                return a;
+            } catch (e) { return null; }
         }
 
-        finalScore = Math.max(0, Math.min(100, finalScore));
+        // Calcular nota
+        let finalScore = 75;
+        const singer = (queue[0] && queue[0].singer) ? queue[0].singer : "Convidado";
 
+        if (typeof forceScore === 'number') {
+            finalScore = forceScore;
+        } else if (typeof forcedScore === 'number') {
+            finalScore = forcedScore;
+        } else if (settings && settings.enableScore === false) {
+            finalScore = 0;
+        } else {
+            let base = 70 + Math.floor(Math.random() * 15);
+            let volBonus = Math.floor((maxVolume / 150) * 15);
+            finalScore = base + volBonus;
+            if (currentVotes) {
+                const votes = Object.values(currentVotes);
+                if (votes.length > 0) {
+                    const avg = votes.reduce((a, b) => a + (b.stars || 0), 0) / votes.length;
+                    finalScore = Math.round((finalScore * 0.7) + ((avg / 5 * 100) * 0.3));
+                }
+            }
+        }
+        finalScore = Math.max(0, Math.min(100, Number(finalScore) || 75));
+        forcedScore = null;
         maxVolume = 0;
+        console.log("📊 [SCORE] Nota calculada:", finalScore, "| Cantor:", singer);
 
-        const scoreStr = finalScore.toString().padStart(2, '0');
+        // Salva pontuação no ranking da noite
+        if (queue[0]) {
+            updateDJStats(queue[0], finalScore);
+            sessionRanking.push({
+                singer: singer,
+                title: queue[0].title,
+                artist: queue[0].artist,
+                score: finalScore
+            });
+            // Ordena decrescente pelo score
+            sessionRanking.sort((a, b) => b.score - a.score);
+            // Mantém top 5
+            if (sessionRanking.length > 5) {
+                sessionRanking = sessionRanking.slice(0, 5);
+            }
+        }
 
-        playerArea.innerHTML = `
-
-        <div class="suspense-layer">
-
-            <div class="suspense-text">DANDO NOTA...</div>
-
-            <div class="score-number" id="tickerScore">__</div>
-
-            <div class="score-phrase">Segura o coração, ${singer.toUpperCase()}!</div>
-
-        </div>
-
-    `;
-
-        playSfx('suspense');
-
-        const tickerEl = document.getElementById('tickerScore');
-
-        const ticker = setInterval(() => {
-
-            if (tickerEl) tickerEl.innerText = Math.floor(Math.random() * 100).toString().padStart(2, '0');
-
-        }, 60);
-
-        // After 11s: reveal score
-
-        setTimeout(() => {
-
-            clearInterval(ticker);
-
-            if (!tickerEl) return;
-
-            tickerEl.innerText = scoreStr[0] + Math.floor(Math.random() * 10);
-
+        // Grava last_score no Firebase após 15s (aguarda a animação do telão terminar)
+        if (currentRoomCode && db) {
+            const scoreEntry = queue[0] || {};
+            const scorePayload = {
+                singer: singer,
+                singerUid: scoreEntry.singerUid || null,
+                title: scoreEntry.title || '',
+                artist: scoreEntry.artist || '',
+                score: finalScore,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
             setTimeout(() => {
+                db.ref(`salas/${currentRoomCode}/last_score`).set(scorePayload)
+                    .catch(e => console.warn('[SCORE] Falha ao gravar last_score:', e));
+            }, 15000); // 15s de atraso — dá tempo da animação no telão aparecer primeiro
+        }
 
-                if (!tickerEl) return;
+        // Encontrar container onde mostrar animação
+        const targetPlayer = document.getElementById('player');
+        if (!targetPlayer) {
+            console.error("❌ [SCORE] #player não encontrado, chamando finishSong diretamente");
+            finishSong();
+            return;
+        }
 
-                tickerEl.innerText = scoreStr;
+        // PASSO 1: Mostrar tela de suspense + tocar aplausos
+        targetPlayer.innerHTML = `
+            <div class="suspense-layer" style="
+                display:flex; flex-direction:column; align-items:center; justify-content:center;
+                width:100%; height:100%; background:#000;
+                color:#fff; font-family:sans-serif; text-align:center; padding:40px;
+            ">
+                <div style="font-size:4rem; font-weight:900; letter-spacing:8px; margin-bottom:40px; opacity:0.7;">DANDO NOTA...</div>
+                <div id="tickerScore" style="font-size:22rem; font-weight:900; color:#FFD700; line-height:0.9;">--</div>
+                <div style="font-size:2.5rem; margin-top:40px; opacity:0.8;">Segura o coração, ${singer.toUpperCase()}! 🎤</div>
+            </div>
+        `;
 
-                tickerEl.classList.add('reveal-pulse');
+        _playSound('../SFX/Aplausos.mp3');
+        showApplauseAnimation();
 
-                let cat = "med1", sfxKey = "med";
+        // PASSO 2: Após 2s — tocar suspense e iniciar ticker
+        setTimeout(() => {
+            const suspenseAudio = _playSound('../SFX/Dando_nota.mp3');
+            const tickerEl = document.getElementById('tickerScore');
+            const tickerInt = setInterval(() => {
+                if (tickerEl) tickerEl.textContent = Math.floor(Math.random() * 100);
+            }, 80);
 
-                if (finalScore >= 100) { cat = "max"; sfxKey = "max"; }
+            // Revelar nota quando o áudio terminar (ou após 15s de fallback)
+            let revealed = false;
+            function revealScore() {
+                if (revealed) return;
+                revealed = true;
+                clearInterval(tickerInt);
 
-                else if (finalScore >= 90) { cat = "high"; sfxKey = "high"; }
+                let sfxFile = 'Nota_media.mp3';
+                let cat = 'med1';
+                if (finalScore >= 95) { sfxFile = 'Nota_maxima.mp3'; cat = 'max'; }
+                else if (finalScore >= 85) { sfxFile = 'Nota_alta.mp3'; cat = 'high'; }
+                else if (finalScore >= 70) { sfxFile = 'Nota_media.mp3'; cat = 'med1'; }
+                else { sfxFile = 'Nota_baixa.mp3'; cat = 'low'; }
 
-                else if (finalScore >= 75) { cat = "med2"; }
+                const phrases = scorePhrases[cat] || scorePhrases['med1'];
+                const phrase = phrases[Math.floor(Math.random() * phrases.length)];
 
-                else if (finalScore < 60) { cat = "low"; sfxKey = "low"; }
+                targetPlayer.innerHTML = `
+                    <div class="score-overlay" style="
+                        display:flex; flex-direction:column; align-items:center; justify-content:center;
+                        width:100%; height:100%; background:#000;
+                        color:#fff; font-family:sans-serif; text-align:center; padding:40px;
+                    ">
+                        <div style="font-size:2.5rem; font-weight:700; letter-spacing:8px; opacity:0.6; margin-bottom:20px;">NOTA FINAL</div>
+                        <div class="score-big" style="font-size:28rem; font-weight:900; color:#FFD700; line-height:0.85; animation: scoreReveal 0.5s cubic-bezier(.175,.885,.32,1.275);">${finalScore}</div>
+                        <div style="font-size:2.2rem; font-style:italic; opacity:0.9; margin-top:30px; max-width:900px;">"${phrase}"</div>
+                        <div style="font-size:3rem; font-weight:700; margin-top:30px;">⭐ ARRASOU, ${singer.toUpperCase()}! 🎤</div>
+                    </div>
+                `;
 
-                const phrase = scorePhrases[cat][Math.floor(Math.random() * scorePhrases[cat].length)];
+                _playSound('../SFX/' + sfxFile);
 
-                playerArea.innerHTML = `
+                // PASSO 4: Após 8s — próxima música
+                setTimeout(() => {
+                    console.log("⏭️ [SCORE] Chamando finishSong");
+                    finishSong();
+                }, 8000);
+            }
 
-                <div class="score-overlay">
-
-                    <div class="score-label">NOTA FINAL</div>
-
-                    <div class="score-number score-big">${finalScore}</div>
-
-                    <div class="score-phrase">"${phrase}"</div>
-
-                    <div class="score-singer">⭐ ARRASOU, ${singer.toUpperCase()}! 🎤</div>
-
-                </div>
-
-            `;
-
-                playSfx(sfxKey);
-
-                // ATUALIZA ESTATÍSTICAS DO DJ (v16)
-                updateDJStats(queue[0], finalScore);
-
-                setTimeout(() => finishSong(), 8000);
-
-            }, 1500);
-
-        }, 11000);
-
+            // Espera o áudio terminar; fallback de 15s se falhar
+            if (suspenseAudio) {
+                suspenseAudio.onended = revealScore;
+                suspenseAudio.onerror = revealScore;
+                setTimeout(revealScore, 15000); // segurança máxima
+            } else {
+                setTimeout(revealScore, 6000); // sem áudio: tempo fixo
+            }
+        }, 2000);
     }
 
     function finishSong() {
+        console.log("🎬 Encerrando música atual...");
 
+        // Aplausos já tocaram no showScore, então aqui apenas limpamos
         isPlaying = false;
-
         queue.shift(); // Remove a música que terminou
 
         // Pré-atualiza o topInfoBox com a próxima música ANTES de renderizar
 
         // para evitar que ele apareça com info desatualizada quando queue.length=1
 
-        if (queue.length > 0 && topInfoTitle && topInfoArtist) {
-
-            topInfoTitle.innerText = queue[0].title;
-
-            topInfoArtist.innerText = `${queue[0].artist} — ${queue[0].singer.toUpperCase()}`;
-
+        if (queue.length > 0) {
+            const titleEl = document.getElementById('topInfoTitle');
+            const artistEl = document.getElementById('topInfoArtist');
+            if (titleEl) titleEl.innerText = queue[0].title;
+            if (artistEl) artistEl.innerText = `${queue[0].artist} — ${queue[0].singer.toUpperCase()}`;
         }
 
         renderQueue(); // Atualiza lista lateral (já chama updateFullscreenQueue internamente)
@@ -2578,35 +2711,37 @@
         document.querySelector('.compact-controls-wrapper')?.classList.remove('autohide'); // Show on finish
 
         if (queue.length > 0) {
-
             playNext();
-
         } else {
-
-            if (topInfoBox) topInfoBox.style.display = 'none';
-
-            playerArea.innerHTML = '<div class="placeholder-msg">PRONTO PARA O PRÓXIMO SHOW!</div>';
-
-            // Avisa Firebase que nada está tocando
-
-            if (currentRoomCode) {
-
-                db.ref('salas/' + currentRoomCode + '/now_playing').set({ playing: false });
-
+            const infoBox = document.getElementById('topInfoBox');
+            if (infoBox) infoBox.style.display = 'none';
+            const targetPlayer = document.getElementById('player');
+            if (targetPlayer) {
+                targetPlayer.innerHTML = '<div class="placeholder-msg">PRONTO PARA O PRÓXIMO SHOW!</div>';
             }
-
-            checkAmbientMusic(); // Verifica se deve tocar música ambiente
-
+            if (currentRoomCode) {
+                db.ref('salas/' + currentRoomCode + '/now_playing').set({ playing: false });
+            }
+            // Exibe o Ranking Board se houver algum cantor no ranking! (Novo!)
+            if (sessionRanking.length > 0) {
+                renderRankingBoard();
+            }
+            checkAmbientMusic();
         }
 
-        // Limpa listener de votos para a próxima música
+        // Limpa listener de votos e dedômetro para a próxima música
 
         if (currentRoomCode) {
-
             db.ref('salas/' + currentRoomCode + '/now_playing/votes').off();
+            db.ref('salas/' + currentRoomCode + '/now_playing/votes').remove(); // Reseta votos no DB
 
-            db.ref('salas/' + currentRoomCode + '/now_playing/votes').remove(); // Reseta votos não DB
+            db.ref('salas/' + currentRoomCode + '/now_playing/dedometro').off();
+            db.ref('salas/' + currentRoomCode + '/now_playing/dedometro').remove(); // Reseta dedometro no DB
 
+            // Reseta variáveis locais e oculta dedômetro na TV
+            currentDedometro = {};
+            const dedoDisplay = document.getElementById('dedometroDisplay');
+            if (dedoDisplay) dedoDisplay.style.display = 'none';
         }
 
     }
@@ -2661,6 +2796,43 @@
 
         if (el.style.display !== 'flex') el.style.setProperty('display', 'flex', 'important');
 
+    }
+
+    function updateDedometroUI() {
+        const el = document.getElementById('dedometroDisplay');
+        const likeCountEl = document.getElementById('likeCount');
+        const dislikeCountEl = document.getElementById('dislikeCount');
+        const likeBar = document.getElementById('likeBarInner');
+        const dislikeBar = document.getElementById('dislikeBarInner');
+        const publicScoreDisp = document.getElementById('publicScoreDisplay');
+
+        if (!el || !likeCountEl || !dislikeCountEl || !likeBar || !dislikeBar) return;
+
+        const entries = Object.values(currentDedometro);
+        const total = entries.length;
+
+        if (total === 0) {
+            el.style.display = 'none';
+            return;
+        }
+
+        const likes = entries.filter(e => e.type === 'like').length;
+        const dislikes = total - likes;
+
+        likeCountEl.innerText = likes;
+        dislikeCountEl.innerText = dislikes;
+
+        const likePercent = (likes / total) * 100;
+        const dislikePercent = 100 - likePercent;
+
+        likeBar.style.width = likePercent + '%';
+        dislikeBar.style.width = dislikePercent + '%';
+
+        el.style.display = 'block';
+        if (publicScoreDisp) {
+            publicScoreDisp.style.display = 'flex';
+            if (publicScoreDisp.style.display !== 'flex') publicScoreDisp.style.setProperty('display', 'flex', 'important');
+        }
     }
 
     // ─── Ambient Music (YouTube) ──────────────────────────────────────────────────
@@ -2758,6 +2930,11 @@
         // Se não há URL configurada, mostra uma tela bonita de espera
 
         if (!url) {
+            // Se a fila estiver vazia, mostra o ranking da noite (v20)
+            if (sessionRanking.length > 0) {
+                renderRankingBoard();
+                return;
+            }
 
             playerArea.innerHTML = `
 
@@ -2789,17 +2966,24 @@
 
             <div id="ytAmbient"></div>
 
-            <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:transparent; display:flex; align-items:center; justify-content:center; flex-direction:column; color:white; pointer-events:none;">
+            <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; flex-direction:column; color:white; pointer-events:none;">
 
-                <h2 style="font-weight:900; letter-spacing:10px; margin-bottom:10px; opacity:0.3;">MÚSICA AMBIENTE</h2>
-
-                <div class="placeholder-msg">AGUARDANDO PRÓXIMO SHOW...</div>
+                <div id="ambientOverlayContent" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
+                    <div style="position:absolute; top:40px; text-align:center; width:100%;">
+                        <h2 style="font-weight:900; letter-spacing:10px; opacity:0.4; margin:0; font-size:1.4rem;">MÚSICA AMBIENTE</h2>
+                        <div class="placeholder-msg" style="font-size:0.9rem; opacity:0.6; margin-top:2px;">AGUARDANDO PRÓXIMO SHOW...</div>
+                    </div>
+                </div>
 
             </div>
 
         </div>
 
     `;
+
+        if (sessionRanking.length > 0) {
+            renderRankingBoard(true);
+        }
 
         setTimeout(() => {
 
@@ -2972,25 +3156,23 @@
     }
 
     function setVideoVolume(val) {
+        const numericVal = parseFloat(val);
+        if (isNaN(numericVal)) return;
+
+        currentVolume = Math.max(0, Math.min(1, numericVal));
+        localStorage.setItem('djVolume', currentVolume.toString());
 
         const v = document.getElementById('mainVideo');
-
-        if (v) v.volume = val;
+        if (v) v.volume = currentVolume;
 
         const r = document.getElementById('volRange');
-
-        if (r) r.value = val;
-
+        if (r) r.value = currentVolume;
     }
 
     function changeVolume(delta) {
-
-        const v = document.getElementById('mainVideo');
-
-        if (v) setVideoVolume(Math.max(0, Math.min(1, v.volume + delta)));
-
+        const newVolume = Math.max(0, Math.min(1, currentVolume + delta));
+        setVideoVolume(newVolume);
         resetControlásTimer();
-
     }
 
     function changeTone(delta) {
@@ -3061,11 +3243,13 @@
 
         if (idleTimeout) clearTimeout(idleTimeout);
 
-        // If playing, set timeout to hide controls (ONLY if NOT mobile)
+        // If playing, set timeout to hide controls (desktop OR landscape mobile)
 
         const isMobile = window.innerWidth <= 900;
+        const isLandscape = isMobile && window.matchMedia('(orientation: landscape)').matches;
+        const shouldAutohide = !isMobile || (isMobile && isLandscape);
 
-        if (isPlaying && !isMobile) {
+        if (isPlaying && shouldAutohide) {
 
             controlsTimeout = setTimeout(() => {
 
@@ -3085,9 +3269,9 @@
 
             }, 3000);
 
-        } else if (isPlaying && isMobile) {
+        } else if (isPlaying && !shouldAutohide) {
 
-            // Não mobile, removemos a classe autohide caso ainda esteja lá
+            // Portrait mobile: mantém controles sempre visíveis
 
             wrapper.classList.remove('autohide');
 
@@ -3147,7 +3331,10 @@
 
             case ' ': e.preventDefault(); togglePlay(); break;
 
-            case 'Delete': e.preventDefault(); showScore(); break;
+            case 'Delete':
+                e.preventDefault();
+                showScore();
+                break;
 
             case ',': // Hidden hotkey: apenas agenda a nota 100 (discreto)
 
@@ -3165,7 +3352,7 @@
 
             case 'Home': restartSong(); break;
 
-            case 'PageDown': skipSong(); break;
+            case 'PageDown': e.preventDefault(); skipSong(); break;
 
             case 'f': case 'F': e.preventDefault(); toggleFullscreen(); break;
 
@@ -3284,63 +3471,100 @@
     // ─── Fullscreen Queue ──────────────────────────────────────────────────────────
 
     function updateFullscreenQueue() {
-
         const box = document.getElementById('fsQueueOverlay');
-
         const topInfo = document.getElementById('topInfoBox');
 
         if (!box || queue.length <= 1) {
-
             if (box) box.style.display = 'none';
-
             if (topInfo && isPlaying) topInfo.style.display = 'block';
-
             return;
-
         }
 
         box.style.display = 'flex';
-
         if (topInfo) topInfo.style.display = 'none';
 
         const current = queue[0];
 
-        const nexts = queue.slice(1, 4);
+        // --- LÓGICA RESPONSIVA: Quantos cantores cabem na tela? ---
+        let qtdProximos = 2; // Padrão para janela pequena (1 atual + 2 próximos)
 
-        // Layout compacto: título  · artista em uma linha, cantor embaixo
-
-        let html = `<div class="fs-col fs-col-current">
-
-        <div class="fs-col-label">CANTANDO AGORA</div>
-
-        <div class="fs-col-main"><span class="fs-col-title">${current.title}</span><span class="fs-col-sep">  · </span><span class="fs-col-artist">${current.artist}</span></div>
-
-        <div class="fs-col-singer">🎤 ${current.singer}</div>
-
-    </div>`;
-
-        if (nexts.length > 0) {
-
-            html += `<div class="fs-divider-v"></div>`;
-
-            nexts.forEach((item, i) => {
-
-                html += `<div class="fs-col fs-col-next">
-
-                <div class="fs-col-label">#${i + 2}</div>
-
-                <div class="fs-col-main"><span class="fs-col-title">${item.title}</span><span class="fs-col-sep">  · </span><span class="fs-col-artist">${item.artist}</span></div>
-
-                <div class="fs-col-singer">${item.singer}</div>
-
-            </div>`;
-
-            });
-
+        if (window.innerWidth >= 1600) {
+            qtdProximos = 6; // Telas grandes/TV (Full HD): mostra + 6 cantores
+        } else if (window.innerWidth >= 1366) {
+            qtdProximos = 4; // Notebooks grandes: mostra + 4 cantores
+        } else if (window.innerWidth >= 1100) {
+            qtdProximos = 3; // Telas médias: mostra + 3 cantores
         }
 
-        box.innerHTML = html;
+        // Corta a fila dinamicamente com base no espaço disponível
+        const nexts = queue.slice(1, qtdProximos + 1);
 
+        const isLandscape = window.innerHeight < 500;
+        const usePCLayout = true; // Layout HORIZONTAL PC em todas as telas
+
+        if (usePCLayout) {
+            // Layout HORIZONTAL Dashboard/PC (Conforme Referência)
+            let html = `<div class="fs-label-header">FILA DE ESPERA</div>`;
+
+            html += `<div class="fs-row-container">`;
+
+            // Item AGORA (NOVA ESTRUTURA COM fs-info-pc)
+            html += `
+                <div class="fs-col-pc current">
+                    <div class="fs-rank-pc">AGORA</div>
+                    <div class="fs-info-pc">
+                        <div class="fs-name-pc">${current.singer}</div>
+                        <div class="fs-song-pc">${current.title} ${isLandscape ? '' : `- ${current.artist}`}</div>
+                    </div>
+                </div>
+            `;
+
+            if (nexts.length > 0) {
+                nexts.forEach((item, i) => {
+                    // Itens da fila (NOVA ESTRUTURA COM fs-info-pc)
+                    html += `
+                        <div class="fs-divider-v-pc"></div>
+                        <div class="fs-col-pc">
+                            <div class="fs-rank-pc">${i + 2}º</div>
+                            <div class="fs-info-pc">
+                                <div class="fs-name-pc">${item.singer}</div>
+                                ${isLandscape ? '' : `<div class="fs-song-pc">${item.title}</div>`}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            html += `</div>`;
+            box.innerHTML = html;
+        } else {
+            // Layout VERTICAL Compacto (Mobile Portrait) - MANTIDO INTACTO
+            let html = `
+                <div class="fs-col fs-col-current">
+                    <div class="fs-col-label">CANTANDO AGORA</div>
+                    <div class="fs-col-main">
+                        <span class="fs-col-title">${current.title}</span>
+                        <span class="fs-col-sep">  · </span>
+                        <span class="fs-col-artist">${current.artist}</span>
+                    </div>
+                    <div class="fs-col-singer">🎤 ${current.singer}</div>
+                </div>
+            `;
+            if (nexts.length > 0) {
+                html += `<div class="fs-divider-v" style="height: 1px; width: 80%; margin: 5px auto;"></div>`;
+                nexts.forEach((item, i) => {
+                    html += `
+                        <div class="fs-col fs-col-next">
+                            <div class="fs-col-label">#${i + 2}</div>
+                            <div class="fs-col-main">
+                                <span class="fs-col-title">${item.title}</span>
+                            </div>
+                            <div class="fs-col-singer">${item.singer}</div>
+                        </div>
+                    `;
+                });
+            }
+            box.innerHTML = html;
+        }
     }
 
     // ─── Mobile Poláling (Firebase Sync) ──────────────────────────────────────────
@@ -3376,6 +3600,8 @@
                         ...song,
 
                         singer: req.singer,
+
+                        singerUid: req.singerUid || null, // Para score card no mobile
 
                         time: mobileTime
 
@@ -3445,7 +3671,8 @@
 
                 if (banner) banner.style.display = 'none';
 
-                showToast("💎 PLANO ATIVO!");
+                // Toast de plano ativo removido para não sobrepor o Bem-vindo
+                console.log('💎 Plano Premium ativo.');
 
             } else {
 
@@ -3491,11 +3718,167 @@
 
     window.handlePhotoUpload = typeof handlePhotoUpload !== 'undefined' ? handlePhotoUpload : null;
 
+    window.handleLogoUpload = typeof handleLogoUpload !== 'undefined' ? handleLogoUpload : null;
+
     window.togglePlay = typeof togglePlay !== 'undefined' ? togglePlay : null;
 
     window.addToQueue = typeof addToQueue !== 'undefined' ? addToQueue : null;
 
     window.confirmCompactSinger = typeof confirmCompactSinger !== 'undefined' ? confirmCompactSinger : null;
+
+    // ─── Engajamento em Tempo Real (v20) ──────────────────────────────────────────
+
+    function initReactionListener() {
+        if (!currentRoomCode) return;
+        console.log("📡 [REACTIONS] Ouvindo sala:", currentRoomCode);
+        const reactionsRef = db.ref(`salas/${currentRoomCode}/reactions`);
+
+        // Remove reações antigas (opcional, para limpar o DB)
+        reactionsRef.remove().catch(e => console.warn("Erro ao limpar reações:", e));
+
+        reactionsRef.on("child_added", (snapshot) => {
+            const reaction = snapshot.val();
+            console.log("🌸 [REACTIONS] Recebido:", reaction);
+            if (reaction) {
+                if (reaction.type === 'message') {
+                    spawnFloatingMessage(reaction.text, reaction.sender, reaction.photo);
+                } else if (reaction.emoji) {
+                    spawnFloatingEmoji(reaction.emoji);
+                }
+            }
+        });
+    }
+
+    function spawnFloatingMessage(text, sender, photo) {
+        console.log("🌸 Spawning message bubble:", text, "from", sender);
+        const container = document.getElementById("reactionContainer");
+        if (!container) {
+            console.error("❌ Container de reações não encontrado!");
+            return;
+        }
+
+        const el = document.createElement("div");
+        el.className = "floating-message-bubble";
+
+        // Se houver foto, cria img, senão iniciais estilizadas
+        const imgHtml = photo
+            ? `<img src="${photo}" class="msg-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`
+            : `<div class="msg-avatar-initials">${(sender || 'C')[0].toUpperCase()}</div>`;
+
+        el.innerHTML = `
+            ${imgHtml}
+            <div class="msg-body">
+                <span class="msg-sender">${sender}</span>
+                <p class="msg-text"></p>
+            </div>
+        `;
+
+        // Fallback de iniciais caso o carregamento da imagem falhe
+        if (photo) {
+            const fallback = document.createElement("div");
+            fallback.className = "msg-avatar-initials";
+            fallback.style.display = "none";
+            fallback.innerText = (sender || 'C')[0].toUpperCase();
+            el.insertBefore(fallback, el.firstChild.nextSibling);
+        }
+
+        // Sanitização usando textContent contra XSS
+        el.querySelector('.msg-text').textContent = text;
+
+        // Posição horizontal aleatória (mais lateralizada)
+        const side = Math.random() > 0.5 ? 'left' : 'right';
+        if (side === 'left') {
+            el.style.left = (Math.random() * 20 + 8) + "vw"; // 8% a 28%
+        } else {
+            el.style.right = (Math.random() * 20 + 8) + "vw"; // 8% a 28%
+        }
+
+        container.appendChild(el);
+
+        // Remove do DOM após a animação de 6 segundos
+        setTimeout(() => el.remove(), 6000);
+    }
+
+    function spawnFloatingEmoji(emoji) {
+        console.log("🌸 Spawning emoji:", emoji);
+        const container = document.getElementById("reactionContainer");
+        if (!container) {
+            console.error("❌ Container de reações não encontrado!");
+            return;
+        }
+
+        const el = document.createElement("div");
+        el.className = "floating-emoji";
+        el.innerText = emoji;
+
+        // Posição horizontal aleatória
+        const startX = Math.random() * 80 + 10; // 10% a 90%
+        el.style.left = startX + "vw"; // Use vw para container fixo
+
+        // Variáveis CSS para trajetórias aleatórias
+        el.style.setProperty("--random-x", (Math.random() * 200 - 100) + "px");
+        el.style.setProperty("--random-x-end", (Math.random() * 400 - 200) + "px");
+
+        container.appendChild(el);
+
+        // Remove do DOM após a animação
+        setTimeout(() => el.remove(), 4500);
+    }
+
+    function showApplauseAnimation() {
+        const container = document.getElementById("playerContainer");
+        if (!container) return;
+
+        const overlay = document.createElement("div");
+        overlay.className = "applause-overlay";
+        overlay.innerHTML = `<div class="clapping-emoji">👏</div>`;
+
+        container.appendChild(overlay);
+
+        setTimeout(() => {
+            overlay.style.transition = "opacity 1s";
+            overlay.style.opacity = "0";
+            setTimeout(() => overlay.remove(), 1000);
+        }, 3000);
+    }
+
+    function renderRankingBoard(isAmbient = false) {
+        const videoArea = isAmbient
+            ? document.getElementById("ambientOverlayContent")
+            : document.getElementById("player");
+        if (!videoArea || sessionRanking.length === 0) return;
+
+        // Limpa ranking e placeholders anteriores (apenas se não for ambient, para não quebrar o player de vídeo)
+        if (!isAmbient) {
+            videoArea.innerHTML = "";
+        } else {
+            const oldBoard = videoArea.querySelector(".ranking-board");
+            if (oldBoard) oldBoard.remove();
+        }
+
+        const board = document.createElement("div");
+        board.className = `ranking-board ${isAmbient ? 'is-ambient' : ''}`;
+
+        let itemsHtml = "";
+        sessionRanking.forEach((item, i) => {
+            itemsHtml += `
+                <div class="ranking-item">
+                    <div class="rank-pos">${i + 1}º</div>
+                    <div class="rank-singer">${item.singer}</div>
+                    <div class="rank-score">${item.score}</div>
+                </div>
+            `;
+        });
+
+        board.innerHTML = `
+            <h2 class="ranking-title">🏆 Melhores da Noite</h2>
+            <div class="ranking-list">
+                ${itemsHtml}
+            </div>
+        `;
+
+        videoArea.appendChild(board);
+    }
 
     // ─── Mobile Logic (v4.0) ──────────────────────────────────────────────────
 
@@ -3541,7 +3924,7 @@
     window.switchMobileTab = switchMobileTab;
     window.toggleMobilePlayer = toggleMobilePlayer;
 
-    window.handlePhoneInput = function(el) {
+    window.handlePhoneInput = function (el) {
         let v = el.value.replace(/\D/g, '');
         if (v.length > 11) v = v.substring(0, 11);
         let val = '';
@@ -3554,6 +3937,10 @@
     window.moveQueue = typeof moveQueue !== 'undefined' ? moveQueue : null;
     window.removeFromQueue = typeof removeFromQueue !== 'undefined' ? removeFromQueue : null;
     window.playNext = typeof playNext !== 'undefined' ? playNext : null;
+    window.skipSong = typeof skipSong !== 'undefined' ? skipSong : null;
+    window.finishSong = typeof finishSong !== 'undefined' ? finishSong : null;
+    window.showScore = typeof showScore !== 'undefined' ? showScore : null;
+    window.spawnEmoji = typeof spawnFloatingEmoji !== 'undefined' ? spawnFloatingEmoji : null;
 
 })();
 

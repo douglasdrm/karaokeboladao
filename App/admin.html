@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-9CFQJSJJDS"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-9CFQJSJJDS');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KARAOKE PARTY | Painel Admin Master</title>
@@ -126,11 +135,13 @@
         }
 
         .status-badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.65rem;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.7rem;
             font-weight: 800;
             text-transform: uppercase;
+            white-space: nowrap;
+            display: inline-block;
         }
 
         .status-vip { background: rgba(0,255,0,0.1); color: #00ff00; border: 1px solid #00ff00; }
@@ -292,7 +303,7 @@
     <div id="loginOverlay">
         <img src="../Assets/logo.png" style="width: 80px; margin-bottom: 30px;">
         <button class="btn-login" onclick="login()">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="24">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="24" style="pointer-events:none;">
             ENTRAR NA MINHA CABINE
         </button>
         <div id="loader"><i class="fas fa-spinner fa-spin"></i> Validando acesso...</div>
@@ -326,16 +337,27 @@
                     <div class="value" id="statTrialCount">0</div>
                     <div class="label">DJs em Trial</div>
                 </div>
+                <div class="stat-card">
+                    <div class="value" id="statLeadsCount">0</div>
+                    <div class="label">Leads / Cantores</div>
+                </div>
             </div>
 
             <div class="admin-tabs">
-                <button class="tab-btn active" onclick="switchAdminTab('all', this)"><i class="fas fa-users"></i> TODOS DJs</button>
-                <button class="tab-btn" onclick="switchAdminTab('vip', this)"><i class="fas fa-crown" style="color:#FFD700;"></i> VIPS</button>
-                <button class="tab-btn" onclick="switchAdminTab('trial', this)"><i class="fas fa-hourglass-half"></i> EM TRIAL</button>
-                <button class="tab-btn" onclick="switchAdminTab('leads', this)"><i class="fas fa-microphone"></i> CANTORES / LEADS</button>
+                <button class="tab-btn active" id="btnTabUsers" onclick="switchTab('users')"><i class="fas fa-users"></i> USUÁRIOS</button>
+                <button class="tab-btn" id="btnTabCatalog" onclick="switchTab('catalog')"><i class="fas fa-music"></i> CATÁLOGO</button>
+                <button class="tab-btn" id="btnTabFeedback" onclick="switchTab('feedback')"><i class="fas fa-comment-alt"></i> FEEDBACKS</button>
             </div>
 
-            <div class="user-list">
+            <div class="user-list" id="userListContainer">
+                <!-- SUB-FILTROS DE USUÁRIOS (v24.2) -->
+                <div id="userSubFilters" style="display: flex; gap: 8px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; border: 1px solid var(--border); width: fit-content;">
+                    <button class="tab-btn active" id="btnFilterAll" onclick="switchTab('all')" style="padding: 6px 12px; font-size: 0.65rem;">TODOS DJs</button>
+                    <button class="tab-btn" id="btnFilterVip" onclick="switchTab('vip')" style="padding: 6px 12px; font-size: 0.65rem;"><i class="fas fa-crown" style="color:#FFD700;"></i> VIPS</button>
+                    <button class="tab-btn" id="btnFilterTrial" onclick="switchTab('trial')" style="padding: 6px 12px; font-size: 0.65rem;">EM TRIAL</button>
+                    <button class="tab-btn" id="btnFilterLeads" onclick="switchTab('leads')" style="padding: 6px 12px; font-size: 0.65rem;"><i class="fas fa-microphone"></i> LEADS/CANTORES</button>
+                </div>
+
                 <table id="mainAdminTable">
                     <thead id="tableHeader">
                         <!-- Cabeçalho Dinâmico -->
@@ -345,12 +367,63 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- VIEW DO CATÁLOGO -->
+            <div id="catalogView" style="display: none;">
+                <div class="catalog-actions" style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; background: var(--glass); padding: 15px; border-radius: 15px; border: 1px solid var(--border);">
+                    <div style="flex: 1; min-width: 250px;">
+                        <input type="text" id="catalogSearch" placeholder="Buscar no catálogo (Artista, Música ou Código)..." 
+                               style="width:100%; padding:10px 15px; border-radius:10px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; outline:none;">
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-action btn-activate" onclick="showAddSongModal()"><i class="fas fa-plus"></i> NOVA MÚSICA</button>
+                        <button class="btn-action" style="border-color:#ffaa00; color:#ffaa00;" onclick="showImportModal()"><i class="fas fa-file-import"></i> IMPORTAR FHD</button>
+                        <button class="btn-action" id="btnPublishCatalog" style="border-color:var(--blue); color:var(--blue);" onclick="publishCatalog()">
+                            <i class="fas fa-cloud-upload-alt"></i> PUBLICAR NO SITE
+                        </button>
+                        <button class="btn-action" onclick="exportCatalogCSV()"><i class="fas fa-download"></i> EXPORTAR CSV</button>
+                    </div>
+                </div>
+
+                <div class="user-list">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">CÓDIGO</th>
+                                <th>ARTISTA</th>
+                                <th>TÍTULO</th>
+                                <th>INÍCIO DA LETRA</th>
+                                <th style="width: 120px;">ESTILO</th>
+                                <th style="width: 80px;">IDIOMA</th>
+                                <th style="width: 100px;">AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="catalogTableBody">
+                            <tr><td colspan="7" style="text-align:center; padding:40px; opacity:0.5;">Carregando músicas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="catalogPagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 20px; align-items: center;"></div>
+            </div>
+
+            <!-- VIEW DE FEEDBACK -->
+            <div id="feedbackView" style="display: none;">
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button class="btn-action active" id="btnSubSugestoes" onclick="switchFeedbackSub('suggestions')">SUGESTÕES</button>
+                    <button class="btn-action" id="btnSubReports" onclick="switchFeedbackSub('reports')">ERROS/BUGS</button>
+                </div>
+                <div class="user-list">
+                    <table>
+                        <thead id="feedbackTableHead"></thead>
+                        <tbody id="feedbackTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <!-- DJ PERSONAL DASHBOARD (v16) -->
         <div id="djDashboard">
             <div class="dj-grid">
-                <!-- Card Status -->
                 <div class="dj-card">
                     <h3>💎 Minha Assinatura</h3>
                     <div id="djPlanBadge" style="margin-bottom: 15px;"></div>
@@ -369,7 +442,6 @@
                     </div>
                 </div>
 
-                <!-- Hall da Fama -->
                 <div class="dj-card">
                     <h3>🏆 Hall da Fama (Top Notas)</h3>
                     <table class="hall-fame-table">
@@ -378,13 +450,11 @@
                     </table>
                 </div>
 
-                <!-- Estilos / Gêneros -->
                 <div class="dj-card">
                     <h3>🎵 Gêneros mais Pedidos</h3>
                     <div id="djGenreStats"></div>
                 </div>
 
-                <!-- Horário de Pico -->
                 <div class="dj-card" style="grid-column: span 1;">
                     <h3>🔥 Horário de Pico (Bombando)</h3>
                     <div class="peak-bar-container" id="djPeakGraph"></div>
@@ -399,6 +469,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCnZ8hoE3NGNx2t490Yw12AxlCqVjSguig",
@@ -420,6 +491,8 @@
                 document.getElementById('loginOverlay').style.display = 'none';
                 if (user.email === ADMIN_EMAIL) {
                     document.getElementById('masterView').style.display = 'block';
+                    switchTab('users');
+                    initCatalogLogic(); // Força carga do catálogo no login
                     loadData();
                 } else {
                     document.getElementById('djDashboard').style.display = 'block';
@@ -431,9 +504,21 @@
         });
 
         function login() {
-            document.getElementById('loader').style.display = 'block';
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithRedirect(provider);
+            try {
+                document.getElementById('loader').style.display = 'block';
+                const provider = new firebase.auth.GoogleAuthProvider();
+                auth.signInWithPopup(provider).then(() => {
+                    location.reload();
+                }).catch(err => {
+                    console.error("❌ Erro Admin Login:", err);
+                    alert("Erro Firebase: " + err.code + " - " + err.message);
+                    document.getElementById('loader').style.display = 'none';
+                });
+            } catch(e) {
+                console.error("❌ Erro Catastrófico Admin:", e);
+                alert("Erro catastrófico: " + e.message);
+                document.getElementById('loader').style.display = 'none';
+            }
         }
 
         function logout() {
@@ -442,38 +527,138 @@
 
         let currentFilter = 'all';
 
-        function switchAdminTab(filter, el) {
-            currentFilter = filter;
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            if (el) el.classList.add('active');
-            loadData();
-        }
+        window.switchTab = (tab) => {
+            const isUserFilter = ['all', 'vip', 'trial', 'leads', 'users'].includes(tab);
+            
+            if (isUserFilter) {
+                if (tab !== 'users') currentFilter = tab;
+                else if (currentFilter === 'catalog' || currentFilter === 'feedback') currentFilter = 'all';
+            } else {
+                currentFilter = tab;
+            }
+
+            // Áreas principais
+            document.getElementById('userListContainer').style.display = isUserFilter ? 'block' : 'none';
+            document.getElementById('catalogView').style.display = tab === 'catalog' ? 'block' : 'none';
+            document.getElementById('feedbackView').style.display = tab === 'feedback' ? 'block' : 'none';
+
+            // Estados dos botões PRINCIPAIS
+            document.getElementById('btnTabUsers').classList.toggle('active', isUserFilter);
+            document.getElementById('btnTabCatalog').classList.toggle('active', tab === 'catalog');
+            document.getElementById('btnTabFeedback').classList.toggle('active', tab === 'feedback');
+
+            // Estados dos botões de FILTRO
+            if (isUserFilter) {
+                document.getElementById('btnFilterAll').classList.toggle('active', currentFilter === 'all' || currentFilter === 'users');
+                document.getElementById('btnFilterVip').classList.toggle('active', currentFilter === 'vip');
+                document.getElementById('btnFilterTrial').classList.toggle('active', currentFilter === 'trial');
+                document.getElementById('btnFilterLeads').classList.toggle('active', currentFilter === 'leads');
+            }
+
+            if (tab === 'catalog') {
+                if (!fullCatalog || fullCatalog.length === 0) initCatalogLogic();
+                renderCatalog();
+            }
+            if (tab === 'feedback') loadFeedback();
+            if (isUserFilter) loadData();
+        };
+
+        // Lógica de Feedback (v24.1)
+        let currentFeedbackSub = 'suggestions';
+        window.switchFeedbackSub = (sub) => {
+            currentFeedbackSub = sub;
+            document.getElementById('btnSubSugestoes').classList.toggle('active', sub === 'suggestions');
+            document.getElementById('btnSubReports').classList.toggle('active', sub === 'reports');
+            loadFeedback();
+        };
+
+        window.loadFeedback = () => {
+            const tbody = document.getElementById('feedbackTableBody');
+            const thead = document.getElementById('feedbackTableHead');
+            
+            if (!thead || !tbody) return;
+            
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; opacity:0.5;"><i class="fas fa-spinner fa-spin"></i> Carregando...</td></tr>';
+
+            if (currentFeedbackSub === 'suggestions') {
+                thead.innerHTML = `<tr><th>USUÁRIO</th><th>SALA</th><th>SUGESTÃO</th><th>DATA</th><th>AÇÕES</th></tr>`;
+            } else {
+                thead.innerHTML = `<tr><th>MÚSICA</th><th>TIPO</th><th>DETALHES</th><th>USUÁRIO</th><th>AÇÕES</th></tr>`;
+            }
+
+            db.ref(`feedback/${currentFeedbackSub}`).on('value', snap => {
+                const data = snap.val();
+                tbody.innerHTML = '';
+                if (!data) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; opacity:0.5;">Nenhuma mensagem nesta categoria.</td></tr>';
+                    return;
+                }
+
+                Object.keys(data).reverse().forEach(key => {
+                    const item = data[key];
+                    const tr = document.createElement('tr');
+                    const date = item.timestamp ? new Date(item.timestamp).toLocaleString('pt-BR') : '—';
+
+                    if (currentFeedbackSub === 'suggestions') {
+                        tr.innerHTML = `
+                            <td><div style="font-weight:600;">${item.user_name || 'Anônimo'}</div><div style="font-size:0.6rem; opacity:0.5;">${item.user_email || ''}</div></td>
+                            <td style="font-family:monospace; color:var(--accent); font-weight:bold;">${item.room || '—'}</td>
+                            <td style="max-width:300px; white-space:normal;">${item.msg}</td>
+                            <td style="font-size:0.75rem; opacity:0.6;">${date}</td>
+                            <td><button class="btn-action btn-cancel" onclick="deleteFeedback('${key}')"><i class="fas fa-trash"></i> RESOLVIDO</button></td>
+                        `;
+                    } else {
+                        tr.innerHTML = `
+                            <td style="font-weight:600;">${item.song || '—'}</td>
+                            <td style="color:#ff4444; font-weight:700;">${(item.type || 'ERRO').toUpperCase()}</td>
+                            <td style="max-width:300px; white-space:normal;">${item.details || '—'}</td>
+                            <td><div style="font-weight:600;">${item.user_name || '—'}</div></td>
+                            <td><button class="btn-action btn-cancel" onclick="deleteFeedback('${key}')"><i class="fas fa-trash"></i> RESOLVIDO</button></td>
+                        `;
+                    }
+                    tbody.appendChild(tr);
+                });
+            });
+        };
+
+        window.deleteFeedback = async (key) => {
+            if (!confirm("Deseja marcar como resolvido e remover este feedback?")) return;
+            try {
+                await db.ref(`feedback/${currentFeedbackSub}/${key}`).remove();
+            } catch (e) {
+                alert("Erro ao excluir: " + e.message);
+            }
+        };
 
         function loadData() {
             db.ref('users').on('value', snap => {
                 const users = snap.val() || {};
                 const tbody = document.getElementById('userTableBody');
                 const thead = document.getElementById('tableHeader');
+                
+                if (!tbody) return;
                 tbody.innerHTML = '';
                 
                 // Configura Cabeçalho conforme o Filtro
                 if (currentFilter === 'leads') {
                     thead.innerHTML = `<tr><th>Nome / E-mail</th><th>WhatsApp</th><th>Última Atividade</th><th>Ação</th></tr>`;
                 } else {
-                    thead.innerHTML = `<tr><th>DJ / E-mail</th><th>Status</th><th>WhatsApp</th><th>Plano</th><th>Vencimento</th><th>Ações Rápidas</th></tr>`;
+                    thead.innerHTML = `<tr><th>DJ / E-mail</th><th>Nome DJ</th><th>Status</th><th>WhatsApp</th><th>Músicas</th><th>Plano</th><th>Vencimento</th><th>Ações Rápidas</th></tr>`;
                 }
 
-                let totalHost = 0, activeVIP = 0, inTrial = 0;
+                let totalHost = 0, activeVIP = 0, inTrial = 0, totalLeads = 0;
 
                 Object.entries(users).forEach(([uid, user]) => {
                     const sub = user.subscription || { active: false, status: 'trial', plan: 'Gratuito' };
                     let isExpired = sub.expiresAt && sub.expiresAt < Date.now();
 
-                    // Stats Globais (Sempre conta todos os hosts)
+                    // Stats Globais
                     if (user.isHost) {
                         totalHost++;
                         if (sub.active && !isExpired) activeVIP++;
                         else if (!isExpired) inTrial++;
+                    } else {
+                        totalLeads++;
                     }
 
                     // FILTRAGEM PARA RENDERIZAÇÃO
@@ -489,9 +674,11 @@
                         const statusClass = sub.active && !isExpired ? 'status-vip' : (isExpired ? 'status-expired' : 'status-trial');
                         const statusText = sub.active && !isExpired ? 'VIP ATIVO' : (isExpired ? 'EXPIRADO' : 'TRIAL');
                         
-                        // WhatsApp com ícone compacto
-                        const waHtml = user.whatsapp ? `
-                            <a href="https://wa.me/55${user.whatsapp.replace(/\D/g,'')}" class="wa-btn" target="_blank" title="${user.whatsapp}">
+                        // WhatsApp com ícone compacto e tratamento robusto de tipo e DDI
+                        const cleanWa = String(user.whatsapp || '').replace(/\D/g, '');
+                        const waLink = cleanWa ? `https://wa.me/${cleanWa.startsWith('55') ? cleanWa : '55' + cleanWa}` : '';
+                        const waHtml = waLink ? `
+                            <a href="${waLink}" class="wa-btn" target="_blank" title="${user.whatsapp}">
                                 <i class="fab fa-whatsapp" style="font-size:1.2rem;"></i>
                             </a>` : '<i class="fab fa-whatsapp" style="opacity:0.2; font-size:1.2rem;" title="Não informado"></i>';
 
@@ -505,22 +692,32 @@
                                     </div>
                                 </div>
                             </td>
+                            <td style="font-weight:700; color:var(--accent-primary);">${user.djName || '---'}</td>
                             <td><span class="status-badge ${user.isBanned ? 'status-banned' : statusClass}">${user.isBanned ? 'BANIDO' : statusText}</span></td>
                             <td style="text-align:center;">${waHtml}</td>
+                            <td style="text-align:center; font-weight:700;">${user.stats?.totalSongsPlayed || 0}</td>
                             <td style="opacity:0.8;">${sub.plan || 'Gratuito'}</td>
                             <td style="font-weight:600;">${expDate}</td>
                             <td>
                                 <div class="action-group">
                                     <select class="plan-select" id="sel-${uid}">
-                                        <option value="casual">Casual (30d)</option>
-                                        <option value="festa">Festa (90d)</option>
-                                        <option value="anual">Anual (365d)</option>
-                                        <option value="vitalicio">Vitalício</option>
+                                         <option value="avulso3h">Avulso 3h</option>
+                                         <option value="avulso8h">Avulso 8h</option>
+                                         <option value="avulso24h">Avulso 24h</option>
+                                         <option value="avulso48h">Avulso 48h</option>
+                                         <option value="casual">Casual (30d)</option>
+                                         <option value="festa">Festa (90d)</option>
+                                         <option value="semestral">Semestral (180d)</option>
+                                         <option value="anual">Anual (365d)</option>
+                                         <option value="vitalicio">Vitalício</option>
                                     </select>
                                     <button class="btn-action btn-activate" onclick="applyPlan('${uid}')">OK</button>
                                     <button class="btn-action btn-cancel" onclick="cancelSub('${uid}')" title="Reset Trial"><i class="fas fa-undo"></i></button>
                                     <button class="btn-action" onclick="toggleBan('${uid}', ${!!user.isBanned})" style="color:${user.isBanned ? '#00ff00' : '#ff0000'}; border-color:${user.isBanned ? '#00ff00' : '#ff0000'};" title="${user.isBanned ? 'Desbanir' : 'Banir'}">
                                         <i class="fas ${user.isBanned ? 'fa-user-check' : 'fa-user-slash'}"></i>
+                                    </button>
+                                    <button class="btn-action btn-cancel" onclick="deleteUser('${uid}')" title="DELETAR USUÁRIO">
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
                             </td>
@@ -528,8 +725,10 @@
                     } else {
                         // RENDERIZAÇÃO LEADS
                         const date = user.lastLogin ? new Date(user.lastLogin).toLocaleDateString('pt-BR') : '—';
-                        const waHtml = user.whatsapp ? `
-                            <a href="https://wa.me/55${user.whatsapp.replace(/\D/g,'')}" class="wa-btn" target="_blank">
+                        const cleanWa = String(user.whatsapp || '').replace(/\D/g, '');
+                        const waLink = cleanWa ? `https://wa.me/${cleanWa.startsWith('55') ? cleanWa : '55' + cleanWa}` : '';
+                        const waHtml = waLink ? `
+                            <a href="${waLink}" class="wa-btn" target="_blank">
                                 <i class="fab fa-whatsapp"></i> ${user.whatsapp}
                             </a>` : '<i class="fab fa-whatsapp" style="opacity:0.2;"></i> —';
 
@@ -547,13 +746,16 @@
                             <td style="opacity:0.6;">${date}</td>
                             <td>
                                 <div class="action-group">
-                                    ${user.whatsapp ? `
-                                    <button class="btn-action btn-activate" onclick="window.open('https://wa.me/55${user.whatsapp.replace(/\D/g,'')}?text=Olá ${encodeURIComponent(user.name.split(' ')[0])}, tudo bem? Vi que você curtiu o nosso Karaokê!')">
+                                    ${waLink ? `
+                                    <button class="btn-action btn-activate" onclick="window.open('${waLink}?text=Olá ${encodeURIComponent((user.name || '').split(' ')[0])}, tudo bem? Vi que você curtiu o nosso Karaokê!')">
                                         <i class="fab fa-whatsapp"></i> CONTATO
                                     </button>
                                     ` : ''}
                                     <button class="btn-action" onclick="toggleBan('${uid}', ${!!user.isBanned})" style="color:${user.isBanned ? '#00ff00' : '#ff0000'}; border-color:${user.isBanned ? '#00ff00' : '#ff0000'};" title="${user.isBanned ? 'Desbanir' : 'Banir'}">
                                         <i class="fas ${user.isBanned ? 'fa-user-check' : 'fa-user-slash'}"></i>
+                                    </button>
+                                    <button class="btn-action btn-cancel" onclick="deleteUser('${uid}')" title="DELETAR USUÁRIO">
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
                             </td>
@@ -566,6 +768,12 @@
                 document.getElementById('statTotalUsers').innerText = totalHost;
                 document.getElementById('statActiveSubs').innerText = activeVIP;
                 document.getElementById('statTrialCount').innerText = inTrial;
+                document.getElementById('statLeadsCount').innerText = totalLeads;
+            }, err => {
+                console.error("❌ Erro ao ler lista de usuários:", err);
+                if (err.code === 'PERMISSION_DENIED') {
+                    alert("Acesso Negado: Suas regras do Firebase ainda não permitem que você veja a lista de usuários.");
+                }
             });
         }
 
@@ -656,15 +864,30 @@
             const sel = document.getElementById('sel-' + uid);
             const planKey = sel.value;
             
-            let days = 0;
-            if(planKey === 'casual') days = 30;
-            else if(planKey === 'festa') days = 90;
-            else if(planKey === 'anual') days = 365;
-            else if(planKey === 'vitalicio') days = 36500; // 100 anos
-
-            const expiration = Date.now() + (days * 24 * 60 * 60 * 1000);
-            const planNames = { casual: 'Casual', festa: 'Festa', anual: 'Anual', vitalicio: 'Vitalício' };
+            let expiration = Date.now();
+            const planNames = { 
+                avulso3h: 'Avulso 3h',
+                avulso8h: 'Avulso 8h',
+                avulso24h: 'Avulso 24h',
+                avulso48h: 'Avulso 48h',
+                casual: 'Casual', 
+                festa: 'Festa', 
+                semestral: 'Semestral',
+                anual: 'Anual', 
+                vitalicio: 'Vitalício' 
+            };
             
+            // Cálculo de Expiração
+            if(planKey === 'avulso3h') expiration += (3 * 60 * 60 * 1000);
+            else if(planKey === 'avulso8h') expiration += (8 * 60 * 60 * 1000);
+            else if(planKey === 'avulso24h') expiration += (24 * 60 * 60 * 1000);
+            else if(planKey === 'avulso48h') expiration += (48 * 60 * 60 * 1000);
+            else if(planKey === 'casual') expiration += (30 * 24 * 60 * 60 * 1000);
+            else if(planKey === 'festa') expiration += (90 * 24 * 60 * 60 * 1000);
+            else if(planKey === 'semestral') expiration += (180 * 24 * 60 * 60 * 1000);
+            else if(planKey === 'anual') expiration += (365 * 24 * 60 * 60 * 1000);
+            else if(planKey === 'vitalicio') expiration += (36500 * 24 * 60 * 60 * 1000); // 100 anos
+
             db.ref('users/' + uid + '/subscription').update({
                 active: true,
                 status: 'active',
@@ -686,6 +909,16 @@
                 expiresAt: 0
             });
             db.ref('users/' + uid + '/trialUsedMs').set(0);
+        }
+
+        function deleteUser(uid) {
+            if (!confirm("⚠️ ATENÇÃO: Deseja realmente DELETAR este usuário? Isso removerá todos os dados dele do banco de dados.\n\nO login continuará existindo no Google/Email, mas ele será visto como um NOVO usuário ao entrar novamente.")) return;
+            
+            db.ref('users/' + uid).remove().then(() => {
+                alert("Usuário removido com sucesso!");
+            }).catch(err => {
+                alert("Erro ao remover: " + err.message);
+            });
         }
 
         function exportLeadsCSV() {
@@ -711,6 +944,343 @@
                 document.body.removeChild(link);
             });
         }
+        // ─────────────────────────────────────────────────────────────────────────────
+        // LÓGICA DO GERENCIADOR DE CATÁLOGO (CMS)
+        // ─────────────────────────────────────────────────────────────────────────────
+
+        let fullCatalog = [];
+        let filteredCatalog = [];
+        let catalogPage = 1;
+        const catalogPageSize = 50;
+        let isCatalogLoaded = false;
+
+        function initCatalogLogic() {
+            // Monitora busca
+            document.getElementById('catalogSearch').oninput = (e) => {
+                const term = e.target.value.toLowerCase().trim();
+                catalogPage = 1;
+                filterCatalog(term);
+            };
+
+            // Carga inicial
+            loadCatalogFromSource();
+        }
+
+        async function loadCatalogFromSource() {
+            // Tenta carregar do Database Master primeiro
+            db.ref('master_catalog').once('value').then(snap => {
+                const data = snap.val();
+                if (data && data.musicas) {
+                    fullCatalog = data.musicas;
+                    finishCatalogLoad();
+                } else {
+                    console.log("Master catalog vazio, usando fallback local.");
+                    loadLocalFallback();
+                }
+            }).catch(err => {
+                console.warn("Erro de permissão ou conexão no Master Catalog. Usando fallback local.", err);
+                loadLocalFallback();
+            });
+        }
+
+        function loadLocalFallback() {
+            fetch('songs.json')
+                .then(r => r.json())
+                .then(data => {
+                    fullCatalog = data.musicas || [];
+                    finishCatalogLoad();
+                })
+                .catch(err => {
+                    console.error("Falha crítica ao carregar songs.json local:", err);
+                    fullCatalog = [];
+                    finishCatalogLoad();
+                });
+        }
+
+        function finishCatalogLoad() {
+            isCatalogLoaded = true;
+            filteredCatalog = [...fullCatalog];
+            sortCatalog(filteredCatalog);
+            if (currentFilter === 'catalog') renderCatalog();
+        }
+
+        function sortCatalog(arr) {
+            arr.sort((a, b) => {
+                const artA = (a.artista || "").toLowerCase();
+                const artB = (b.artista || "").toLowerCase();
+                if (artA < artB) return -1;
+                if (artA > artB) return 1;
+                const titA = (a.titulo || "").toLowerCase();
+                const titB = (b.titulo || "").toLowerCase();
+                return titA.localeCompare(titB);
+            });
+        }
+
+        function filterCatalog(term) {
+            if (!term) {
+                filteredCatalog = [...fullCatalog];
+            } else {
+                filteredCatalog = fullCatalog.filter(m => 
+                    (m.artista || "").toLowerCase().includes(term) ||
+                    (m.titulo || "").toLowerCase().includes(term) ||
+                    (m.inicioletra || "").toLowerCase().includes(term) ||
+                    (m.codigo || "").toLowerCase().includes(term)
+                );
+            }
+            renderCatalog();
+        }
+
+        function renderCatalog() {
+            const tbody = document.getElementById('catalogTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const start = (catalogPage - 1) * catalogPageSize;
+            const end = start + catalogPageSize;
+            const pageItems = filteredCatalog.slice(start, end);
+
+            pageItems.forEach((song, idx) => {
+                const globalIdx = start + idx;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><input type="text" class="catalog-input" value="${song.codigo || ''}" onchange="updateSong(${globalIdx}, 'codigo', this.value)"></td>
+                    <td><input type="text" class="catalog-input" value="${song.artista || ''}" onchange="updateSong(${globalIdx}, 'artista', this.value)"></td>
+                    <td><input type="text" class="catalog-input" value="${song.titulo || ''}" onchange="updateSong(${globalIdx}, 'titulo', this.value)"></td>
+                    <td><input type="text" class="catalog-input" value="${song.inicioletra || ''}" onchange="updateSong(${globalIdx}, 'inicioletra', this.value)" placeholder="..."></td>
+                    <td><input type="text" class="catalog-input" value="${song.estilo || ''}" onchange="updateSong(${globalIdx}, 'estilo', this.value)"></td>
+                    <td><input type="text" class="catalog-input" style="text-align:center" value="${song.idioma || ''}" onchange="updateSong(${globalIdx}, 'idioma', this.value)"></td>
+                    <td>
+                        <div class="action-group">
+                            <button class="btn-action" onclick="editSongDetails(${globalIdx})"><i class="fas fa-edit"></i></button>
+                            <button class="btn-action btn-cancel" onclick="deleteSong(${globalIdx})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const container = document.getElementById('catalogPagination');
+            const totalPages = Math.ceil(filteredCatalog.length / catalogPageSize);
+            container.innerHTML = `
+                <button class="btn-action" ${catalogPage === 1 ? 'disabled' : ''} onclick="changeCatalogPage(-1)"><i class="fas fa-chevron-left"></i></button>
+                <span style="font-size:0.8rem; opacity:0.7">Página ${catalogPage} de ${totalPages || 1} (${filteredCatalog.length} músicas)</span>
+                <button class="btn-action" ${catalogPage >= totalPages ? 'disabled' : ''} onclick="changeCatalogPage(1)"><i class="fas fa-chevron-right"></i></button>
+            `;
+        }
+
+        window.changeCatalogPage = (delta) => {
+            catalogPage += delta;
+            renderCatalog();
+        };
+
+        window.updateSong = (filteredIdx, field, value) => {
+            const song = filteredCatalog[filteredIdx];
+            if (song) {
+                song[field] = value;
+                saveMasterCatalog();
+            }
+        };
+
+        window.editSongDetails = (filteredIdx) => {
+            const song = filteredCatalog[filteredIdx];
+            const newLyrics = prompt("Editar Início da Letra:", song.inicioletra || "");
+            if (newLyrics !== null) {
+                song.inicioletra = newLyrics;
+                saveMasterCatalog();
+                alert("Letra atualizada!");
+            }
+        };
+
+        window.deleteSong = (filteredIdx) => {
+            if (!confirm("Tem certeza que deseja excluir esta música do catálogo?")) return;
+            const songToDelete = filteredCatalog[filteredIdx];
+            fullCatalog = fullCatalog.filter(s => s !== songToDelete);
+            filteredCatalog.splice(filteredIdx, 1);
+            saveMasterCatalog();
+            renderCatalog();
+        };
+
+        window.showAddSongModal = () => {
+            const newSong = {
+                artista: "NOVO ARTISTA",
+                titulo: "NOVA MÚSICA",
+                codigo: "00000",
+                estilo: "Pop",
+                idioma: "BRA",
+                inicioletra: "",
+                pacote: "avu",
+                acervo: "avu"
+            };
+            fullCatalog.unshift(newSong);
+            filteredCatalog = [...fullCatalog];
+            catalogPage = 1;
+            renderCatalog();
+            saveMasterCatalog();
+        };
+
+        async function saveMasterCatalog() {
+            // Salva o estado atual no Realtime Database (Mestre)
+            db.ref('master_catalog').set({
+                lastUpdate: firebase.database.ServerValue.TIMESTAMP,
+                musicas: fullCatalog
+            }).catch(err => console.error("Erro ao salvar mestre:", err));
+        }
+
+        // Importa um songs_atualizado.json e publica direto no Firebase
+        window.importarCatalogoJSON = () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = e => {
+                const reader = new FileReader();
+                reader.onload = async (ev) => {
+                    try {
+                        const json = JSON.parse(ev.target.result);
+                        if (!json.musicas || !Array.isArray(json.musicas)) {
+                            alert('❌ Arquivo inválido. Certifique-se de selecionar o songs_atualizado.json');
+                            return;
+                        }
+                        // Injeta no escopo correto do admin
+                        fullCatalog = json.musicas;
+                        filteredCatalog = [...fullCatalog];
+                        renderCatalog();
+                        alert(`✅ ${fullCatalog.length} músicas carregadas!\n\nClicando OK, o sistema vai PUBLICAR tudo no site automaticamente.\nAguarde o aviso de conclusão.`);
+                        // Chama o publish que já tem acesso ao fullCatalog correto
+                        await publishCatalog();
+                    } catch(err) {
+                        alert('❌ Erro ao ler o arquivo: ' + err.message);
+                    }
+                };
+                reader.readAsText(e.target.files[0]);
+            };
+            input.click();
+        };
+
+        window.publishCatalog = async () => {
+            const btn = document.getElementById('btnPublishCatalog');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PREPARANDO MISSILE...';
+            btn.disabled = true;
+
+            try {
+                // 1. Organiza alfabeticamente
+                sortCatalog(fullCatalog);
+                
+                // 2. Fragmentação do Catálogo (v22)
+                const CHUNK_SIZE = 2000;
+                const totalChunks = Math.ceil(fullCatalog.length / CHUNK_SIZE);
+                console.log(`Iniciando publicação fragmentada: ${fullCatalog.length} músicas em ${totalChunks} partes.`);
+
+                // 3. Limpa partes antigas e sobe as novas
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> LIMPANDO NUVEM...';
+                await db.ref('catalog_chunks').remove();
+
+                for (let i = 0; i < totalChunks; i++) {
+                    const start = i * CHUNK_SIZE;
+                    const chunk = fullCatalog.slice(start, start + CHUNK_SIZE);
+                    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> SUBINDO PARTE ${i + 1}/${totalChunks}...`;
+                    await db.ref(`catalog_chunks/part_${i}`).set(chunk);
+                }
+
+                // 4. Sobe também o arquivo songs.json para compatibilidade de legado (opcional)
+                const jsonBlob = new Blob([JSON.stringify({ musicas: fullCatalog })], { type: 'application/json' });
+                await firebase.storage().ref('songs.json').put(jsonBlob);
+
+                // 5. Sinaliza conclusão e versão no Config
+                const newVersion = new Date().getTime();
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> FINALIZANDO...';
+                await db.ref('config/catalog').set({
+                    totalChunks: totalChunks,
+                    totalSongs: fullCatalog.length,
+                    version: String(newVersion),
+                    lastUpdated: firebase.database.ServerValue.TIMESTAMP,
+                    mode: 'fragmented'
+                });
+
+                alert(`🚀 MÍSSIL LANÇADO COM SUCESSO!\n\nTotal: ${fullCatalog.length} músicas\nPartes: ${totalChunks}\n\nTodos os DJs e Celulares vão se atualizar em segundos.`);
+            } catch (err) {
+                console.error("Erro no lançamento do míssil:", err);
+                alert("Erro catastrófico: " + err.message + "\n\nVerifique as permissões de gravação no Database.");
+            } finally {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+                renderCatalog();
+            }
+        };
+
+        window.showImportModal = () => {
+            const raw = prompt("Cole aqui o conteúdo da sua aba FHD (Excel) para importação em massa:");
+            if (!raw) return;
+
+            const lines = raw.trim().split('\n');
+            if (lines.length < 1) return;
+
+            const newSongs = [];
+            lines.forEach(line => {
+                const cols = line.split('\t');
+                if (cols.length >= 3) {
+                    newSongs.push({
+                        artista: cols[0]?.trim(),
+                        codigo: cols[1]?.trim(),
+                        titulo: cols[2]?.trim(),
+                        inicioletra: cols[3]?.trim() || "",
+                        pacote: cols[4]?.trim() || "avu",
+                        favorito: cols[5]?.trim() || "0",
+                        idioma: cols[6]?.trim() || "BRA",
+                        acervo: cols[7]?.trim() || "avu",
+                        lancamento: cols[8]?.trim() || "",
+                        estilo: cols[9]?.trim() || "Pop"
+                    });
+                }
+            });
+
+            if (confirm(`Deseja adicionar ${newSongs.length} músicas ao catálogo?`)) {
+                fullCatalog = [...newSongs, ...fullCatalog];
+                filteredCatalog = [...fullCatalog];
+                saveMasterCatalog();
+                renderCatalog();
+                alert("Importação concluída! Clique em PUBLICAR para liberar no site.");
+            }
+        };
+
+        window.exportCatalogCSV = () => {
+            let csv = "Artista\tCódigo\tTítulo\tInício Letra\tIdioma\tEstilo\n";
+            fullCatalog.forEach(s => {
+                csv += `${s.artista}\t${s.codigo}\t${s.titulo}\t${s.inicioletra}\t${s.idioma}\t${s.estilo}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/tab-separated-values' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `catalogo_reserva_${new Date().toLocaleDateString()}.tsv`;
+            a.click();
+        };
+
+        // Estilos para os inputs da tabela
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .catalog-input {
+                width: 100%;
+                background: transparent;
+                border: none;
+                color: white;
+                font-family: inherit;
+                font-size: 0.75rem;
+                padding: 5px;
+                outline: none;
+                border-bottom: 1px solid transparent;
+                transition: 0.3s;
+            }
+            .catalog-input:focus {
+                background: rgba(255,255,255,0.05);
+                border-bottom-color: var(--accent);
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
