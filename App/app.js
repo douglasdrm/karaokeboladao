@@ -26,6 +26,18 @@
 
     let currentPitch = 1.0;
 
+    let currentCallAudio = null; // Áudio ativo da apresentação do próximo cantor
+
+    let currentCallTimer = null; // Timer ativo da apresentação do próximo cantor
+
+    function safeEscape(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
     let controlsTimeout = null;
 
     let idleTimeout = null;
@@ -133,26 +145,41 @@
     let subscriptionData = null; // Novo: Detalhes da assinatura (expiração, plano)
 
     const hostMemePhrases = [
-        "Receba! [Nome] tá vindo pro palco com a luva de pedreiro do karaokê!",
-        "Esquece tudo! [Nome] vai mostrar como se faz agora.",
-        "Calma, Calabreso! Respira que o show do(a) [Nome] vai começar!",
-        "O inimigo da timidez chegou: [Nome], o palco é seu!",
-        "Vem, [Nome]! O Brasil tá vendo e eu também tô vendo!",
-        "Segura a emoção que lá vem a lenda: [Nome] no microfone!",
-        "Disseram que não ia ter show hoje... mentiram! Olha o(a) [Nome] vindo aí!",
-        "[Nome], não é o Rock in Rio, mas a plateia tá esperando!",
-        "Atenção: nível de talento aumentando. [Nome] subindo no palco!",
-        "Prepara o celular pra gravar que o(a) [Nome] vai brilhar agora!",
-        "Brota, [Nome]! O microfone tá no ponto e a galera tá no pique!",
-        "Solta a voz, [Nome]! Mostra que aqui não tem iniciante!",
-        "É agora ou nunca, [Nome]! O palco tá liberado, chega mais!",
-        "[Nome] vindo pro palco... É o brabo(a) tem nome!",
-        "Pega a visão: [Nome] vai dar aula de canto agora!",
-        "O próximo cantor é [Nome]. Quem tiver coração fraco, se prepare!",
-        "A produção avisou que o(a) [Nome] é profissional. Vamos conferir!",
-        "Sai da frente que o(a) [Nome] tá vindo com tudo!",
-        "Alô, gravadoras! Fiquem de olho no(a) [Nome] agora!",
-        "Chamando o dono da voz: [Nome], sua hora chegou!"
+        "Atenção, porque agora o microfone tem dono: [Nome]!",
+        "Pode abrir espaço que [Nome] chegou para cantar!",
+        "O palco está pronto. O microfone também. Agora é com [Nome]!",
+        "A próxima apresentação tem nome: [Nome]!",
+        "Sem pressão nenhuma... pode chegar, [Nome]!",
+        "Atenção, plateia: [Nome] assumiu o microfone!",
+        "A música foi escolhida. Agora não tem mais volta, [Nome]!",
+        "Preparem os ouvidos e o coração: chegou [Nome]!",
+        "O karaokê continua e agora é a vez de [Nome]!",
+        "Quem está pronto para mais uma? Porque [Nome] está!",
+        "O palco foi liberado. Pode entrar, [Nome]!",
+        "Chegou o momento. Respira fundo e vai, [Nome]!",
+        "A próxima voz da noite atende pelo nome de [Nome]!",
+        "Agora é oficial: [Nome] está com o microfone!",
+        "Tudo pronto por aqui. Só faltava [Nome]!",
+        "Pode aumentar o volume: [Nome] chegou!",
+        "A noite ainda tem história para contar. Com vocês, [Nome]!",
+        "Atenção: [Nome] está prestes a fazer acontecer!",
+        "O microfone mudou de mãos. Agora é com [Nome]!",
+        "A próxima performance começa com um nome: [Nome]!",
+        "Segura essa, porque [Nome] vem aí!",
+        "O palco está por conta de [Nome]!",
+        "A plateia pediu música. [Nome] resolveu atender!",
+        "A próxima música já tem protagonista: [Nome]!",
+        "Chegou a hora de [Nome] mostrar serviço!",
+        "Pode preparar os aplausos: [Nome] está na área!",
+        "Agora é aquele momento em que tudo pode acontecer: [Nome] no microfone!",
+        "A responsabilidade agora está oficialmente nas mãos de [Nome]!",
+        "O show segue e [Nome] é a próxima atração!",
+        "Senhoras e senhores... com vocês, [Nome]!",
+        "A confiança chegou primeiro. Agora vem [Nome]!",
+        "É hora de descobrir o que [Nome] anda cantando por aí!",
+        "O microfone está ligado. [Nome] também!",
+        "O próximo capítulo da noite começa agora com [Nome]!",
+        "Pode vir tranquilo... ou não. É a vez de [Nome]!"
     ];
 
     let activeUsers = {};
@@ -2184,6 +2211,14 @@
 
     function skipSong() {
         if (queue.length === 0) return;
+        if (currentCallAudio) {
+            try { currentCallAudio.pause(); } catch (e) { }
+            currentCallAudio = null;
+        }
+        if (currentCallTimer) {
+            clearTimeout(currentCallTimer);
+            currentCallTimer = null;
+        }
         const video = document.getElementById('mainVideo');
         if (video) {
             video.onended = null;
@@ -2204,9 +2239,9 @@
             if (queue.length === 0) return;
             const current = queue[0];
 
-            // CHAMADA DE CANTOR MEME (v16)
-            // Se já estivermos no meio da música (ex: vindo de um crash) ou chamada desativada, não chama de novo
-            if (isPlaying || settings.playIntroCall === false) {
+            // A apresentação visual do próximo cantor deve SEMPRE aparecer entre músicas.
+            // settings.playIntroCall controla apenas se o áudio de voz toca ou se exibe com timer visual
+            if (isPlaying) {
                 startVideoPlay(current);
             } else {
                 showComingNext(current.singer, () => startVideoPlay(current));
@@ -2219,72 +2254,153 @@
     function showComingNext(singerName, onComplete) {
         if (!playerArea) playerArea = document.getElementById('player');
 
+        // Limpa áudio ou timer anterior caso haja sobreposição rápida
+        if (currentCallAudio) {
+            try { currentCallAudio.pause(); } catch (e) { }
+            currentCallAudio = null;
+        }
+        if (currentCallTimer) {
+            clearTimeout(currentCallTimer);
+            currentCallTimer = null;
+        }
+
         const phraseTemplate = hostMemePhrases[Math.floor(Math.random() * hostMemePhrases.length)];
-        const finalPhrase = phraseTemplate.replace('[Nome]', singerName.toUpperCase());
+        const cleanName = (singerName || 'CANTOR').toString().trim().toUpperCase();
+
+        let phraseHtml = '';
+        if (phraseTemplate.includes('[Nome]')) {
+            const parts = phraseTemplate.split('[Nome]');
+            const lead = safeEscape(parts[0]);
+            const trail = safeEscape(parts.slice(1).join(''));
+
+            phraseHtml = `
+                <div class="cn-phrase-container">
+                    ${lead ? `<span class="cn-text-lead">${lead}</span>` : ''}
+                    <span class="cn-singer-name">${safeEscape(cleanName)}</span>
+                    ${trail ? `<span class="cn-text-trail">${trail}</span>` : ''}
+                </div>
+            `;
+        } else {
+            phraseHtml = `
+                <div class="cn-phrase-container">
+                    <span class="cn-text-lead">${safeEscape(phraseTemplate)}</span>
+                    <span class="cn-singer-name">${safeEscape(cleanName)}</span>
+                </div>
+            `;
+        }
 
         playerArea.innerHTML = `
             <div class="coming-next-overlay">
-                <div class="cn-badge">PRÓXIMO SHOW</div>
-                <div class="cn-phrase">${finalPhrase}</div>
-                <div class="cn-spinner"></div>
+                <div class="cn-stage-glow"></div>
+                <div class="cn-badge"><i class="fas fa-microphone-alt"></i> PRÓXIMO SHOW</div>
+                <div class="cn-content">
+                    ${phraseHtml}
+                </div>
+                <div class="cn-equalizer" aria-hidden="true" title="Palco Pronto">
+                    <span class="cn-bar bar-1"></span>
+                    <span class="cn-bar bar-2"></span>
+                    <span class="cn-bar bar-3"></span>
+                    <span class="cn-bar bar-4"></span>
+                    <span class="cn-bar bar-5"></span>
+                    <span class="cn-bar bar-6"></span>
+                    <span class="cn-bar bar-7"></span>
+                </div>
             </div>
         `;
 
-        // CHAMADA DE CANTOR ROBUSTA (v23)
-        const sfxArray = ['Chamada_1.mp3', 'Chamada_2.mp3', 'Chamada_3.mp3'];
-        const randomSfx = sfxArray[Math.floor(Math.random() * sfxArray.length)];
-        const audioUrl = `../SFX/${randomSfx}`;
-        console.log("[SFX] Iniciando chamada do próximo cantor:", audioUrl);
-        let callAudio = new Audio(audioUrl);
-        let audioDone = false;
+        let callCompleted = false;
 
         const finalizeCall = () => {
-            if (audioDone) return;
-            audioDone = true;
-            console.log("[SFX] Chamada finalizada.");
+            if (callCompleted) return;
+            callCompleted = true;
+            if (currentCallTimer) {
+                clearTimeout(currentCallTimer);
+                currentCallTimer = null;
+            }
+            if (currentCallAudio) {
+                try { currentCallAudio.pause(); } catch (e) { }
+                currentCallAudio = null;
+            }
+            console.log("[Apresentação] Transição finalizada. Iniciando música...");
             const overlay = document.querySelector('.coming-next-overlay');
             if (overlay) overlay.classList.add('fade-out');
             setTimeout(() => {
                 if (overlay) overlay.remove();
                 onComplete();
-            }, 500);
+            }, 450);
         };
 
-        callAudio.onended = finalizeCall;
-        callAudio.onerror = () => {
-            console.warn("[SFX] Falha ao carregar .mp3, tentando .MP3...");
-            const fallback = new Audio(`../SFX/${randomSfx.replace('.mp3', '.MP3')}`);
-            fallback.onended = finalizeCall;
-            fallback.onerror = () => {
-                console.warn("[SFX] Falha ao carregar .MP3, tentando chamada_1.mp3...");
-                const fallbackFinal = new Audio(`../SFX/chamada_1.mp3`);
-                fallbackFinal.onended = finalizeCall;
-                fallbackFinal.onerror = () => {
-                    console.error("[SFX] Falha crítica: Nenhum arquivo de chamada encontrado.");
-                    setTimeout(finalizeCall, 3000);
+        if (settings.playIntroCall !== false) {
+            // CHAMADA DE CANTOR COM ÁUDIO SFX ATIVADO
+            const sfxArray = ['Chamada_1.mp3', 'Chamada_2.mp3', 'Chamada_3.mp3'];
+            const randomSfx = sfxArray[Math.floor(Math.random() * sfxArray.length)];
+            const audioUrl = `../SFX/${randomSfx}`;
+            console.log("[SFX] Iniciando chamada do próximo cantor:", audioUrl);
+            currentCallAudio = new Audio(audioUrl);
+
+            currentCallAudio.onended = finalizeCall;
+            currentCallAudio.onerror = () => {
+                console.warn("[SFX] Falha ao carregar .mp3, tentando .MP3...");
+                const fallback = new Audio(`../SFX/${randomSfx.replace('.mp3', '.MP3')}`);
+                fallback.onended = finalizeCall;
+                fallback.onerror = () => {
+                    console.warn("[SFX] Falha ao carregar .MP3, tentando chamada_1.mp3...");
+                    const fallbackFinal = new Audio(`../SFX/chamada_1.mp3`);
+                    fallbackFinal.onended = finalizeCall;
+                    fallbackFinal.onerror = () => {
+                        console.error("[SFX] Falha crítica: Nenhum arquivo de chamada encontrado.");
+                        currentCallTimer = setTimeout(finalizeCall, 4000);
+                    };
+                    currentCallAudio = fallbackFinal;
+                    fallbackFinal.play().catch(e => {
+                        currentCallTimer = setTimeout(finalizeCall, 4000);
+                    });
                 };
-                fallbackFinal.play().catch(e => {
-                    setTimeout(finalizeCall, 3000);
+                currentCallAudio = fallback;
+                fallback.play().catch(e => {
+                    console.warn("[SFX] Play bloqueado pelo navegador:", e);
+                    currentCallTimer = setTimeout(finalizeCall, 4000);
                 });
             };
-            fallback.play().catch(e => {
-                console.warn("[SFX] Play bloqueado pelo navegador:", e);
-                setTimeout(finalizeCall, 3000);
+
+            currentCallAudio.play().catch(e => {
+                console.warn("[SFX] Erro ou autoplay bloqueado ao tocar chamada:", e);
+                // Se o navegador bloquear o autoplay com som, prossegue após 4 segundos
+                currentCallTimer = setTimeout(finalizeCall, 4000);
             });
-        };
 
-        callAudio.play().catch(e => {
-            console.warn("[SFX] Erro ao tocar chamada inicial:", e);
-            // Se o navegador bloquear o autoplay, seguimos o fluxo após um delay
-            setTimeout(finalizeCall, 4000);
-        });
+            // Segurança Máxima caso o áudio não dispare onended
+            currentCallTimer = setTimeout(finalizeCall, 10000);
+        } else {
+            // CHAMADA COM ÁUDIO DESATIVADO: Apresentação visual permanece por 4 segundos
+            console.log("[Apresentação] Áudio desativado. Exibindo apresentação visual por 4 segundos.");
+            currentCallTimer = setTimeout(finalizeCall, 4000);
+        }
+    }
 
-        // Segurança Máxima: 10 segundos
-        setTimeout(finalizeCall, 10000);
+    function resetTone() {
+        currentPitch = 1.0;
+        if (pitchShifter) {
+            try {
+                pitchShifter.setPitchOffset(1.0);
+            } catch (e) { }
+        }
+        const v = document.getElementById('mainVideo');
+        if (v) {
+            v.playbackRate = 1.0;
+            v.preservesPitch = true;
+        }
+        const display = document.querySelector('.tone-control .control-label');
+        if (display) {
+            display.innerText = 'TOM: 0';
+        }
     }
 
     function startVideoPlay(current) {
         try {
+            // Reseta o tom para 0 para toda nova música que iniciar
+            resetTone();
+
             if (window.innerWidth <= 1024) {
                 toggleMobilePlayer(true);
             }
@@ -2691,6 +2807,7 @@
 
         // Aplausos já tocaram no showScore, então aqui apenas limpamos
         isPlaying = false;
+        resetTone(); // Garante que o tom resete para TOM: 0 a cada término de música
         queue.shift(); // Remove a música que terminou
 
         // Pré-atualiza o topInfoBox com a próxima música ANTES de renderizar
@@ -3701,6 +3818,8 @@
     window.restartSong = typeof restartSong !== 'undefined' ? restartSong : null;
 
     window.changeTone = typeof changeTone !== 'undefined' ? changeTone : null;
+
+    window.resetTone = typeof resetTone !== 'undefined' ? resetTone : null;
 
     window.changeVolume = typeof changeVolume !== 'undefined' ? changeVolume : null;
 
