@@ -4655,3 +4655,47 @@ body.dashboard-mode {
     backdrop-filter: blur(20px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
 }
+
+.score-suspense-overlay {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: #050505;
+    text-align: center;
+    padding: 40px;
+    overflow: hidden;
+}
+
+.sf-badge-suspense {
+    animation: cnBadgeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both, pulse-glow 1.2s infinite 0.5s;
+}
+
+.sf-ticker-value {
+    font-size: clamp(6rem, 16vw, 14rem);
+    font-weight: 900;
+    line-height: 0.9;
+    background: linear-gradient(180deg, #fff 0%, #ffe27a 45%, #ffd700 70%, #ff9d00 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.55));
+    animation: sfTickerPulse 0.16s ease-in-out infinite alternate;
+}
+
+@keyframes sfTickerPulse {
+    from {
+        transform: scale(1);
+    }
+
+    to {
+        transform: scale(1.04);
+    }
+}
+
+.cn-equalizer-fast .cn-bar {
+    animation-duration: 0.5s !important;
+}

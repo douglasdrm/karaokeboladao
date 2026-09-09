@@ -2730,16 +2730,22 @@
 
         // PASSO 1: Mostrar tela de suspense + tocar aplausos
         targetPlayer.innerHTML = `
-            <div class="suspense-layer" style="
-                display:flex; flex-direction:column; align-items:center; justify-content:center;
-                width:100%; height:100%; background:#000;
-                color:#fff; font-family:sans-serif; text-align:center; padding:40px;
-            ">
-                <div style="font-size:4rem; font-weight:900; letter-spacing:8px; margin-bottom:40px; opacity:0.7;">DANDO NOTA...</div>
-                <div id="tickerScore" style="font-size:22rem; font-weight:900; color:#FFD700; line-height:0.9;">--</div>
-                <div style="font-size:2.5rem; margin-top:40px; opacity:0.8;">Segura o coração, ${singer.toUpperCase()}! 🎤</div>
-            </div>
-        `;
+    <div class="score-suspense-overlay">
+        <div class="cn-stage-glow"></div>
+        <div class="sf-badge sf-badge-suspense"><i class="fas fa-hourglass-half"></i> DANDO NOTA...</div>
+        <div id="tickerScore" class="sf-ticker-value">--</div>
+        <div class="sf-singer">Segura o coração, ${safeEscape(singer.toUpperCase())}! 🎤</div>
+        <div class="cn-equalizer cn-equalizer-fast" aria-hidden="true">
+            <span class="cn-bar bar-1"></span>
+            <span class="cn-bar bar-2"></span>
+            <span class="cn-bar bar-3"></span>
+            <span class="cn-bar bar-4"></span>
+            <span class="cn-bar bar-5"></span>
+            <span class="cn-bar bar-6"></span>
+            <span class="cn-bar bar-7"></span>
+        </div>
+    </div>
+`;
 
         _playSound('../SFX/Aplausos.mp3');
         showApplauseAnimation();
@@ -2770,17 +2776,23 @@
                 const phrase = phrases[Math.floor(Math.random() * phrases.length)];
 
                 targetPlayer.innerHTML = `
-                    <div class="score-overlay" style="
-                        display:flex; flex-direction:column; align-items:center; justify-content:center;
-                        width:100%; height:100%; background:#000;
-                        color:#fff; font-family:sans-serif; text-align:center; padding:40px;
-                    ">
-                        <div style="font-size:2.5rem; font-weight:700; letter-spacing:8px; opacity:0.6; margin-bottom:20px;">NOTA FINAL</div>
-                        <div class="score-big" style="font-size:28rem; font-weight:900; color:#FFD700; line-height:0.85; animation: scoreReveal 0.5s cubic-bezier(.175,.885,.32,1.275);">${finalScore}</div>
-                        <div style="font-size:2.2rem; font-style:italic; opacity:0.9; margin-top:30px; max-width:900px;">"${phrase}"</div>
-                        <div style="font-size:3rem; font-weight:700; margin-top:30px;">⭐ ARRASOU, ${singer.toUpperCase()}! 🎤</div>
-                    </div>
-                `;
+    <div class="score-final-overlay">
+        <div class="cn-stage-glow"></div>
+        <div class="sf-badge"><i class="fas fa-star"></i> NOTA FINAL</div>
+        <div class="sf-score-value">${finalScore}</div>
+        <div class="sf-phrase">"${phrase}"</div>
+        <div class="sf-singer">⭐ ARRASOU, ${safeEscape(singer.toUpperCase())}! 🎤</div>
+        <div class="cn-equalizer" aria-hidden="true">
+            <span class="cn-bar bar-1"></span>
+            <span class="cn-bar bar-2"></span>
+            <span class="cn-bar bar-3"></span>
+            <span class="cn-bar bar-4"></span>
+            <span class="cn-bar bar-5"></span>
+            <span class="cn-bar bar-6"></span>
+            <span class="cn-bar bar-7"></span>
+        </div>
+    </div>
+`;
 
                 _playSound('../SFX/' + sfxFile);
 
@@ -3602,15 +3614,17 @@
 
         const current = queue[0];
 
-        // --- LÓGICA RESPONSIVA: Quantos cantores cabem na tela? ---
-        let qtdProximos = 2; // Padrão para janela pequena (1 atual + 2 próximos)
+        // Mede o container real (playerContainer), não a janela toda
+        const containerEl = document.getElementById('playerContainer');
+        const refWidth = containerEl ? containerEl.clientWidth : window.innerWidth;
 
-        if (window.innerWidth >= 1600) {
-            qtdProximos = 6; // Telas grandes/TV (Full HD): mostra + 6 cantores
-        } else if (window.innerWidth >= 1366) {
-            qtdProximos = 4; // Notebooks grandes: mostra + 4 cantores
-        } else if (window.innerWidth >= 1100) {
-            qtdProximos = 3; // Telas médias: mostra + 3 cantores
+        let qtdProximos = 2;
+        if (refWidth >= 1600) {
+            qtdProximos = 6;
+        } else if (refWidth >= 1366) {
+            qtdProximos = 4;
+        } else if (refWidth >= 1100) {
+            qtdProximos = 3;
         }
 
         // Corta a fila dinamicamente com base no espaço disponível
