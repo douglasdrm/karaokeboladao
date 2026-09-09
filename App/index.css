@@ -4699,3 +4699,65 @@ body.dashboard-mode {
 .cn-equalizer-fast .cn-bar {
     animation-duration: 0.5s !important;
 }
+
+.score-final-overlay {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: #050505;
+    text-align: center;
+    padding: 40px;
+    overflow: hidden;
+}
+
+.sf-badge {
+    background: linear-gradient(90deg, #ff00c8, #a020f0);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 24px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    letter-spacing: 3px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #fff;
+    margin-bottom: 30px;
+    animation: cnBadgeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sf-score-value {
+    font-size: clamp(6rem, 16vw, 14rem);
+    font-weight: 900;
+    line-height: 0.9;
+    background: linear-gradient(180deg, #fff 0%, #ffd6f5 40%, #ff5fd6 70%, #a020f0 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 25px rgba(160, 32, 240, 0.6));
+    animation: cnSingerPop 0.75s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+.sf-phrase {
+    font-size: clamp(1.2rem, 2.4vw, 1.8rem);
+    font-style: italic;
+    color: #f1f5f9;
+    max-width: 900px;
+    margin-top: 20px;
+    opacity: 0.9;
+    animation: cnTextLeadIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.2s;
+}
+
+.sf-singer {
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-weight: 800;
+    color: #fff;
+    margin-top: 24px;
+    animation: cnTextLeadIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.35s;
+}
+
+.score-final-overlay .cn-equalizer {
+    margin-top: 40px;
+}
