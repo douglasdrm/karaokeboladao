@@ -1339,6 +1339,7 @@
             const ref = db.ref(`salas/${currentRoomCode}/reactions`);
             ref.push({
                 type: 'message',
+                senderUid: currentUser.uid,
                 text: text,
                 sender: senderName.split(' ')[0],
                 photo: senderPhoto,
@@ -1913,6 +1914,7 @@
             });
         }
         function sendReaction(emoji) {
+            if (!currentUser) { alert('Faça login para enviar reações!'); return; }
             if (!currentRoomCode) {
                 console.error("❌ Erro: currentRoomCode nulo no mobile!");
                 return;
@@ -1921,6 +1923,7 @@
             console.log("🌸 [MOBILE] Enviando emoji para:", path, emoji);
             const ref = db.ref(path);
             ref.push({
+                senderUid: currentUser.uid,
                 emoji: emoji,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
