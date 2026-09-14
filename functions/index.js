@@ -37,7 +37,7 @@ exports.createCheckoutSession = onCall(
 
         try {
             const session = await stripe.checkout.sessions.create({
-                payment_method_types: ['card', 'boleto'],
+                payment_method_types: ['card'],
                 line_items: [{
                     price_data: {
                         currency: 'brl',
