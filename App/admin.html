@@ -296,6 +296,29 @@
         .hall-fame-table { width: 100%; font-size: 0.75rem; border-collapse: collapse; }
         .hall-fame-table th { opacity: 0.5; font-weight: 400; text-align: left; padding: 5px; border-bottom: 1px solid var(--border); }
         .hall-fame-table td { padding: 8px 5px; border-bottom: 1px dotted var(--border); }
+    
+        #djDashboard .dj-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); align-items: stretch; }
+        #djDashboard .dj-card { min-width: 0; padding: 24px; }
+        #djDashboard .dj-hall { grid-column: 1 / -1; order: 3; }
+        #djDashboard .dj-peak { grid-column: 1 / -1 !important; order: 4; }
+        #djDashboard .hall-fame-table { min-width: 0; width: 100%; table-layout: fixed; }
+        #djDashboard .hall-fame-table th, #djDashboard .hall-fame-table td { white-space: normal; overflow-wrap: anywhere; padding: 12px 10px; }
+        #djDashboard .hall-fame-table th:first-child { width: 32%; }
+        #djDashboard .hall-fame-table th:last-child { width: 64px; }
+        #djDashboard .hall-fame-table td:last-child { color: var(--blue); font-weight: 900; text-align: right; }
+        #djDashboard .hall-fame-table th:last-child { text-align: right; }
+        .dj-caption { color: #a6a4b6; font-size: .75rem; line-height: 1.6; margin: -8px 0 18px; }
+        .dj-genre-row { margin: 16px 0; }
+        .dj-genre-label { display: flex; gap: 12px; justify-content: space-between; font-size: .83rem; margin-bottom: 8px; }
+        .dj-genre-label span:first-child { overflow-wrap: anywhere; }
+        .dj-genre-label span:last-child { white-space: nowrap; color: var(--blue); }
+        .dj-genre-row .progress-container-mini { margin: 0; height: 7px; }
+        .dj-empty { color: #a6a4b6; padding: 20px 0; font-size: .85rem; }
+        @media (max-width: 640px) {
+            #djDashboard .dj-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+            #djDashboard .dj-card { padding: 18px; }
+            #djDashboard .hall-fame-table th, #djDashboard .hall-fame-table td { padding: 10px 4px; }
+        }
     </style>
     <link rel="stylesheet" href="party-features.css?v=3">
 </head>
@@ -439,7 +462,7 @@
                         <strong id="djExpDate">—</strong>
                     </div>
                     <div class="stat-row">
-                        <span>Total de Músicas:</span>
+                        <span>Músicas cantadas:</span>
                         <strong id="djTotalSongs">0</strong>
                     </div>
                     <div class="badge-system" id="djBadges">
@@ -449,7 +472,7 @@
                     </div>
                 </div>
 
-                <div class="dj-card">
+                <div class="dj-card dj-hall">
                     <h3>🏆 Hall da Fama (Top Notas)</h3>
                     <table class="hall-fame-table">
                         <thead><tr><th>Cantor</th><th>Música</th><th>Nota</th></tr></thead>
@@ -458,11 +481,11 @@
                 </div>
 
                 <div class="dj-card">
-                    <h3>🎵 Gêneros mais Pedidos</h3>
-                    <div id="djGenreStats"></div>
+                    <h3>🎵 Gêneros mais tocados</h3>
+                    <p class="dj-caption" id="djGenreCaption">Somente músicas com gênero identificado.</p><div id="djGenreStats"></div>
                 </div>
 
-                <div class="dj-card" style="grid-column: span 1;">
+                <div class="dj-card dj-peak">
                     <h3>🔥 Horário de Pico (Bombando)</h3>
                     <div class="peak-bar-container" id="djPeakGraph"></div>
                     <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:0.6rem; opacity:0.5;">
@@ -814,17 +837,15 @@
                 // 2. Badges de Gamificação
                 const badges = document.querySelectorAll('#djBadges .badge-icon');
                 const counts = stats.totalSongsPlayed || 0;
-                if (counts >= 50) badges[0].classList.add('unlocked');
-                if (counts >= 200) badges[1].classList.add('unlocked');
-                if (counts >= 500) badges[2].classList.add('unlocked');
+                [50, 200, 500].forEach((minimum, i) => badges[i].classList.toggle('unlocked', counts >= minimum));
 
                 // 3. Hall da Fama (Top Notas)
                 const hfBody = document.getElementById('djHallFame');
                 hfBody.innerHTML = '';
-                const records = stats.stats_records || [];
+                const records = Object.values(stats.stats_records || {}).filter(r => r && typeof r.song === 'string' && r.song.trim() && r.song !== '—' && r.score !== null && r.score !== '' && Number.isFinite(Number(r.score))).sort((a, b) => Number(b.score) - Number(a.score)).slice(0, 10);
                 records.forEach(r => {
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${r.singer}</td><td>${r.song}</td><td style="color:var(--blue); font-weight:900;">${r.score}</td>`;
+                    [r.singer || 'Anônimo', r.song, Number(r.score)].forEach(value => { const td = document.createElement('td'); td.textContent = value; tr.appendChild(td); });
                     hfBody.appendChild(tr);
                 });
                 if(records.length === 0) hfBody.innerHTML = '<tr><td colspan="3" style="text-align:center; opacity:0.3; padding:20px;">Nenhum recorde ainda</td></tr>';
@@ -832,21 +853,23 @@
                 // 4. Gêneros Favoritos
                 const genreContainer = document.getElementById('djGenreStats');
                 genreContainer.innerHTML = '';
-                const genres = stats.genres || {};
-                const sortedGenres = Object.entries(genres).sort((a,b) => b[1] - a[1]).slice(0, 5);
-                const totalG = Object.values(genres).reduce((a,b) => a+b, 0) || 1;
-                
-                sortedGenres.forEach(([name, count]) => {
-                    const pct = Math.round((count / totalG) * 100);
-                    genreContainer.innerHTML += `
-                        <div class="stat-row">
-                            <span style="width:80px; overflow:hidden; text-overflow:ellipsis;">${name}</span>
-                            <div class="progress-container-mini"><div class="progress-fill" style="width:${pct}%;"></div></div>
-                            <span style="width:30px; text-align:right;">${pct}%</span>
-                        </div>
-                    `;
+                const genres = PartyCore.genreRanking(stats.genres);
+                const totalG = genres.reduce((total, entry) => total + entry[1], 0);
+                document.getElementById('djGenreCaption').textContent = totalG
+                    ? totalG.toLocaleString('pt-BR') + ' músicas com gênero identificado. Percentuais calculados sobre essa base.'
+                    : 'Somente músicas com gênero identificado.';
+                genres.slice(0, 5).forEach(([name, count]) => {
+                    const pct = Math.round(count / totalG * 100);
+                    const row = document.createElement('div'); row.className = 'dj-genre-row';
+                    const label = document.createElement('div'); label.className = 'dj-genre-label';
+                    const title = document.createElement('span'); title.textContent = name;
+                    const value = document.createElement('span'); value.textContent = count.toLocaleString('pt-BR') + ' · ' + pct + '%';
+                    label.append(title, value);
+                    const track = document.createElement('div'); track.className = 'progress-container-mini';
+                    const fill = document.createElement('div'); fill.className = 'progress-fill'; fill.style.width = pct + '%';
+                    track.appendChild(fill); row.append(label, track); genreContainer.appendChild(row);
                 });
-                if(sortedGenres.length === 0) genreContainer.innerHTML = '<p style="text-align:center; opacity:0.3; padding:20px;">Sem dados de gênero</p>';
+                if (!genres.length) { const empty = document.createElement('p'); empty.className = 'dj-empty'; empty.textContent = 'Ainda não há músicas com gênero identificado.'; genreContainer.appendChild(empty); }
 
                 // 5. Horário de Pico
                 const peakGraph = document.getElementById('djPeakGraph');

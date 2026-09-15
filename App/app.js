@@ -1535,7 +1535,7 @@
         if (statSongs) statSongs.innerText = hostUser.stats?.totalSongsPlayed || 0;
         if (statGenre) {
             const genres = hostUser.stats?.genres || {};
-            const topGenre = Object.keys(genres).reduce((a, b) => genres[a] > genres[b] ? a : b, "---");
+            const topGenre = PartyCore.genreRanking(genres)[0]?.[0] || 'Sem dados';
             statGenre.innerText = topGenre.toUpperCase();
         }
 
@@ -2125,10 +2125,10 @@
             stats.totalSongsPlayed = (stats.totalSongsPlayed || 0) + 1;
 
             // 2. Contador de Gêneros
-            if (song && song.estilo) {
-                const genre = song.estilo;
+            if (song && PartyCore.validGenre(song.estilo)) {
+                const genre = song.estilo.trim();
                 if (!stats.genres) stats.genres = {};
-                stats.genres[genre] = (stats.genres[genre] || 0) + 1;
+                stats.genres[genre] = (Number(stats.genres[genre]) || 0) + 1;
             }
 
             // 3. Sistema de Recordes (Hall da Fama)

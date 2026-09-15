@@ -25,7 +25,16 @@
             '', 'Músicas cantadas:', ...summary.completed.map(s => `${s.singer} — ${s.title}${s.score == null ? '' : ` (${s.score} pontos)`}`),
             '', 'Destaques:', ...summary.ranking.map((s, i) => `${i + 1}. ${s.singer} — ${s.score} pontos`)].join('\n');
     }
-    const api = { normalize, preferenceKey, validPitch, summarize, summaryText };
+    function validGenre(value) {
+        if (typeof value !== 'string') return false;
+        const name = value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        return /[a-z]/.test(name) && !['null', 'undefined', 'nan', 'n/a', 'na', 'sem estilo', 'sem genero', 'sem identificacao', 'nao informado', 'nao identificado', 'desconhecido'].includes(name);
+    }
+    function genreRanking(genres) {
+        return Object.entries(genres || {}).filter(([name, count]) => validGenre(name) && (typeof count === 'number' || typeof count === 'string') && Number.isFinite(Number(count)) && Number(count) > 0)
+            .map(([name, count]) => [name.trim(), Number(count)]).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'pt-BR'));
+    }
+    const api = { validGenre, genreRanking, normalize, preferenceKey, validPitch, summarize, summaryText };
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
     root.PartyCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);
