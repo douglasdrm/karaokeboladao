@@ -297,6 +297,7 @@
         .hall-fame-table th { opacity: 0.5; font-weight: 400; text-align: left; padding: 5px; border-bottom: 1px solid var(--border); }
         .hall-fame-table td { padding: 8px 5px; border-bottom: 1px dotted var(--border); }
     </style>
+    <link rel="stylesheet" href="party-features.css?v=1">
 </head>
 <body>
 
@@ -344,6 +345,7 @@
             </div>
 
             <div class="admin-tabs">
+                <button class="tab-btn" id="btnAccessHistory">HISTÓRICO DE ACESSOS</button>
                 <button class="tab-btn active" id="btnTabUsers" onclick="switchTab('users')"><i class="fas fa-users"></i> USUÁRIOS</button>
                 <button class="tab-btn" id="btnTabCatalog" onclick="switchTab('catalog')"><i class="fas fa-music"></i> CATÁLOGO</button>
                 <button class="tab-btn" id="btnTabFeedback" onclick="switchTab('feedback')"><i class="fas fa-comment-alt"></i> FEEDBACKS</button>
@@ -573,6 +575,9 @@
         };
 
         window.loadFeedback = () => {
+            KaraokeAdmin.feedback(currentFeedbackSub);
+        };
+        const legacyLoadFeedback = () => {
             const tbody = document.getElementById('feedbackTableBody');
             const thead = document.getElementById('feedbackTableHead');
             
@@ -852,12 +857,12 @@
             const action = wasBanned ? 'DESBANIR' : 'BANIR';
             if (!confirm(`Deseja realmente ${action} este usuário?`)) return;
             
-            db.ref('users/' + uid).update({
+            KaraokeAdmin.change(uid, action, {
                 isBanned: !wasBanned,
                 bannedAt: !wasBanned ? firebase.database.ServerValue.TIMESTAMP : null
-            }).then(() => {
-                alert(`Usuário ${wasBanned ? 'desbloqueado' : 'banido'} com sucesso.`);
-            });
+            }).then(saved => {
+                if (saved) alert(`Usuário ${wasBanned ? 'desbloqueado' : 'banido'} com sucesso.`);
+            }).catch(error => alert('Alteração não realizada: ' + error.message));
         }
 
         function applyPlan(uid) {
@@ -888,34 +893,32 @@
             else if(planKey === 'anual') expiration += (365 * 24 * 60 * 60 * 1000);
             else if(planKey === 'vitalicio') expiration += (36500 * 24 * 60 * 60 * 1000); // 100 anos
 
-            db.ref('users/' + uid + '/subscription').update({
-                active: true,
-                status: 'active',
-                plan: planNames[planKey],
-                expiresAt: expiration,
-                lastUpdate: firebase.database.ServerValue.TIMESTAMP,
-                updatedBy: 'admin_manual'
-            }).then(() => {
-                alert(`Sucesso! Plano ${planNames[planKey].toUpperCase()} ativado.`);
-            });
+            if (!planNames[planKey]) { alert('Escolha um plano válido.'); return; }
+            KaraokeAdmin.change(uid, 'Ativar plano: ' + planNames[planKey], {
+                'subscription/active': true,
+                'subscription/status': 'active',
+                'subscription/plan': planNames[planKey],
+                'subscription/expiresAt': expiration,
+                'subscription/lastUpdate': firebase.database.ServerValue.TIMESTAMP,
+                'subscription/updatedBy': 'admin_manual'
+            }).then(saved => {
+                if (saved) alert(`Sucesso! Plano ${planNames[planKey].toUpperCase()} ativado.`);
+            }).catch(error => alert('Plano não alterado: ' + error.message));
         }
 
         function cancelSub(uid) {
             if (!confirm("Deseja resetar a assinatura deste usuário?")) return;
-            db.ref('users/' + uid + '/subscription').set({
-                active: false,
-                status: 'trial',
-                plan: 'Free Trial',
-                expiresAt: 0
-            });
-            db.ref('users/' + uid + '/trialUsedMs').set(0);
+            KaraokeAdmin.change(uid, 'Reiniciar teste gratuito', {
+                subscription: { active: false, status: 'trial', plan: 'Free Trial', expiresAt: 0 },
+                trialUsedMs: 0
+            }).then(saved => { if (saved) alert('Teste gratuito reiniciado.'); }).catch(error => alert('Acesso não alterado: ' + error.message));
         }
 
         function deleteUser(uid) {
             if (!confirm("⚠️ ATENÇÃO: Deseja realmente DELETAR este usuário? Isso removerá todos os dados dele do banco de dados.\n\nO login continuará existindo no Google/Email, mas ele será visto como um NOVO usuário ao entrar novamente.")) return;
             
-            db.ref('users/' + uid).remove().then(() => {
-                alert("Usuário removido com sucesso!");
+            KaraokeAdmin.change(uid, 'Excluir cadastro', null).then(saved => {
+                if (saved) alert("Usuário removido com sucesso!");
             }).catch(err => {
                 alert("Erro ao remover: " + err.message);
             });
@@ -1282,5 +1285,9 @@
         `;
         document.head.appendChild(style);
     </script>
+    <script src="party-core.js?v=1"></script>
+    <script src="party-ui.js?v=1"></script>
+    <script src="party-admin.js?v=1"></script>
+    <script>KaraokeAdmin.init({db, auth});</script>
 </body>
 </html>

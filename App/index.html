@@ -9,6 +9,7 @@
     <link rel="icon" type="image/png" href="../Assets/icon.png">
     <link rel="stylesheet" href="index.css?v=3.2">
     <link rel="stylesheet" href="engagement.css">
+    <link rel="stylesheet" href="party-features.css?v=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Driver.js Tour -->
@@ -85,6 +86,7 @@
                 </div>
             </div>
             <div class="header-right">
+                <button id="btnPartySummary" class="btn-icon" title="Festas e resumos" aria-label="Festas e resumos"><i class="fas fa-list-alt"></i></button>
                 <button id="btnSettings" class="btn-icon" title="Configurações"><i class="fas fa-cog"></i></button>
             </div>
         </header>
@@ -178,6 +180,7 @@
                             <button class="btn-mini" onclick="changeTone(-0.05)" title="Diminuir Tom"><i
                                     class="fas fa-minus"></i></button>
                             <span class="control-label">TOM: 0</span>
+                            <button id="btnSongPreference" class="btn-mini" title="Salvar tom preferido" aria-label="Salvar tom preferido"><i class="fas fa-save"></i></button>
                             <button class="btn-mini" onclick="changeTone(0.05)" title="Aumentar Tom"><i
                                     class="fas fa-plus"></i></button>
                         </div>
@@ -531,7 +534,10 @@
     <div id="reactionContainer"></div>
 
     <script src="qrcode.min.js"></script>
-    <script src="app.js?v=3.4" defer></script>
+    <script src="party-core.js?v=1" defer></script>
+    <script src="party-ui.js?v=1" defer></script>
+    <script src="party-host.js?v=1" defer></script>
+    <script src="app.js?v=3.5" defer></script>
     <script src="tour-host.js" defer></script>
 </body>
 

@@ -908,6 +908,7 @@
     }
 
     function startRoom(name) {
+        PartyHost.begin(name);
 
         // Remove sala anterior deste host (se existir) para não acumular
 
@@ -1098,7 +1099,10 @@
 
     }
 
-    function logoutHost() {
+    async function logoutHost() {
+        try { await PartyHost.end(); } catch (error) {
+            if (!confirm("Não foi possível salvar o resumo. Sair mesmo assim?")) return;
+        }
 
         if (currentRoomCode) {
 
@@ -1117,6 +1121,17 @@
         });
 
     }
+
+    PartyHost.init({
+        db, user: () => hostUser, song: () => isPlaying ? queue[0] : null, pitch: () => currentPitch, logout: logoutHost,
+        setPitch(value) {
+            currentPitch = value;
+            if (pitchShifter) pitchShifter.setPitchOffset(value);
+            const label = document.querySelector(".tone-control .control-label");
+            const steps = Math.round((value - 1) / 0.059);
+            if (label) label.textContent = `TOM: ${steps > 0 ? "+" : ""}${steps} (salvo)`;
+        }
+    });
 
     // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -2229,6 +2244,7 @@
             audioSource = null;
         }
 
+        PartyHost.complete(null, "skipped");
         // Pula para a próxima música imediatamente sem dar nota
         // finishSong já cuida de isPlaying=false, queue.shift(), renderQueue() e playNext()
         finishSong();
@@ -2379,6 +2395,7 @@
     }
 
     function resetTone() {
+        PartyHost.invalidate();
         currentPitch = 1.0;
         if (pitchShifter) {
             try {
@@ -2468,6 +2485,7 @@
             `;
 
             const video = document.getElementById('mainVideo');
+            PartyHost.playing(current, video);
             const loader = document.getElementById('playerLoading');
             const fallback = document.getElementById('autoplayFallback');
 
@@ -2491,6 +2509,7 @@
                 };
 
                 video.onerror = () => {
+                    PartyHost.complete(null, "error");
                     updateDebugInfo(`❌ ERRO CDN: ${videoId}.mp4`);
                     setTimeout(showScore, 3000);
                 };
@@ -2682,6 +2701,7 @@
             }
         }
         finalScore = Math.max(0, Math.min(100, Number(finalScore) || 75));
+        PartyHost.complete(settings.enableScore === false ? null : finalScore);
         forcedScore = null;
         maxVolume = 0;
         console.log("📊 [SCORE] Nota calculada:", finalScore, "| Cantor:", singer);
@@ -3305,6 +3325,7 @@
     }
 
     function changeTone(delta) {
+        PartyHost.toneEdited();
 
         const v = document.getElementById('mainVideo');
 
