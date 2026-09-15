@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" href="../Assets/icon.png">
     <link rel="stylesheet" href="index.css?v=3.2">
     <link rel="stylesheet" href="engagement.css">
-    <link rel="stylesheet" href="party-features.css?v=3">
+    <link rel="stylesheet" href="party-features.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Driver.js Tour -->
@@ -303,10 +303,8 @@
         <div id="settingsModal" class="modal-overlay">
             <div class="modal-content settings-content">
                 <h2>⚙️ Configurações do Sistema</h2>
-                <div class="settings-body">
-                    <!-- PERSONALIZAÇÃO (v16) -->
-                    <div class="setting-item" style="border-color: var(--accent-primary); background: rgba(217,70,239,0.05); margin-bottom: 25px;">
-                        <label for='setDjName'>🆔 Identidade Visual do DJ:</label>
+                <div class="settings-body"><section class="settings-group"><h3>Visual da festa</h3><div class="setting-item" style="border-color: var(--accent-primary); background: rgba(217,70,239,0.05); margin-bottom: 25px;">
+                        <label for="setDjName">🆔 Identidade Visual do DJ:</label>
                         <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
                             <input type="text" id="setDjName" placeholder="Seu Nome Artístico (Ex: DJ Douglas)" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px; border-radius: 8px;">
                             
@@ -314,45 +312,22 @@
                                 <i class="fas fa-image"></i> UPLOAD DA LOGO (PNG/JPG)
                                 <input type="file" id="setLogoInput" accept="image/*" style="display:none" onchange="handleLogoUpload(event)">
                             </label>
-                            <small id="logoStatus" style="opacity:0.6;">Duração máxima: 500KB. Formato: PNG/JPG.</small>
+                            <small id="logoStatus" style="opacity:0.6;">Tamanho máximo: 500KB. Formato: PNG/JPG.</small>
                         </div>
-                    </div>
-
-                    <div class="setting-item">
-                        <label id='lblPhotos'>🖼️ Fotos para Proteção de Tela:</label>
+                    </div><div class="setting-item">
+                        <label id="lblPhotos">🖼️ Fotos para Proteção de Tela:</label>
                         <div class="photo-upload-container">
                             <label class="photo-input-btn">
                                 <i class="fas fa-upload"></i> ADICIONAR FOTOS
-                                <input type="file" id="setPhotosInput" multiple accept="image/*" style="display:none">
+                                <input type="file" id="setPhotosInput" multiple="" accept="image/*" style="display:none">
                             </label>
                             <p style="font-size:0.65rem; opacity:0.5;">Dica: Use fotos horizontais (1920x1080) para
                                 cobrir toda a tela.</p>
                             <div id="photoPreviewGrid" class="photo-preview-grid"></div>
                         </div>
-                    </div>
-                    <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="setAutoFullscreen">
-                            Tela cheia automática (ao clicar na tela)
-                        </label>
-                    </div>
-                    <div class="setting-item">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="setPlayIntroCall" checked>
-                            <strong>Tocar áudio de abertura antes das músicas</strong>
-                        </label>
-                        <small>Quando ativado, toca a vinheta de chamada do cantor antes do vídeo iniciar. Quando desativado, o vídeo inicia diretamente.</small>
-                    </div>
-                    <div class="setting-item">
-                        <label for='setAmbientUrl'>Música Ambiente (YouTube Link):</label>
-                        <input type="text" id="setAmbientUrl" placeholder="Ex: https://www.youtube.com/watch?v=..."
-                            class="full-width">
-                        <small>Deixe em branco para usar o padrão (Lounge Instrumental)</small>
-                    </div>
-                    <div class="setting-item">
-                        <label for='setScreensaverTime'>Inatividade para Proteção de Tela:</label>
-                        <select id="setScreensaverTime"
-                            style="width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:white; padding:10px; border-radius:8px; margin-top:10px;">
+                    </div><div class="setting-item">
+                        <label for="setScreensaverTime">Inatividade para Proteção de Tela:</label>
+                        <select id="setScreensaverTime" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:white; padding:10px; border-radius:8px; margin-top:10px;">
                             <option value="30000">30 Segundos (Padrão)</option>
                             <option value="60000">1 Minuto</option>
                             <option value="120000">2 Minutos</option>
@@ -360,13 +335,20 @@
                             <option value="0">Nunca (Manter Vibe/Clipe)</option>
                         </select>
                         <small>O carrossel de fotos aparece automaticamente após este tempo sem uso.</small>
-                    </div>
-
-                    <!-- NÃOVA SEÇÃO: PONTUAÇÃO -->
-                    <div class="setting-section">
+                    </div></section><section class="settings-group"><h3>Áudio e reprodução</h3><div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="setPlayIntroCall" checked="">
+                            <strong>Tocar áudio de abertura antes das músicas</strong>
+                        </label>
+                        <small>Quando ativado, toca a vinheta de chamada do cantor antes do vídeo iniciar. Quando desativado, o vídeo inicia diretamente.</small>
+                    </div><div class="setting-item">
+                        <label for="setAmbientUrl">Música Ambiente (YouTube Link):</label>
+                        <input type="text" id="setAmbientUrl" placeholder="Ex: https://www.youtube.com/watch?v=..." class="full-width">
+                        <small>Deixe em branco para usar o padrão (Lounge Instrumental)</small>
+                    </div></section><section class="settings-group"><h3>Pontuação</h3><div class="setting-section">
                         <div class="setting-item">
                             <label class="checkbox-label">
-                                <input type="checkbox" id="setEnableScore" checked>
+                                <input type="checkbox" id="setEnableScore" checked="">
                                 <strong>Habilitar Pontuação</strong>
                                 <span class="score-range-hint">mín=0 máx=100</span>
                             </label>
@@ -379,32 +361,27 @@
                                     Aleatória
                                 </label>
                                 <div class="sub-setting">
-                                    <span>Menãor Pontuação Aleatória:</span>
+                                    <span>Menor pontuação aleatória:</span>
                                     <input type="number" id="setMinRandomScore" value="75" min="0" max="100">
                                 </div>
                             </div>
 
                             <div class="score-mode-choice">
                                 <label class="radio-label">
-                                    <input type="radio" name="scoreMode" value="mic" id="modeMic" checked>
+                                    <input type="radio" name="scoreMode" value="mic" id="modeMic" checked="">
                                     A partir do Microfone
                                 </label>
                             </div>
                         </div>
 
                         <div class="difficulty-section" id="difficultySection">
-                            <div style='font-weight:bold;margin-bottom:8px;'>Grau de Dificuldade da Pontuação (Microfone):</div>
+                            <div style="font-weight:bold;margin-bottom:8px;">Grau de Dificuldade da Pontuação (Microfone):</div>
                             <div class="difficulty-radios">
-                                <label class="diff-btn"><input type="radio" name="difficulty"
-                                        value="super_easy"><span>Super Fácil</span></label>
-                                <label class="diff-btn"><input type="radio" name="difficulty"
-                                        value="very_easy"><span>Muito Fácil</span></label>
-                                <label class="diff-btn"><input type="radio" name="difficulty"
-                                        value="easy"><span>Fácil</span></label>
-                                <label class="diff-btn"><input type="radio" name="difficulty" value="nãormal"
-                                        checked><span>Padrão</span></label>
-                                <label class="diff-btn"><input type="radio" name="difficulty"
-                                        value="hard"><span>Difícil</span></label>
+                                <label class="diff-btn"><input type="radio" name="difficulty" value="super_easy"><span>Super Fácil</span></label>
+                                <label class="diff-btn"><input type="radio" name="difficulty" value="very_easy"><span>Muito Fácil</span></label>
+                                <label class="diff-btn"><input type="radio" name="difficulty" value="easy"><span>Fácil</span></label>
+                                <label class="diff-btn"><input type="radio" name="difficulty" value="nãormal" checked=""><span>Padrão</span></label>
+                                <label class="diff-btn"><input type="radio" name="difficulty" value="hard"><span>Difícil</span></label>
                             </div>
                             <!-- VU METRO DE CALIBRAÇÃO -->
                             <div class="calib-container">
@@ -414,27 +391,13 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <a id="adminMenuBtn" href="admin.html" target="_blank" rel="noopener" class="setting-item" style="display:none;color:#ffd700;padding:14px;text-align:center;">ADMINISTRAÇÃO / MEU PAINEL DE DJ</a>
-                    <div class="setting-item"
-                        style="border-color: #ffd700; background: rgba(255,215,0,0.05); cursor: pointer; margin-bottom: 10px;"
-                        onclick="openSubscriptionModal()">
-                        <label style="color: #ffd700; justify-content: center; cursor: pointer;"><i
-                                class="fas fa-star"></i> MINHA ASSINATURA / PLANO</label>
-                    </div>
-                    <div class="setting-item"
-                        style="border-color: #ff4444; background: rgba(255,0,0,0.05); cursor: pointer;"
-                        onclick="logoutHost()">
-                        <label style="color: #ff4444; justify-content: center; cursor: pointer;"><i
-                                class="fas fa-sign-out-alt"></i> DESCONECTAR DA CABINE (LOGOUT)</label>
-                    </div>
-                    <div class="setting-item"
-                        style="border-color: #00f2ff; background: rgba(0,242,255,0.05); cursor: pointer; margin-top: 10px;"
-                        onclick="startHostTour(true)">
-                        <label style="color: #00f2ff; justify-content: center; cursor: pointer;"><i
-                                class="fas fa-route"></i> REFAZER TUTORIAL DA CABINE</label>
-                    </div>
-                </div>
+                    </div></section><section class="settings-group"><h3>Conta e ajuda</h3><a id="adminMenuBtn" href="admin.html" target="_blank" rel="noopener" class="setting-item" style="display:none;color:#ffd700;padding:14px;text-align:center;">ADMINISTRAÇÃO / MEU PAINEL DE DJ</a><div class="setting-item" style="border-color: #ffd700; background: rgba(255,215,0,0.05); cursor: pointer; margin-bottom: 10px;" onclick="openSubscriptionModal()">
+                        <label style="color: #ffd700; justify-content: center; cursor: pointer;"><i class="fas fa-star"></i> MINHA ASSINATURA / PLANO</label>
+                    </div><div class="setting-item" style="border-color: #ff4444; background: rgba(255,0,0,0.05); cursor: pointer;" onclick="logoutHost()">
+                        <label style="color: #ff4444; justify-content: center; cursor: pointer;"><i class="fas fa-sign-out-alt"></i> DESCONECTAR DA CABINE (LOGOUT)</label>
+                    </div><div class="setting-item" style="border-color: #00f2ff; background: rgba(0,242,255,0.05); cursor: pointer; margin-top: 10px;" onclick="startHostTour(true)">
+                        <label style="color: #00f2ff; justify-content: center; cursor: pointer;"><i class="fas fa-route"></i> REFAZER TUTORIAL DA CABINE</label>
+                    </div></section></div>
                 <div class="modal-footer">
                     <button id="settingsClose" class="btn-modal secondary">FECHAR</button>
                     <button id="settingsSave" class="btn-modal primary">SALVAR</button>

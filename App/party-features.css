@@ -2,3 +2,25 @@
 
 #main_wrapper .header-right{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:nowrap}#main_wrapper .header-right .btn-icon{flex:0 0 auto;margin:0}
 .party-dialog{position:fixed;inset:0;margin:auto;height:fit-content;width:min(720px,calc(100vw - 32px));max-height:calc(100dvh - 48px);padding:28px;border:1px solid #ffffff24;border-radius:24px;background:linear-gradient(150deg,#20162f,#11111e 60%);box-shadow:0 28px 100px #000b;color:#f4f1ff;overscroll-behavior:contain}.party-dialog::backdrop{background:#06050cbf;backdrop-filter:blur(7px)}.party-heading{padding-bottom:18px;margin-bottom:20px;border-bottom:1px solid #ffffff18}.party-heading h2{font-size:1.3rem;letter-spacing:-.025em;font-weight:650}.party-button{border:1px solid #ffffff25;background:#ffffff0a;padding:11px 16px;border-radius:12px;transition:background .15s,border-color .15s}.party-button:hover{background:#d946ef1a;border-color:#d946ef88}.party-button:focus-visible{outline:2px solid #de7aff;outline-offset:3px}.party-heading .party-button{font-size:.8rem;color:#d3c9df}.party-card{background:#ffffff04;padding:18px;border-radius:16px;border-color:#ffffff15}.party-card strong{display:block;margin-bottom:8px}.party-card p{margin:8px 0 12px}.party-dialog>div>h3{margin:0 0 12px;font-size:1.1rem}.party-dialog p{line-height:1.6;margin-bottom:12px}.party-dialog pre{padding:16px;background:#0003;border-radius:14px;font-size:.9rem}.party-dialog select,.party-dialog input,.party-dialog textarea{margin:8px 0;border-color:#ffffff30;background:#090813}.party-dialog details summary{cursor:pointer;padding:8px 0;color:#dca6f4}.party-actions{gap:10px;margin:20px 0}.party-dialog button{white-space:normal}@media(max-width:540px){.party-dialog{padding:20px;width:calc(100vw - 24px);max-height:calc(100dvh - 32px);border-radius:20px}.party-heading h2{font-size:1.1rem}.party-actions .party-button{flex:1 1 140px}}
+
+/* Configurações amplas, com grupos e ações sempre acessíveis. */
+#settingsModal { padding: 20px; box-sizing: border-box; }
+#settingsModal .settings-content { width: min(1040px, 100%) !important; max-height: 92dvh !important; padding: 28px; border-radius: 24px; border-width: 1px; }
+#settingsModal h2 { margin: 0; font-size: 1.35rem; }
+#settingsModal .settings-body { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 22px; min-height: 0; max-height: none !important; margin-top: 22px; padding-right: 10px !important; scrollbar-width: thin; scrollbar-color: #744392 transparent; }
+#settingsModal .settings-group { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+#settingsModal .settings-group h3 { color: #dfacf5; font-size: .9rem; margin: 0 0 2px; letter-spacing: .04em; }
+#settingsModal .setting-item { margin: 0 !important; padding: 16px; }
+#settingsModal .setting-item label { font-size: .88rem; line-height: 1.5; }
+#settingsModal small { display: block; font-size: .75rem; line-height: 1.6; margin-top: 8px; opacity: .7; }
+#settingsModal input, #settingsModal select { max-width: 100%; box-sizing: border-box; }
+#settingsModal .setting-section { margin: 0; padding: 0; border: 0; }
+#settingsModal .difficulty-radios { flex-wrap: wrap; }
+#settingsModal .modal-footer { flex-shrink: 0; display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.1); }
+#settingsModal .modal-footer button { min-width: 110px; margin: 0; }
+@media(max-width: 700px) {
+ #settingsModal { padding: 10px; }
+ #settingsModal .settings-content { padding: 20px 16px; max-height: 94dvh !important; }
+ #settingsModal .settings-body { grid-template-columns: minmax(0,1fr); }
+ #settingsModal .modal-footer button { flex: 1; }
+}

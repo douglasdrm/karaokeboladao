@@ -437,7 +437,7 @@
             console.warn("⚠️ Player ambiente bloqueado ou falhou:", e);
         }
 
-        // Auto-Fullscreen Trigger (Clique na Tela)
+        // Retoma o áudio após interação do usuário
 
         document.addEventListener('click', () => {
             // Garante que o AudioContext seja retomado em qualquer interação (Autoplay Policy)
@@ -445,17 +445,7 @@
                 audioContext.resume();
             }
 
-            if (settings.autoFullscreen && !document.fullscreenElement && !document.webkitFullscreenElement) {
 
-                const container = document.getElementById('playerContainer');
-
-                if (container) {
-
-                    (container.requestFullscreen || container.webkitRequestFullscreen).call(container).catch(() => { });
-
-                }
-
-            }
 
         }, { once: false });
 
@@ -1203,7 +1193,6 @@
 
         if (!modal) return;
 
-        document.getElementById('setAutoFullscreen').checked = settings.autoFullscreen || false;
 
         const introCallInput = document.getElementById('setPlayIntroCall');
         if (introCallInput) introCallInput.checked = settings.playIntroCall !== false;
@@ -1278,7 +1267,6 @@
 
     async function saveSettings() {
 
-        const autoFs = document.getElementById('setAutoFullscreen').checked;
 
         const playIntro = document.getElementById('setPlayIntroCall') ? document.getElementById('setPlayIntroCall').checked : (settings.playIntroCall !== false);
 
@@ -1298,7 +1286,7 @@
 
             ...settings,
 
-            autoFullscreen: autoFs,
+            autoFullscreen: false,
 
             playIntroCall: playIntro,
 
@@ -2437,12 +2425,7 @@
             stopAmbientMusic();
             forcedScore = null;
 
-            if (settings.autoFullscreen && !document.fullscreenElement) {
-                const container = document.getElementById('playerContainer');
-                if (container) {
-                    (container.requestFullscreen || container.webkitRequestFullscreen)?.call(container).catch(() => { });
-                }
-            }
+
 
             if (topInfoTitle) topInfoTitle.innerText = current.title;
             if (topInfoArtist) topInfoArtist.innerText = `${current.artist} — ${current.singer.toUpperCase()}`;
