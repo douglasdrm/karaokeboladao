@@ -659,6 +659,11 @@ body {
 /* ═══════════════════════════════════════
    ACTIVE USERS CHIPS
    ═══════════════════════════════════════ */
+#nameModalOverlay .mobile-modal { max-height: 88vh; overflow-y: auto; box-sizing: border-box; }
+#nameModalOverlay .active-users-list { max-height: 40vh; }
+#nameModalOverlay .active-users-list input[type="text"] { width: 100%; box-sizing: border-box; border: 1px solid #777; border-radius: 9px; padding: 10px; background: #111122; color: #fff; }
+#nameModalOverlay .user-chip:has(input:checked) { border-color: #d946ef; background: rgba(217,70,239,.18); }
+.mobile-tone-panel[hidden]{display:none!important}.mobile-tone-panel{margin:12px 0;padding:16px;border:1px solid #d946ef44;border-radius:18px;background:linear-gradient(135deg,#23152f,#121220);text-align:left}.mobile-tone-panel summary{cursor:pointer;font-weight:600;color:#edd5fa;padding:4px 0}.tone-song-label{margin:12px 0;color:#bab4c7;font-size:.85rem}.tone-mobile-controls{display:flex;align-items:center;justify-content:center;gap:24px;margin:16px 0}.tone-mobile-controls output{font-size:1.1rem;min-width:80px;text-align:center;color:#fff}.mobile-tone-panel button{border:1px solid #ffffff25;background:#ffffff09;color:#fff;border-radius:12px;padding:12px 15px;cursor:pointer}.tone-mobile-controls button{font-size:1.4rem;min-width:48px}.tone-mobile-actions{display:flex;flex-wrap:wrap;gap:8px}.tone-mobile-actions button{flex:1 1 auto;font-size:.8rem}.tone-mobile-message{font-size:.78rem;color:#bcb0c7;line-height:1.5;margin-top:12px}.mobile-tone-panel button:disabled{opacity:.5}.mobile-tone-panel button:focus-visible{outline:2px solid #d946ef;outline-offset:2px}
 .active-users-list {
     display: flex; flex-wrap: wrap; gap: 8px;
     justify-content: center; margin-bottom: 18px;
@@ -1495,5 +1500,3 @@ body { padding-top: 0; }
 /* ════════════════════════════════
    ÍNDICE ALFABÉTICO
 ════════════════════════════════ */
-
-

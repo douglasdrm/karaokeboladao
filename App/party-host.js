@@ -36,39 +36,14 @@
             party.songs[track] = { id: String(song.id), title: song.title || '', artist: song.artist || '', singer: song.singer || 'Convidado', status: 'playing', startedAt: Date.now() };
             backgroundSave();
         }
-        try {
-            const snap = await base().child('preferences/' + PartyCore.preferenceKey(song)).once('value');
-            const preference = snap.val();
-            if (token !== generation || document.getElementById('mainVideo') !== video || !preference || !PartyCore.validPitch(preference.pitch)) return;
-            api.setPitch(preference.pitch);
-        } catch (error) { console.warn('Não foi possível carregar o tom salvo:', error); }
     }
+
     function complete(score, status = 'completed') {
         const item = party?.songs?.[track];
         if (!item || item.status !== 'playing') return;
         item.status = status; item.endedAt = Date.now();
         if (status === 'completed' && Number.isFinite(score)) item.score = score;
         backgroundSave();
-    }
-    async function preferences() {
-        const song = api.song();
-        if (!song || !document.getElementById('mainVideo')) { alert('Inicie uma música para salvar o tom dos cantores.'); return; }
-        const userUid = api.user()?.uid;
-        const reference = base().child('preferences/' + PartyCore.preferenceKey(song));
-        const { body } = dialog('Tom preferido');
-        body.append(el('h3', song.title), el('p', song.singer), el('p', 'Salvo na conta deste DJ para esta música e formação de cantores. Pedidos em grupo têm preferência própria.', 'party-muted'));
-        const actions = el('div', undefined, 'party-actions');
-        const message = el('p', '', 'party-muted');
-        actions.append(button('Salvar o tom atual', async () => {
-            if (api.user()?.uid !== userUid || api.song() !== song) throw new Error('A música ou a conta mudou. Abra novamente este painel.');
-            const pitch = api.pitch();
-            if (!PartyCore.validPitch(pitch)) throw new Error('Tom inválido.');
-            await reference.set({ pitch, title: song.title || '', singer: song.singer || '', updatedAt: firebase.database.ServerValue.TIMESTAMP });
-            message.textContent = 'Tom salvo. Será aplicado nos próximos pedidos desta música para estes cantores.';
-        }), button('Esquecer preferência', async () => {
-            await reference.remove(); message.textContent = 'Preferência removida. As próximas execuções começam no tom original.';
-        }));
-        body.append(actions, message);
     }
     function showSummary(value, current = false) {
         const { body } = dialog(current ? 'Resumo da festa atual' : 'Resumo da festa');
@@ -116,7 +91,7 @@
         } finally { clearTimeout(timer); }
     }
     window.PartyHost = {
-        init(options) { api = options; document.getElementById('btnSongPreference').onclick = preferences; document.getElementById('btnPartySummary').onclick = summaries; },
+        init(options) { api = options; document.getElementById('btnPartySummary').onclick = summaries; },
         begin, playing, complete, end, toneEdited() { generation++; },
         invalidate() { generation++; }
     };

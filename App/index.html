@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" href="../Assets/icon.png">
     <link rel="stylesheet" href="index.css?v=3.2">
     <link rel="stylesheet" href="engagement.css">
-    <link rel="stylesheet" href="party-features.css?v=1">
+    <link rel="stylesheet" href="party-features.css?v=3">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Driver.js Tour -->
@@ -180,7 +180,7 @@
                             <button class="btn-mini" onclick="changeTone(-0.05)" title="Diminuir Tom"><i
                                     class="fas fa-minus"></i></button>
                             <span class="control-label">TOM: 0</span>
-                            <button id="btnSongPreference" class="btn-mini" title="Salvar tom preferido" aria-label="Salvar tom preferido"><i class="fas fa-save"></i></button>
+
                             <button class="btn-mini" onclick="changeTone(0.05)" title="Aumentar Tom"><i
                                     class="fas fa-plus"></i></button>
                         </div>
@@ -415,6 +415,7 @@
                             </div>
                         </div>
                     </div>
+                    <a id="adminMenuBtn" href="admin.html" target="_blank" rel="noopener" class="setting-item" style="display:none;color:#ffd700;padding:14px;text-align:center;">ADMINISTRAÇÃO / MEU PAINEL DE DJ</a>
                     <div class="setting-item"
                         style="border-color: #ffd700; background: rgba(255,215,0,0.05); cursor: pointer; margin-bottom: 10px;"
                         onclick="openSubscriptionModal()">
@@ -534,10 +535,12 @@
     <div id="reactionContainer"></div>
 
     <script src="qrcode.min.js"></script>
+    <script src="singer-selection.js?v=1" defer></script>
+    <script src="tone-control.js?v=1" defer></script>
     <script src="party-core.js?v=1" defer></script>
     <script src="party-ui.js?v=1" defer></script>
-    <script src="party-host.js?v=1" defer></script>
-    <script src="app.js?v=3.5" defer></script>
+    <script src="party-host.js?v=2" defer></script>
+    <script src="app.js?v=3.6" defer></script>
     <script src="tour-host.js" defer></script>
 </body>
 

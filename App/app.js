@@ -25,6 +25,8 @@
     let audioSource = null;
 
     let currentPitch = 1.0;
+    let tonePerformanceId = "";
+    let toneManuallyAdjusted = false;
 
     let currentCallAudio = null; // Áudio ativo da apresentação do próximo cantor
 
@@ -2415,6 +2417,8 @@
 
     function startVideoPlay(current) {
         try {
+            tonePerformanceId = Date.now().toString(36) + Math.random().toString(36).slice(2);
+            toneManuallyAdjusted = false;
             // Reseta o tom para 0 para toda nova música que iniciar
             resetTone();
 
@@ -2446,7 +2450,10 @@
 
             if (currentRoomCode) {
                 db.ref('salas/' + currentRoomCode + '/now_playing').set({
-                    title: current.title, artist: current.artist, singer: current.singer, playing: true
+                    title: current.title, artist: current.artist, singer: current.singer, playing: true,
+                    songId: current.id, performanceId: tonePerformanceId, pitch: 1, remoteToneEnabled: true,
+                    requesterUid: current.requesterUid || current.singerUid || null,
+                    recipientVersion: 1, recipientUids: SingerSelection.recipients(current)
                 });
                 currentVotes = {};
                 db.ref('salas/' + currentRoomCode + '/now_playing/votes').on('value', snap => {
@@ -2726,16 +2733,20 @@
         // Grava last_score no Firebase após 15s (aguarda a animação do telão terminar)
         if (currentRoomCode && db) {
             const scoreEntry = queue[0] || {};
+            const scoreRoomCode = currentRoomCode;
             const scorePayload = {
                 singer: singer,
                 singerUid: scoreEntry.singerUid || null,
+                recipientVersion: 1,
+                recipientUids: SingerSelection.recipients(scoreEntry),
                 title: scoreEntry.title || '',
                 artist: scoreEntry.artist || '',
                 score: finalScore,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             };
             setTimeout(() => {
-                db.ref(`salas/${currentRoomCode}/last_score`).set(scorePayload)
+                if (currentRoomCode !== scoreRoomCode) return;
+                db.ref(`salas/${scoreRoomCode}/last_score`).set(scorePayload)
                     .catch(e => console.warn('[SCORE] Falha ao gravar last_score:', e));
             }, 15000); // 15s de atraso — dá tempo da animação no telão aparecer primeiro
         }
@@ -3326,6 +3337,7 @@
 
     function changeTone(delta) {
         PartyHost.toneEdited();
+        toneManuallyAdjusted = true;
 
         const v = document.getElementById('mainVideo');
 
@@ -3361,14 +3373,9 @@
 
         }
 
-        // Feedback visual 2: Toast de aviso (ajuda em modo tela cheia)
-
-        if (typeof showToast === 'function') {
-
-            const semitones = Math.round((currentPitch - 1.0) / 0.059);
-
-            showToast(`TOM: ${semitones > 0 ? '+' : ''}${semitones}`);
-
+        // Keep the adjustment discreet: update only the control label and mobile state.
+        if (currentRoomCode && isPlaying) {
+            db.ref(`salas/${currentRoomCode}/now_playing/pitch`).set(currentPitch).catch(console.warn);
         }
 
         resetControlásTimer();
@@ -3736,6 +3743,17 @@
         requestsRef.on('child_added', (snapshot) => {
 
             const req = snapshot.val();
+            if (req && req.kind === "tone") {
+                const current = queue[0];
+                const state = current ? { ...current, playing: isPlaying, remoteToneEnabled: true, requesterUid: current.requesterUid || current.singerUid } : null;
+                if (current && req.performanceId === tonePerformanceId && String(req.id) === String(current.id) &&
+                    ToneControl.canControl(state, req.singerUid) && ToneControl.valid(req.pitch) &&
+                    !(req.automatic && toneManuallyAdjusted)) {
+                    changeTone(req.pitch - currentPitch);
+                }
+                requestsRef.child(snapshot.key).remove().catch(console.warn);
+                return;
+            }
 
             if (req && !req.processed) {
 
@@ -3753,7 +3771,10 @@
 
                         singer: req.singer,
 
-                        singerUid: req.singerUid || null, // Para score card no mobile
+                        singerUid: req.singerUid || null, // Autor de pedidos antigos
+                        requesterUid: req.singerUid || null,
+                        recipientVersion: 1,
+                        recipientUids: SingerSelection.recipients(req),
 
                         time: mobileTime
 
@@ -4097,6 +4118,5 @@
     window.spawnEmoji = typeof spawnFloatingEmoji !== 'undefined' ? spawnFloatingEmoji : null;
 
 })();
-
 
 

@@ -26,7 +26,7 @@
     <link rel="icon" type="image/x-icon" href="../Assets/icon.png">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="mobile.css?v=10">
+    <link rel="stylesheet" href="mobile.css?v=11">
 
     <!-- Driver.js Tour -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css" />
@@ -50,6 +50,8 @@
             document.head.appendChild(s);
         })();
     </script>
+    <script src="singer-selection.js?v=1"></script>
+    <script src="tone-control.js?v=1"></script>
 </head>
 
 <body class="mobile-body">
@@ -489,7 +491,7 @@
     <div id="nameModalOverlay" class="mobile-modal-overlay">
         <div class="mobile-modal">
             <h3>Quem vai cantar? 🎤</h3>
-            <p>Selecione alguém da sala ou escreva o nome:</p>
+            <p>Selecione uma ou mais pessoas. Desmarque seu nome se você não for cantar.</p>
             <div class="active-users-list" id="activeUsersChips"></div>
             <input type="text" id="modalSingerName" placeholder="Nome do cantor..." autocomplete="off">
             <div class="modal-buttons">
@@ -1705,25 +1707,7 @@
             modal.style.transform = 'scale(1) translateY(0)';
             modal.style.opacity = '1';
 
-            input.value = currentUser.displayName?.split(' ')[0] || '';
-
-            // Chips de usuários ativos
-            const chips = document.getElementById('activeUsersChips');
-            chips.innerHTML = '';
-            try {
-                Object.values(activeUsers || {})
-                    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-                    .forEach(u => {
-                        const c = document.createElement('div');
-                        c.className = 'user-chip';
-                        c.innerHTML = `${u.photo ? `<img src="${u.photo}">` : '👤'} <span>${u.name}</span> <i class="fas fa-plus-circle"></i>`;
-                        c.onclick = () => {
-                            const cur = input.value.trim();
-                            input.value = cur ? (cur.includes(u.name) ? cur : cur + ' e ' + u.name) : u.name;
-                        };
-                        chips.appendChild(c);
-                    });
-            } catch (e) { console.error("Erro ao renderizar chips:", e); }
+            SingerSelection.mount(document.getElementById('activeUsersChips'), input, activeUsers, currentUser);
 
             setTimeout(() => input.focus(), 100);
         }
@@ -1735,8 +1719,12 @@
             setTimeout(() => { overlay.style.display = 'none'; pendingRequest = null; }, 350);
         }
 
+        let sendingSongRequest = false;
         function confirmNameModal() {
-            const name = document.getElementById('modalSingerName').value.trim() || 'Cantor Surpresa';
+            if (sendingSongRequest || !currentUser) return;
+            const selection = SingerSelection.current();
+            if (!selection.singer) { alert("Selecione pelo menos uma pessoa para cantar."); return; }
+            const name = selection.singer;
             if (!pendingRequest) { console.error("❌ Erro: Nenhum pedido pendente."); return; }
             if (!currentRoomCode) {
                 alert("❌ Erro: Sem código de sala. Tente escanear o QR Code novamente.");
@@ -1746,24 +1734,27 @@
 
             console.log("📤 Enviando pedido para Firebase:", pendingRequest.title, "Cantor:", name);
 
+            const request = { ...pendingRequest };
+            sendingSongRequest = true;
             db.ref(`salas/${currentRoomCode}/pedidos`).push({
                 id: pendingRequest.id,
                 title: pendingRequest.title,
                 artist: pendingRequest.artist,
                 singer: name,
-                singerUid: currentUser ? currentUser.uid : null, // Para score card
+                singerUid: currentUser.uid, // Autor legado, mantido para as regras existentes
+                requesterUid: currentUser.uid,
+                ...selection,
                 processed: false,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
                 console.log("✅ Pedido enviado com sucesso!");
                 triggernotification(`🎤 NA FILA, ${name.toUpperCase()}!`);
-                updateHistory(pendingRequest.id, pendingRequest.title, pendingRequest.artist);
+                updateHistory(request.id, request.title, request.artist);
+                closeNameModal();
             }).catch(err => {
                 console.error("❌ Falha não envio do Firebase:", err);
                 alert('Erro ao enviar pedido: ' + err.message);
-            });
-
-            closeNameModal();
+            }).finally(() => { sendingSongRequest = false; });
         }
 
         function updateHistory(id, title, artist) {
@@ -2189,15 +2180,21 @@
 
         let scoreCardBlob = null;
         let lastSeenScoreTimestamp = 0;
+        let scoreCardListenerRef = null;
 
         function listenForScoreCard() {
             if (!currentRoomCode || !currentUser) return;
 
             // Recupera o timestamp do último card já visto (persiste entre logins)
-            const storageKey = `kp_last_score_ts_${currentUser.uid}`;
+            const scoreUserUid = currentUser.uid;
+            const scoreRoom = currentRoomCode;
+            const storageKey = `kp_last_score_ts_${scoreRoom}_${scoreUserUid}`;
             lastSeenScoreTimestamp = parseInt(localStorage.getItem(storageKey) || '0', 10);
 
-            db.ref(`salas/${currentRoomCode}/last_score`).on('value', snap => {
+            if (scoreCardListenerRef) scoreCardListenerRef.off('value');
+            scoreCardListenerRef = db.ref(`salas/${currentRoomCode}/last_score`);
+            scoreCardListenerRef.on('value', snap => {
+                if (currentUser?.uid !== scoreUserUid || currentRoomCode !== scoreRoom) return;
                 const data = snap.val();
                 if (!data || !data.timestamp) return;
 
@@ -2206,7 +2203,7 @@
                 if (data.timestamp < fiveMinutesAgo) return;
 
                 // Só dispara se for para este usuário E for um score novo (nunca visto antes)
-                if (data.singerUid === currentUser.uid && data.timestamp > lastSeenScoreTimestamp) {
+                if (SingerSelection.recipients(data).includes(scoreUserUid) && data.timestamp > lastSeenScoreTimestamp) {
                     lastSeenScoreTimestamp = data.timestamp;
                     localStorage.setItem(storageKey, data.timestamp);
                     generateScoreCard(data);
@@ -2888,6 +2885,7 @@
         }
     </script>
 
+    <script>MobileTone.init({db, auth, getRoom: () => currentRoomCode});</script>
 </body>
 
 </html>

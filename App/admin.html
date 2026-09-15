@@ -297,7 +297,7 @@
         .hall-fame-table th { opacity: 0.5; font-weight: 400; text-align: left; padding: 5px; border-bottom: 1px solid var(--border); }
         .hall-fame-table td { padding: 8px 5px; border-bottom: 1px dotted var(--border); }
     </style>
-    <link rel="stylesheet" href="party-features.css?v=1">
+    <link rel="stylesheet" href="party-features.css?v=3">
 </head>
 <body>
 
@@ -324,6 +324,11 @@
             </div>
         </header>
 
+        <nav id="ownerViewControls" style="display:none;gap:10px;flex-wrap:wrap;margin:16px 0;">
+            <button class="party-button" onclick="setOwnerView('master')">Administração do sistema</button>
+            <button class="party-button" onclick="setOwnerView('dj')">Meu painel de DJ</button>
+            <a class="party-button" href="index.html">Voltar à cabine</a>
+        </nav>
         <div id="masterView" style="display: none;">
             <div class="stats-grid">
                 <div class="stat-card">
@@ -488,20 +493,28 @@
 
         const ADMIN_EMAIL = "douglasdrm@gmail.com"; 
 
+        let loadedOwnerDashboard = false;
+        function setOwnerView(view) {
+            const user = auth.currentUser;
+            if (!user || user.email !== ADMIN_EMAIL) return;
+            document.getElementById('masterView').style.display = view === 'master' ? 'block' : 'none';
+            document.getElementById('djDashboard').style.display = view === 'dj' ? 'block' : 'none';
+            if (view === 'dj' && !loadedOwnerDashboard) { loadDJData(user.uid); loadedOwnerDashboard = true; }
+        }
         auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('loginOverlay').style.display = 'none';
-                if (user.email === ADMIN_EMAIL) {
-                    document.getElementById('masterView').style.display = 'block';
-                    switchTab('users');
-                    initCatalogLogic(); // Força carga do catálogo no login
-                    loadData();
-                } else {
-                    document.getElementById('djDashboard').style.display = 'block';
-                    loadDJData(user.uid);
-                }
+            document.getElementById('masterView').style.display = 'none';
+            document.getElementById('djDashboard').style.display = 'none';
+            document.getElementById('ownerViewControls').style.display = 'none';
+            document.getElementById('loginOverlay').style.display = user ? 'none' : 'flex';
+            if (!user) { loadedOwnerDashboard = false; return; }
+            if (user.email === ADMIN_EMAIL) {
+                document.getElementById('ownerViewControls').style.display = 'flex';
+                setOwnerView('master');
+                switchTab('users');
+                initCatalogLogic();
             } else {
-                document.getElementById('loginOverlay').style.display = 'flex';
+                document.getElementById('djDashboard').style.display = 'block';
+                loadDJData(user.uid);
             }
         });
 
