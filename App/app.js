@@ -990,13 +990,7 @@
         startActiveUsersListener();
         initReactionListener();
 
-        // Solicita acesso ao microfone (Host)
-
-        if (typeof startMic === 'function') {
-
-            startMic();
-
-        }
+        // O microfone só é aberto durante a pontuação ou um teste explícito.
 
         // SINCRONIA INICIAL (v11)
 
@@ -1108,6 +1102,7 @@
 
         }
 
+        stopMic();
         auth.signOut().then(() => {
 
             window.location.reload();
@@ -1175,7 +1170,7 @@
 
         if (btnSettings) btnSettings.onclick = openSettings;
 
-        if (btnClose) btnClose.onclick = () => modalSettings.style.display = 'none';
+        if (btnClose) btnClose.onclick = closeSettings;
 
         if (btnSave) btnSave.onclick = saveSettings;
 
@@ -1183,10 +1178,15 @@
 
         window.addEventListener('click', (e) => {
 
-            if (e.target === modalSettings) modalSettings.style.display = 'none';
+            if (e.target === modalSettings) closeSettings();
 
         });
 
+    }
+
+    function closeSettings() {
+        document.getElementById('settingsModal').style.display = 'none';
+        stopMic('calibration');
     }
 
     function openSettings() {
@@ -1225,9 +1225,13 @@
 
         modal.style.display = 'flex';
 
-        // Inicia monitoramento do Mic para calibração
-
-        startCalibMic();
+        const testMic = document.getElementById('testMicButton');
+        if (testMic) testMic.onclick = async () => {
+            if (micReasons.has('calibration')) { stopMic('calibration'); return; }
+            await startMic('calibration');
+            if (analyzer) startCalibMic();
+        };
+        if (analyzer) startCalibMic();
 
     }
 
@@ -1237,7 +1241,7 @@
 
         const bar = document.getElementById('calibBar');
 
-        const valText = document.getElementById('calibvolVal');
+        const valText = document.getElementById('calibVolVal');
 
         if (!bar || !valText) return;
 
@@ -1315,7 +1319,9 @@
 
         localStorage.setItem('karaokeSettings', JSON.stringify(settings));
 
-        document.getElementById('settingsModal').style.display = 'none';
+        closeSettings();
+        if (settings.enableScore === false || settings.scoreMode !== 'mic') stopMic('song');
+        else if (isPlaying && !document.getElementById('mainVideo')?.paused) startMic('song');
 
         showToast("Configurações salvas com sucesso!");
 
@@ -2495,12 +2501,15 @@
                     if (fallback) fallback.style.display = 'flex';
                 });
 
+                video.onpause = () => stopMic('song');
                 video.onplaying = () => {
+                    if (settings.enableScore !== false && settings.scoreMode === 'mic') startMic('song');
                     if (fallback) fallback.style.display = 'none';
                     updateDebugInfo(`✅ TOCANDO: ${videoId}.mp4`);
                 };
 
                 video.onerror = () => {
+                    stopMic('song');
                     PartyHost.complete(null, "error");
                     updateDebugInfo(`❌ ERRO CDN: ${videoId}.mp4`);
                     setTimeout(showScore, 3000);
@@ -2648,6 +2657,7 @@
     // ─── Scoring ──────────────────────────────────────────────────────────────────
 
     function showScore(forceScore = null) {
+        stopMic();
         console.log("📊 [SCORE] showScore iniciado");
 
         // Parar vídeo
@@ -2831,6 +2841,7 @@
     }
 
     function finishSong() {
+        stopMic();
         console.log("🎬 Encerrando música atual...");
 
         // Aplausos já tocaram no showScore, então aqui apenas limpamos
@@ -3210,65 +3221,77 @@
 
     // ─── Som SFX ──────────────────────────────────────────────────────────────────
 
-    async function startMic() {
+    let micStream = null, micContext = null, micFrame = null, micPending = null, micGeneration = 0;
+    const micReasons = new Set();
 
-        try {
-
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-            const source = audioContext.createMediaStreamSource(stream);
-
-            analyzer = audioContext.createAnalyser();
-
-            analyzer.fftSize = 256;
-
-            source.connect(analyzer);
-
-            dataArray = new Uint8Array(analyzer.frequencyBinCount);
-
-            const check = () => {
-
-                if (!analyzer) return;
-
-                analyzer.getByteFrequencyData(dataArray);
-
-                const avg = dataArray.reduce((p, c) => p + c, 0) / dataArray.length;
-
-                if (avg > maxVolume) maxVolume = avg;
-
-                // Atualiza feedback visual do microfone (Barra Vertical v5)
-
-                const bar = document.getElementById('vuBar');
-
-                const badge = document.getElementById('micBadge');
-
-                if (bar) {
-
-                    // normalizado para a altura de 180px (CSS)
-
-                    const percentage = Math.min(100, (avg / 140) * 100);
-
-                    bar.style.height = percentage + '%';
-
-                }
-
-                if (badge) {
-
-                    badge.style.display = avg > 8 ? 'block' : 'none';
-
-                }
-
-                requestAnimationFrame(check);
-
-            };
-
-            check();
-
-        } catch (e) { console.warn("Mic indisponível."); }
-
+    function stopMic(reason) {
+        if (reason) micReasons.delete(reason); else micReasons.clear();
+        const testButton = document.getElementById('testMicButton');
+        if (testButton && !micReasons.has('calibration')) testButton.textContent = 'TESTAR MICROFONE';
+        if (micReasons.size) return;
+        micGeneration++;
+        micPending = null;
+        if (micFrame !== null) cancelAnimationFrame(micFrame);
+        micFrame = null;
+        if (micStream) micStream.getTracks().forEach(track => track.stop());
+        micStream = null;
+        if (micContext) micContext.close().catch(() => {});
+        micContext = null; analyzer = null; dataArray = null;
+        if (calibInterval) clearInterval(calibInterval);
+        const bar = document.getElementById('vuBar'); if (bar) bar.style.height = '0%';
+        const badge = document.getElementById('micBadge'); if (badge) badge.style.display = 'none';
+        const calibBar = document.getElementById('calibBar'); if (calibBar) calibBar.style.width = '0%';
+        const calibValue = document.getElementById('calibVolVal'); if (calibValue) calibValue.textContent = '0';
     }
+
+    async function startMic(reason = 'song') {
+        micReasons.add(reason);
+        const testButton = document.getElementById('testMicButton');
+        if (testButton && micReasons.has('calibration')) testButton.textContent = 'PARAR TESTE';
+        if (micStream) return;
+        if (micPending) return micPending;
+        const generation = micGeneration;
+        micPending = (async () => {
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: {
+                    echoCancellation: false, noiseSuppression: false, autoGainControl: false
+                } });
+                if (generation !== micGeneration || !micReasons.size) {
+                    stream.getTracks().forEach(track => track.stop()); return;
+                }
+                micStream = stream;
+                // Contexto próprio: nunca substitui o processamento do vídeo e do tom.
+                micContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = micContext.createMediaStreamSource(stream);
+                analyzer = micContext.createAnalyser(); analyzer.fftSize = 256;
+                source.connect(analyzer);
+                dataArray = new Uint8Array(analyzer.frequencyBinCount);
+                if (micContext.state === 'suspended') await micContext.resume();
+                const check = () => {
+                    if (!analyzer || generation !== micGeneration) return;
+                    analyzer.getByteFrequencyData(dataArray);
+                    const avg = dataArray.reduce((p, c) => p + c, 0) / dataArray.length;
+                    if (micReasons.has('song') && avg > maxVolume) maxVolume = avg;
+                    const bar = document.getElementById('vuBar');
+                    if (bar) bar.style.height = Math.min(100, avg / 140 * 100) + '%';
+                    const badge = document.getElementById('micBadge');
+                    if (badge) badge.style.display = avg > 8 ? 'block' : 'none';
+                    micFrame = requestAnimationFrame(check);
+                };
+                check();
+            } catch (error) {
+                if (stream) stream.getTracks().forEach(track => track.stop());
+                if (generation === micGeneration) {
+                    stopMic();
+                    console.warn('Microfone indisponível:', error.message);
+                    if (reason === 'calibration') showToast('Não foi possível acessar o microfone. Confira a permissão do navegador.');
+                }
+            } finally { if (generation === micGeneration) micPending = null; }
+        })();
+        return micPending;
+    }
+    window.addEventListener('pagehide', () => stopMic());
 
     // ─── Controlás ─────────────────────────────────────────────────────────────────
 
