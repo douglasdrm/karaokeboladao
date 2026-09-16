@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" href="../Assets/icon.png">
     <link rel="stylesheet" href="index.css?v=3.2">
     <link rel="stylesheet" href="engagement.css">
-    <link rel="stylesheet" href="party-features.css?v=4">
+    <link rel="stylesheet" href="party-features.css?v=5">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Driver.js Tour -->
@@ -301,8 +301,8 @@
 
         <!-- Settings Modal Specific -->
         <div id="settingsModal" class="modal-overlay">
-            <div class="modal-content settings-content">
-                <h2>⚙️ Configurações do Sistema</h2>
+            <div class="modal-content settings-content" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+                <h2 id="settingsTitle">⚙️ Configurações da cabine</h2><p class="settings-intro">Personalize sua festa, ajuste o áudio e acompanhe seu painel.</p>
                 <div class="settings-body"><section class="settings-group"><h3>Visual da festa</h3><div class="setting-item" style="border-color: var(--accent-primary); background: rgba(217,70,239,0.05); margin-bottom: 25px;">
                         <label for="setDjName">🆔 Identidade Visual do DJ:</label>
                         <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
@@ -500,10 +500,10 @@
     <script src="qrcode.min.js"></script>
     <script src="singer-selection.js?v=1" defer></script>
     <script src="tone-control.js?v=1" defer></script>
-    <script src="party-core.js?v=1" defer></script>
+    <script src="party-core.js?v=2" defer></script>
     <script src="party-ui.js?v=1" defer></script>
     <script src="party-host.js?v=2" defer></script>
-    <script src="app.js?v=3.6" defer></script>
+    <script src="app.js?v=3.7" defer></script>
     <script src="tour-host.js" defer></script>
 </body>
 

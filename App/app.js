@@ -506,9 +506,11 @@
                     }).catch(err => console.warn("Erro ao atualizar perfil do Host:", err));
 
                     // FIX: checkSubscriptionStatus não existe — usar checkSubscriptionAndStartRoom
-                    if (user.email === 'douglasdrm@gmail.com') {
-                        const adminBtn = document.getElementById('adminMenuBtn');
-                        if (adminBtn) adminBtn.style.display = 'block';
+                    const adminBtn = document.getElementById('adminMenuBtn');
+                    if (adminBtn) {
+                        adminBtn.style.display = 'flex';
+                        adminBtn.textContent = user.email === 'douglasdrm@gmail.com'
+                            ? 'ADMINISTRAÇÃO / MEU PAINEL DE DJ' : 'MEU PAINEL DE DJ';
                     }
                     // FIX: displayName pode ser null em alguns provedores
                     const firstName = (hostUser.displayName || safeName).split(' ')[0];
