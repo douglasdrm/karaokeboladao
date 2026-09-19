@@ -10,7 +10,14 @@
     function summarize(party) {
         const songs = Object.values(party?.songs || {});
         const completed = songs.filter(s => s.status === 'completed');
+        const challenges = completed.filter(s => s.challenge?.id);
+        const accepted = {};
+        for (const song of challenges) for (const singer of song.challenge.singers || []) {
+            if (!accepted[singer.uid]) accepted[singer.uid] = {name:singer.name, count:0};
+            accepted[singer.uid].count++;
+        }
         return {
+            challenges, challengeLeaders: Object.values(accepted).sort((a,b) => b.count-a.count),
             completed,
             skipped: songs.filter(s => s.status === 'skipped').length,
             failed: songs.filter(s => s.status === 'error').length,
@@ -23,6 +30,8 @@
         return [party.name || 'Minha festa', new Date(party.startedAt).toLocaleString('pt-BR'),
             `${summary.completed.length} apresentações concluídas · ${summary.formations} formações diferentes`,
             '', 'Músicas cantadas:', ...summary.completed.map(s => `${s.singer} — ${s.title}${s.score == null ? '' : ` (${s.score} pontos)`}`),
+            '', 'Desafios concluídos: ' + summary.challenges.length, ...summary.challenges.map(s => s.singer + ' — ' + s.title + ' (lançado por ' + s.challenge.authorName + ')'),
+            'Quem mais encarou:', ...summary.challengeLeaders.map(s => s.name + ': ' + s.count),
             '', 'Destaques:', ...summary.ranking.map((s, i) => `${i + 1}. ${s.singer} — ${s.score} pontos`)].join('\n');
     }
     function validGenre(value) {

@@ -52,6 +52,9 @@
     </script>
     <script src="singer-selection.js?v=1"></script>
     <script src="tone-control.js?v=1"></script>
+    <link rel="stylesheet" href="challenges.css?v=1">
+    <script src="challenge-core.js?v=1"></script>
+    <script src="challenges.js?v=1"></script>
 </head>
 
 <body class="mobile-body">
@@ -497,6 +500,7 @@
             <div class="modal-buttons">
                 <button class="btn-cancel" onclick="closeNameModal()">Cancelar</button>
                 <button class="btn-confirm" onclick="confirmNameModal()">PEDIR! 🎵</button>
+                <button class="challenge-btn" onclick="const chosen = pendingRequest; closeNameModal(); ChallengeMobile.compose(chosen)">🔥 DESAFIAR A GALERA</button>
             </div>
         </div>
     </div>
@@ -2501,11 +2505,11 @@
             ctx.fillStyle = '#d946ef';
             ctx.font = 'bold 36px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('karaoke.unodev.com.br', W / 2, H - 90);
+            ctx.fillText(data.challenge ? '🔥 DESAFIO ACEITO!' : 'karaoke.unodev.com.br', W / 2, H - 90);
 
             ctx.fillStyle = 'rgba(255,255,255,0.5)';
             ctx.font = '28px sans-serif';
-            ctx.fillText('Peça suas músicas e compartilhe sua performance! 🎉', W / 2, H - 45);
+            ctx.fillText(data.challenge ? 'Lançado por ' + data.challenge.authorName + ' • Cantado por ' + data.singer : 'Peça suas músicas e compartilhe sua performance! 🎉', W / 2, H - 45, W - 80);
 
             // Gera blob para compartilhar
             canvas.toBlob(blob => { scoreCardBlob = blob; }, 'image/png');
@@ -2885,7 +2889,8 @@
         }
     </script>
 
-    <script>MobileTone.init({db, auth, getRoom: () => currentRoomCode});</script>
+    <script>MobileTone.init({db, auth, getRoom: () => currentRoomCode});
+    ChallengeMobile.init({db, user: () => currentUser, room: () => currentRoomCode, catalog: () => catalog, users: () => activeUsers, mount: () => document.getElementById('mainContent')});</script>
 </body>
 
 </html>

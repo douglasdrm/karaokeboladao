@@ -33,7 +33,7 @@
             const previous = party.songs[track];
             if (previous?.status === 'playing') { previous.status = 'skipped'; previous.endedAt = Date.now(); }
             track = base().push().key;
-            party.songs[track] = { id: String(song.id), title: song.title || '', artist: song.artist || '', singer: song.singer || 'Convidado', status: 'playing', startedAt: Date.now() };
+            party.songs[track] = { id: String(song.id), title: song.title || '', artist: song.artist || '', singer: song.singer || 'Convidado', status: 'playing', startedAt: Date.now(), ...(song.challenge ? {challenge:song.challenge} : {}) };
             backgroundSave();
         }
     }

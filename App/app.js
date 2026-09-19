@@ -985,6 +985,7 @@
 
         // Começa a escutar pedidos e usuários
 
+        ChallengeHost.begin();
         startMobilePolling();
 
         startActiveUsersListener();
@@ -1102,6 +1103,7 @@
 
         }
 
+        await ChallengeHost.end();
         stopMic();
         auth.signOut().then(() => {
 
@@ -1110,6 +1112,9 @@
         });
 
     }
+
+    ChallengeHost.init({db, user: () => hostUser, room: () => currentRoomCode,
+        catalog: () => catalog, users: () => activeUsers, mount: () => document.getElementById('tab-queue')});
 
     PartyHost.init({
         db, user: () => hostUser, song: () => isPlaying ? queue[0] : null, pitch: () => currentPitch, logout: logoutHost,
@@ -2216,7 +2221,7 @@
 
     function removeFromQueue(idx) {
 
-        if (idx === 0) { showScore(); } else { queue.splice(idx, 1); renderQueue(); }
+        if (idx === 0) { showScore(); } else { ChallengeHost.complete(queue[idx]?.challengeId, "skipped"); queue.splice(idx, 1); renderQueue(); }
 
     }
 
@@ -2243,6 +2248,7 @@
         }
 
         PartyHost.complete(null, "skipped");
+        ChallengeHost.complete(queue[0]?.challengeId, "skipped");
         // Pula para a próxima música imediatamente sem dar nota
         // finishSong já cuida de isPlaying=false, queue.shift(), renderQueue() e playNext()
         finishSong();
@@ -2511,6 +2517,7 @@
                 video.onerror = () => {
                     stopMic('song');
                     PartyHost.complete(null, "error");
+                    ChallengeHost.complete(queue[0]?.challengeId, "skipped");
                     updateDebugInfo(`❌ ERRO CDN: ${videoId}.mp4`);
                     setTimeout(showScore, 3000);
                 };
@@ -2704,6 +2711,7 @@
         }
         finalScore = Math.max(0, Math.min(100, Number(finalScore) || 75));
         PartyHost.complete(settings.enableScore === false ? null : finalScore);
+        ChallengeHost.complete(queue[0]?.challengeId);
         forcedScore = null;
         maxVolume = 0;
         console.log("📊 [SCORE] Nota calculada:", finalScore, "| Cantor:", singer);
@@ -2734,6 +2742,7 @@
                 singerUid: scoreEntry.singerUid || null,
                 recipientVersion: 1,
                 recipientUids: SingerSelection.recipients(scoreEntry),
+                ...(scoreEntry.challenge ? {challenge:scoreEntry.challenge} : {}),
                 title: scoreEntry.title || '',
                 artist: scoreEntry.artist || '',
                 score: finalScore,
@@ -3745,12 +3754,23 @@
         // Desativa listener anterior para evitar duplicatas (vazamento de memória)
 
         requestsRef.off('child_added');
+        requestsRef.off('child_changed');
 
         // Escuta novos pedidos
 
-        requestsRef.on('child_added', (snapshot) => {
+        const handleMobileRequest = async (snapshot) => {
 
-            const req = snapshot.val();
+            let req = snapshot.val();
+            if (req?.kind === 'challenge') { ChallengeHost.handle(req, snapshot.key); return; }
+            if (req?.processed) return;
+            if (req?.challengeId) {
+                try { req = await ChallengeHost.validatedRequest(req, snapshot.key); }
+                catch (error) { console.warn('Desafio pendente:', error); return; }
+                if (!req) return;
+                if (queue.some(item => item.challengeId === req.challengeId)) {
+                    requestsRef.child(snapshot.key).update({processed:true}); ChallengeHost.queued(req.challengeId); return;
+                }
+            }
             if (req && req.kind === "tone") {
                 const current = queue[0];
                 const state = current ? { ...current, playing: isPlaying, remoteToneEnabled: true, requesterUid: current.requesterUid || current.singerUid } : null;
@@ -3783,12 +3803,14 @@
                         requesterUid: req.singerUid || null,
                         recipientVersion: 1,
                         recipientUids: SingerSelection.recipients(req),
+                        ...(req.challengeId ? {challengeId:req.challengeId, challenge:req.challenge} : {}),
 
                         time: mobileTime
 
                     }, false);
 
-                    showToast(`🔔 ${req.singer} pediu: ${song.title}`);
+                    if (req.challengeId) ChallengeHost.queued(req.challengeId);
+                    else showToast(`🔔 ${req.singer} pediu: ${song.title}`);
 
                     requestsRef.child(snapshot.key).update({ processed: true });
 
@@ -3796,6 +3818,11 @@
 
             }
 
+        };
+        requestsRef.on('child_added', handleMobileRequest);
+        requestsRef.on('child_changed', snapshot => {
+            const req = snapshot.val();
+            if (req?.challengeId && !req.processed) handleMobileRequest(snapshot);
         });
 
         // Limpeza periódica de pedidos processados (opcional, para não pesar o DB)
