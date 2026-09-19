@@ -10,6 +10,7 @@
     function payload(people) {
         return {
             recipientVersion: 1,
+            performerCount: people.length,
             recipientUids: [...new Set(people.map(person => person.uid).filter(Boolean))],
             singer: people.map(person => person.name).join(' e ')
         };

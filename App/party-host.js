@@ -9,9 +9,10 @@
     }
     function save() {
         if (!party) return Promise.resolve();
+        party.participation = SocialCore.ranking(party.songs, party.activities, party.challenges);
         const snapshot = JSON.parse(JSON.stringify(party));
         const reference = base().child('sessions/' + snapshot.id);
-        saveChain = saveChain.catch(() => {}).then(() => reference.set(snapshot)).then(() => { lastError = null; }).catch(error => {
+        saveChain = saveChain.catch(() => {}).then(async () => { await reference.set(snapshot); if (api.room() && party?.id === snapshot.id) await api.db.ref(`salas/${api.room()}/participation`).set({people:snapshot.participation,weights:SocialCore.weights}); }).then(() => { lastError = null; }).catch(error => {
             lastError = error;
             console.warn('Resumo ainda não sincronizado:', error);
             throw error;
@@ -34,6 +35,10 @@
             if (previous?.status === 'playing') { previous.status = 'skipped'; previous.endedAt = Date.now(); }
             track = base().push().key;
             party.songs[track] = { id: String(song.id), title: song.title || '', artist: song.artist || '', singer: song.singer || 'Convidado', status: 'playing', startedAt: Date.now(), ...(song.challenge ? {challenge:song.challenge} : {}) };
+            const members = api.members() || {};
+            const ids = SingerSelection.recipients(song);
+            party.songs[track].performerCount = Math.max(ids.length, Number(song.performerCount) || 1);
+            party.songs[track].participants = Object.fromEntries(ids.filter(uid => members[uid] || uid === api.user()?.uid).map(uid => [uid, SocialCore.clean(members[uid]?.name || api.user()?.displayName)]));
             backgroundSave();
         }
     }
@@ -42,6 +47,10 @@
         const item = party?.songs?.[track];
         if (!item || item.status !== 'playing') return;
         item.status = status; item.endedAt = Date.now();
+        if (status === 'completed') {
+            const members = api.members() || {};
+            item.voters = Object.fromEntries(Object.entries(api.votes() || {}).filter(([uid,v]) => members[uid] && Number.isFinite(v.stars) && v.stars >= 1 && v.stars <= 5 && !item.participants?.[uid]).map(([uid]) => [uid, SocialCore.clean(members[uid].name)]));
+        }
         if (status === 'completed' && Number.isFinite(score)) item.score = score;
         backgroundSave();
     }
@@ -92,7 +101,10 @@
     }
     window.PartyHost = {
         init(options) { api = options; document.getElementById('btnPartySummary').onclick = summaries; },
-        begin, playing, complete, end, toneEdited() { generation++; },
+        begin, playing, complete, end,
+        challenges(items) { if (!party) return; party.challenges = items || {}; backgroundSave(); },
+        activity(id, value) { if (!party) return; party.activities ||= {}; if (party.activities[id]) return; party.activities[id] = value; backgroundSave(); },
+        toneEdited() { generation++; },
         invalidate() { generation++; }
     };
 })();

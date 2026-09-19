@@ -50,11 +50,14 @@
             document.head.appendChild(s);
         })();
     </script>
-    <script src="singer-selection.js?v=1"></script>
+    <script src="singer-selection.js?v=2"></script>
     <script src="tone-control.js?v=1"></script>
     <link rel="stylesheet" href="challenges.css?v=1">
+    <script src="social-core.js?v=1"></script>
+    <script src="party-social.js?v=1"></script>
     <script src="challenge-core.js?v=1"></script>
     <script src="challenges.js?v=1"></script>
+<link rel="stylesheet" href="party-social.css?v=1">
 </head>
 
 <body class="mobile-body">
@@ -2890,7 +2893,9 @@
     </script>
 
     <script>MobileTone.init({db, auth, getRoom: () => currentRoomCode});
+    SocialMobile.init({db, user: () => currentUser, room: () => currentRoomCode, mount: () => document.getElementById('mainContent')});
     ChallengeMobile.init({db, user: () => currentUser, room: () => currentRoomCode, catalog: () => catalog, users: () => activeUsers, mount: () => document.getElementById('mainContent')});</script>
 </body>
 
 </html>
+

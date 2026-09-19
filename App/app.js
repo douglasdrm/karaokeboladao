@@ -986,6 +986,7 @@
         // Começa a escutar pedidos e usuários
 
         ChallengeHost.begin();
+        SocialHost.begin();
         startMobilePolling();
 
         startActiveUsersListener();
@@ -1103,6 +1104,7 @@
 
         }
 
+        SocialHost.end();
         await ChallengeHost.end();
         stopMic();
         auth.signOut().then(() => {
@@ -1113,11 +1115,14 @@
 
     }
 
+    SocialHost.init({db, user: () => hostUser, room: () => currentRoomCode, mount: () => document.getElementById('tab-queue'),
+        busy: () => isPlaying || !!currentCallAudio || !!currentCallTimer, pauseAmbient: stopAmbientMusic, resumeAmbient: checkAmbientMusic});
+
     ChallengeHost.init({db, user: () => hostUser, room: () => currentRoomCode,
         catalog: () => catalog, users: () => activeUsers, mount: () => document.getElementById('tab-queue')});
 
     PartyHost.init({
-        db, user: () => hostUser, song: () => isPlaying ? queue[0] : null, pitch: () => currentPitch, logout: logoutHost,
+        db, user: () => hostUser, room: () => currentRoomCode, members: () => activeUsers, votes: () => currentVotes, song: () => isPlaying ? queue[0] : null, pitch: () => currentPitch, logout: logoutHost,
         setPitch(value) {
             currentPitch = value;
             if (pitchShifter) pitchShifter.setPitchOffset(value);
@@ -2255,6 +2260,11 @@
     }
 
     function playNext() {
+        if (!isPlaying && SocialHost.beforeNext(playNextAfterAudio)) return;
+        playNextAfterAudio();
+    }
+
+    function playNextAfterAudio() {
         try {
             if (queue.length === 0) return;
             const current = queue[0];
@@ -2418,6 +2428,7 @@
     }
 
     function startVideoPlay(current) {
+        SocialHost.stopAudio();
         try {
             tonePerformanceId = Date.now().toString(36) + Math.random().toString(36).slice(2);
             toneManuallyAdjusted = false;
@@ -3761,6 +3772,7 @@
         const handleMobileRequest = async (snapshot) => {
 
             let req = snapshot.val();
+            if (req?.kind === 'social') { SocialHost.handle(req, snapshot.key); return; }
             if (req?.kind === 'challenge') { ChallengeHost.handle(req, snapshot.key); return; }
             if (req?.processed) return;
             if (req?.challengeId) {
@@ -3803,6 +3815,7 @@
                         requesterUid: req.singerUid || null,
                         recipientVersion: 1,
                         recipientUids: SingerSelection.recipients(req),
+                        performerCount: Math.max(SingerSelection.recipients(req).length, Number(req.performerCount) || 1),
                         ...(req.challengeId ? {challengeId:req.challengeId, challenge:req.challenge} : {}),
 
                         time: mobileTime
@@ -4153,5 +4166,4 @@
     window.spawnEmoji = typeof spawnFloatingEmoji !== 'undefined' ? spawnFloatingEmoji : null;
 
 })();
-
 

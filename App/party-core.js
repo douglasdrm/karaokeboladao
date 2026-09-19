@@ -32,6 +32,7 @@
             '', 'Músicas cantadas:', ...summary.completed.map(s => `${s.singer} — ${s.title}${s.score == null ? '' : ` (${s.score} pontos)`}`),
             '', 'Desafios concluídos: ' + summary.challenges.length, ...summary.challenges.map(s => s.singer + ' — ' + s.title + ' (lançado por ' + s.challenge.authorName + ')'),
             'Quem mais encarou:', ...summary.challengeLeaders.map(s => s.name + ': ' + s.count),
+            '', 'Participação na festa:', ...(party.participation || []).map(p => `${p.name}: ${p.points} pontos · ${p.songs} músicas · ${p.groups} em grupo · ${p.challenges} desafios cantados · ${p.launched} desafios lançados · ${p.receivedVotes} votos recebidos · ${p.recruits} convidados · ${p.audios} recados · sequência máxima: ${p.streak}`),
             '', 'Destaques:', ...summary.ranking.map((s, i) => `${i + 1}. ${s.singer} — ${s.score} pontos`)].join('\n');
     }
     function validGenre(value) {
