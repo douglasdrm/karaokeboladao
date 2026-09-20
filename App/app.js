@@ -962,19 +962,7 @@
 
         if (roomBadge) {
 
-            roomBadge.innerHTML = `
-
-            <div style="font-size:0.9rem; font-weight:900; color:var(--accent-primary); line-height:1.2;">
-
-                ${name.toUpperCase()}
-
-            </div>
-
-            <div style="font-size:0.7rem; letter-spacing:1px; font-weight:600; margin-top:4px; color:#fff; border-top:1px solid rgba(255,255,255,0.1); padding-top:4px;">
-
-                CÓDIGO: <span style="color:var(--accent-primary); background:rgba(0,0,0,0.3); padding:0 6px; border-radius:4px;">${currentRoomCode}</span>
-
-            </div>`;
+            roomBadge.textContent = name;
 
         }
 
@@ -1059,17 +1047,9 @@
 
         const mobileUrl = window.location.origin + pathStr + 'mobile.html?room=' + currentRoomCode;
 
+        const mobileLink = document.getElementById("qrMobileLink");
+        if (mobileLink) mobileLink.href = mobileUrl;
         console.log("URL Mobile:", mobileUrl);
-
-        // QR Code da sidebar
-
-        const qrSidebar = document.getElementById('qrcode');
-
-        if (qrSidebar && typeof QRCode !== 'undefined') {
-
-            try { qrSidebar.innerHTML = ''; new QRCode(qrSidebar, { text: mobileUrl, width: 128, height: 128, colorDark: "#000000", colorLight: "#ffffff" }); } catch (e) { }
-
-        }
 
         // QR Code de tela cheia (canto inferior direito)
 
@@ -1077,14 +1057,17 @@
 
         if (qrFs && typeof QRCode !== 'undefined') {
 
-            try { qrFs.innerHTML = ''; new QRCode(qrFs, { text: mobileUrl, width: 120, height: 120, colorDark: "#000000", colorLight: "#ffffff" }); } catch (e) { }
+            try { qrFs.innerHTML = ''; new QRCode(qrFs, { text: mobileUrl, width: 160, height: 160, colorDark: "#000000", colorLight: "#ffffff" }); } catch (e) { }
 
         }
 
         // Exibe código da sala em texto (alternativa ao QR para projetores)
         const roomCodeEl = document.getElementById('qrRoomCodeFs');
         if (roomCodeEl && currentRoomCode) {
-            roomCodeEl.innerHTML = `<span style="opacity:0.6;font-size:9px;font-weight:400;display:block;margin-bottom:2px;letter-spacing:1px;">CÓDIGO DA SALA</span>${currentRoomCode}`;
+            roomCodeEl.replaceChildren();
+            const caption = document.createElement("span"); caption.textContent = "Código da sala";
+            const code = document.createElement("strong"); code.textContent = currentRoomCode;
+            roomCodeEl.append(caption, code);
             roomCodeEl.style.display = 'block';
         }
 

@@ -24,6 +24,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="challenges.css?v=1">
 <link rel="stylesheet" href="party-social.css?v=1">
+<link rel="stylesheet" href="cabin-layout.css?v=1">
 </head>
 
 <body>
@@ -138,10 +139,12 @@
             <!-- Engajamento em Tempo Real (v22) -->
             <div id="reactionContainer"></div>
 
-            <div class="qr-fullscreen-box">
+            <div class="qr-fullscreen-box" aria-label="Acesso à festa pelo celular">
+                <div id="hostRoomCode" class="qr-party-name">Minha festa</div>
                 <div id="qrcode-fs"></div>
-                <div class="qr-fs-label">ESCANEAR CATÁLOGO</div>
+                <div class="qr-fs-label">Peça pelo celular</div>
                 <div id="qrRoomCodeFs" class="qr-fs-room-code" style="display:none;"></div>
+                <a id="qrMobileLink" class="qr-mobile-link" target="_blank" rel="noopener">Abrir catálogo ↗</a>
             </div>
 
             <div id="topInfoBox" class="floating-info-box" style="display:none">
@@ -279,14 +282,6 @@
             </div>
             <div class="queue-list" id="queueList"></div>
 
-            <div class="qr-sidebar-box">
-                <div class="room-code-badge" id="hostRoomCode"
-                    style="color:var(--accent-primary); font-weight:900; letter-spacing:3px; margin-bottom:10px; font-size:1.1rem;">
-                    SALA: -----</div>
-                <div class="qr-container" id="qrcode"></div>
-                <div class="qr-label">ESCANEAR CATÁLOGO</div>
-                <div class="promo-badge-static">📱 PEÇA PELO CELULAR</div>
-            </div>
         </aside>
 
         <!-- Custom Modals -->
@@ -512,7 +507,7 @@
     <script src="party-social.js?v=2"></script>
     <script src="challenge-core.js?v=1"></script>
     <script src="challenges.js?v=1" defer></script>
-    <script src="app.js?v=4.1" defer></script>
+    <script src="app.js?v=4.2" defer></script>
     <script src="tour-host.js" defer></script>
 </body>
 
