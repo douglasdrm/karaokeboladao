@@ -55,7 +55,7 @@
   const {d,body}=modal('🎙 Recado para a festa',()=>{closed=true;if(recorder?.state==='recording')recorder.stop();release();if(url)URL.revokeObjectURL(url);});
   const status=el('p','Grave até 15 segundos. Você pode chamar alguém para cantar!');
   const preview=el('audio');preview.controls=true;preview.hidden=true;
-  const send=button('Enviar para aprovação do DJ',async()=>{
+  const send=button('Enviar recado',async()=>{
    if(!blob||closed)return;if(api.room()!==room||api.user()?.uid!==user.uid)throw Error('A sala mudou. Grave novamente.');
    const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('Falha ao ler a gravação.'));r.readAsDataURL(blob);});
    if(!SocialCore.validAudio({audio:data,duration}))throw Error('Gravação muito grande ou incompatível. Tente um recado mais curto.');
@@ -78,12 +78,12 @@
    try{recorder=new MediaRecorder(stream,{...(type?{mimeType:type}:{}),audioBitsPerSecond:48000});}catch(e){release();throw e;}
    const chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
    recorder.onerror=()=>{release();status.textContent='Não foi possível gravar. Tente novamente.';};
-   recorder.onstop=()=>{duration=Math.min(15,(Date.now()-started)/1000);release();if(closed)return;blob=new Blob(chunks,{type:recorder.mimeType});url=URL.createObjectURL(blob);preview.src=url;preview.hidden=false;start.hidden=false;stop.hidden=true;send.disabled=!blob.size;status.textContent='Ouça antes de enviar. O DJ aprova e reproduz somente no intervalo.';};
+   recorder.onstop=()=>{duration=Math.min(15,(Date.now()-started)/1000);release();if(closed)return;blob=new Blob(chunks,{type:recorder.mimeType});url=URL.createObjectURL(blob);preview.src=url;preview.hidden=false;start.hidden=false;stop.hidden=true;send.disabled=!blob.size;status.textContent='Ouça antes de enviar. A liberação segue a configuração do DJ; a reprodução ocorre somente no intervalo.';};
    started=Date.now();try{recorder.start();}catch(e){release();throw e;}
    start.hidden=true;stop.hidden=false;status.textContent='🔴 Gravando… a gravação para automaticamente em 15 segundos.';
    timer=setTimeout(()=>{if(recorder.state==='recording')recorder.stop();},15000);
   });
-  body.append(status,start,stop,preview,send,el('p','O microfone é usado apenas enquanto você grava. O áudio será ouvido na festa após aprovação e não altera a fila de cantores.','challenge-muted'));
+  body.append(status,start,stop,preview,send,el('p','O microfone é usado apenas enquanto você grava. O áudio será liberado automaticamente ou pelo DJ, conforme a configuração da festa, e não altera a fila de cantores.','challenge-muted'));
   root.addEventListener('pagehide',()=>{closed=true;release();},{once:true});
  }
  let api,room=null,audioRef,challengeRef,clips={},chain=Promise.resolve(),active=null,renderAudio=null;
@@ -111,17 +111,19 @@
     changes['audioReceipts/'+key]={ok,message,at:Date.now()};await base.update(changes);if(activity)root.PartyHost?.activity('invite_'+req.inviteId,activity);return;
    }
    const list=(await base.child('audioClips').once('value')).val()||{};
-   let message='Recado recebido! Aguarde a aprovação do DJ.',ok=true;
+   const automatic=api.autoApproveAudio?.()===true;
+   let message=automatic?'Recado liberado! Ele tocará em um próximo intervalo.':'Recado recebido! Aguarde a aprovação do DJ.',ok=true;
    if(!member||!Number.isFinite(req.timestamp)||Math.abs(Date.now()-req.timestamp)>180000||!SocialCore.validAudio(req)){ok=false;message='Recado inválido ou expirado. Grave novamente.';}
    else if(Object.values(list).some(c=>c.uid===req.singerUid)){ok=false;message='Você já tem um recado aguardando. Aguarde o DJ.';}
    else if(Object.keys(list).length>=20){ok=false;message='A fila de recados está cheia. Aguarde um intervalo.';}
    const changes={['pedidos/'+key]:null,['audioReceipts/'+key]:{ok,message,at:Date.now()}};
-   if(ok)changes['audioClips/'+key]={uid:req.singerUid,name:name(member),audio:req.audio,duration:req.duration,status:'pending',at:Date.now()};
+   if(ok)changes['audioClips/'+key]={uid:req.singerUid,name:name(member),audio:req.audio,duration:req.duration,status:automatic?'approved':'pending',at:Date.now()};
    await base.update(changes);
+   if(ok&&automatic)root.PartyHost?.activity('audio_'+key,{type:'audio',uid:req.singerUid,name:name(member)});
   }).catch(e=>console.warn('Recado pendente:',e));},
   showAudio(){
    const {d,body}=modal('🎙 Recados da festa');
-   const render=()=>{body.replaceChildren(el('p','Ouça e aprove os recados. Um áudio aprovado toca por intervalo, antes da chamada do próximo cantor. Até 15 segundos.','challenge-muted'));
+   const render=()=>{body.replaceChildren(el('p','A liberação dos novos recados pode ser automática ou manual, nas configurações de áudio. Você pode ouvir, aprovar pendentes ou descartar. Um recado liberado toca por intervalo, antes da chamada do próximo cantor. Até 15 segundos.','challenge-muted'));
     body.append(button('Parar áudio atual',()=>this.stopAudio(true)));
     const entries=Object.entries(clips).sort((a,b)=>a[1].at-b[1].at);
     if(!entries.length)body.append(el('p','Nenhum recado aguardando.'));

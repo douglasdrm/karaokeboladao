@@ -88,6 +88,7 @@
         ambientUrl: "",
 
         playIntroCall: true,
+        autoApproveVoiceMessages: false,
 
         screensaverTimeout: 30000,
 
@@ -1116,6 +1117,7 @@
     }
 
     SocialHost.init({db, user: () => hostUser, room: () => currentRoomCode, mount: () => document.getElementById('tab-queue'),
+        autoApproveAudio: () => settings.autoApproveVoiceMessages === true,
         busy: () => isPlaying || !!currentCallAudio || !!currentCallTimer, pauseAmbient: stopAmbientMusic, resumeAmbient: checkAmbientMusic});
 
     ChallengeHost.init({db, user: () => hostUser, room: () => currentRoomCode,
@@ -1206,6 +1208,7 @@
         if (!modal) return;
 
 
+        document.getElementById('setAutoApproveVoiceMessages').checked = settings.autoApproveVoiceMessages === true;
         const introCallInput = document.getElementById('setPlayIntroCall');
         if (introCallInput) introCallInput.checked = settings.playIntroCall !== false;
 
@@ -1305,6 +1308,7 @@
             autoFullscreen: false,
 
             playIntroCall: playIntro,
+            autoApproveVoiceMessages: document.getElementById('setAutoApproveVoiceMessages').checked,
 
             ambientUrl: ambient,
 
