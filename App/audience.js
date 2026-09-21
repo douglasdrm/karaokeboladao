@@ -2,9 +2,10 @@
  'use strict';
  const stage=document.getElementById('audienceStage'),status=document.getElementById('audienceStatus');
  let markup='',hideTimer;
+ const sectionMarkup=new Map();
  const allowed=['#player','.qr-fullscreen-box','#topInfoBox','#djFooter','#screensaver','#publicScoreDisplay','.challenge-screen-bar'];
- function showToolbar(){document.body.classList.remove('toolbar-hidden');clearTimeout(hideTimer);hideTimer=setTimeout(()=>document.body.classList.add('toolbar-hidden'),4000);}
- document.addEventListener('pointermove',showToolbar);document.addEventListener('keydown',showToolbar);showToolbar();
+ function showToolbar(){document.body.classList.remove('toolbar-hidden');clearTimeout(hideTimer);hideTimer=setTimeout(()=>document.body.classList.add('toolbar-hidden'),2200);}
+ document.addEventListener('pointermove',e=>{if(e.clientY<64)showToolbar();});document.addEventListener('keydown',e=>{if(e.key==='Tab')showToolbar();});showToolbar();
  document.getElementById('audienceFullscreen').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen();}catch{alert('Use a opção de tela cheia do navegador nesta janela.');}};
  function disconnected(message){stage.querySelectorAll('video').forEach(v=>v.pause());status.textContent=message;status.hidden=false;}
  function tick(){
@@ -26,7 +27,16 @@
     clone.querySelectorAll('button').forEach(e=>e.remove());frame.append(clone);
    }
    const next=frame.outerHTML;
-   if(next!==markup){const videos=[...stage.querySelectorAll('video[data-display-video]')];stage.replaceChildren(frame);stage.querySelectorAll('[data-display-video]').forEach(marker=>{const i=Number(marker.dataset.displayVideo),v=videos.find(v=>Number(v.dataset.displayVideo)===i)||document.createElement('video');v.dataset.displayVideo=String(i);v.muted=true;v.defaultMuted=true;v.playsInline=true;v.controls=false;marker.replaceWith(v);});markup=next;}
+   const videos=[...stage.querySelectorAll('video[data-display-video]')];
+   // Keep unchanged overlays mounted: replacing the whole stage restarts entrance animations.
+   if(next!==markup)for(const selector of allowed){
+    const fresh=frame.querySelector(selector),existing=stage.querySelector(selector);
+    if(!fresh){sectionMarkup.delete(selector);continue;}
+    const html=fresh.outerHTML;
+    if(existing&&sectionMarkup.get(selector)===html)fresh.replaceWith(existing);
+    sectionMarkup.set(selector,html);
+   }
+   if(next!==markup){stage.replaceChildren(frame);stage.querySelectorAll('[data-display-video]').forEach(marker=>{const i=Number(marker.dataset.displayVideo),v=videos.find(v=>Number(v.dataset.displayVideo)===i)||document.createElement('video');v.dataset.displayVideo=String(i);v.muted=true;v.defaultMuted=true;v.playsInline=true;v.controls=false;marker.replaceWith(v);});markup=next;}
    stage.querySelectorAll('video[data-display-video]').forEach(v=>{
     const original=sourceVideos[Number(v.dataset.displayVideo)];if(!original)return;
     const url=original.currentSrc||original.src;
