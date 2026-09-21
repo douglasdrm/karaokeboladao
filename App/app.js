@@ -32,6 +32,18 @@
 
     let currentCallTimer = null; // Timer ativo da apresentação do próximo cantor
     let partyRankingTransition = 0;
+    let rankingRefreshTimer = null;
+    const PARTY_RANKING_CATEGORIES = [
+        ['points', 'Pontuação geral', 'fa-star', 'pts'],
+        ['songs', 'Rei/Rainha do Karaokê', 'fa-microphone', 'músicas'],
+        ['launched', 'Maior desafiador', 'fa-fire', 'desafios'],
+        ['challenges', 'Mais corajoso', 'fa-shield-halved', 'aceitos'],
+        ['groups', 'Parceiro de palco', 'fa-people-group', 'grupos'],
+        ['recruits', 'Recrutador', 'fa-bullhorn', 'convites'],
+        ['receivedVotes', 'Queridinho da galera', 'fa-heart', 'votos'],
+        ['streak', 'Incendiário', 'fa-bolt', 'sequência'],
+        ['audios', 'Locutor da festa', 'fa-microphone-lines', 'recados']
+    ];
 
     function safeEscape(str) {
         return String(str || '')
@@ -308,6 +320,10 @@
         codeSongInfo = document.getElementById('codeSongInfo');
 
         modal = document.getElementById('customModal');
+
+        ensureRankingTicker();
+        rankingRefreshTimer = setInterval(refreshRankingTicker, 1500);
+        window.addEventListener('pagehide', () => clearInterval(rankingRefreshTimer), {once:true});
 
         // Carregar catálogo dinâmico (v17)
         // Sincronização Fragmentada de Elite (v22 - Míssil)
@@ -2262,65 +2278,99 @@
             if (isPlaying) {
                 startVideoPlay(current);
             } else {
-                showPartyRankingCarousel(() => showComingNext(current.singer, () => startVideoPlay(current)));
+                showComingNext(current.singer, () => startVideoPlay(current));
             }
         } catch (err) {
             console.error("Erro em playNext:", err);
         }
     }
 
-    function showPartyRankingCarousel(onComplete, options = {}) {
+    function rankingEntries(rows, field, limit = 5) {
+        return rows.slice()
+            .filter(item => (Number(item[field]) || 0) > 0)
+            .sort((a, b) => (Number(b[field]) || 0) - (Number(a[field]) || 0) || a.name.localeCompare(b.name, 'pt-BR'))
+            .slice(0, limit)
+            .map(item => ({name: item.name, value: Number(item[field]) || 0}));
+    }
+
+    function rankingModel() {
         const rows = PartyHost.ranking?.() || [];
-        if (!rows.length && !sessionRanking.length) { onComplete?.(); return; }
-        const categories = [
-            ['points', 'Pontuação geral', 'fa-star', 'pts'],
-            ['songs', 'Rei/Rainha do Karaokê', 'fa-microphone', 'músicas'],
-            ['launched', 'Maior desafiador', 'fa-fire', 'desafios'],
-            ['challenges', 'Mais corajoso', 'fa-shield-halved', 'aceitos'],
-            ['groups', 'Parceiro de palco', 'fa-people-group', 'grupos'],
-            ['recruits', 'Recrutador', 'fa-bullhorn', 'convites'],
-            ['receivedVotes', 'Queridinho da galera', 'fa-heart', 'votos'],
-            ['streak', 'Incendiário', 'fa-bolt', 'sequência'],
-            ['audios', 'Locutor da festa', 'fa-microphone-lines', 'recados']
-        ];
-        const scoreCard = {
-            title: 'Melhores da noite', icon: 'fa-trophy', unit: 'pontos',
-            entries: sessionRanking.slice(0, 5).map(item => ({name: item.singer, value: item.score || 0}))
-        };
-        const activityCards = categories.map(([field, title, icon, unit]) => {
-            const ordered = rows.slice().sort((a, b) => (b[field] || 0) - (a[field] || 0) || a.name.localeCompare(b.name, 'pt-BR'));
-            return {title, icon, unit, entries: ordered.filter(item => (item[field] || 0) > 0).slice(0, 5).map(item => ({name: item.name, value: item[field]}))};
+        return PARTY_RANKING_CATEGORIES.map(([field, title, icon, unit]) => ({
+            field, title, icon, unit, entries: rankingEntries(rows, field)
+        }));
+    }
+
+    function createTickerCard(category) {
+        const card = document.createElement('article');
+        card.className = 'ranking-ticker-card'; card.dataset.rankingField = category.field;
+        const header = document.createElement('div'); header.className = 'ranking-ticker-card-title';
+        const icon = document.createElement('i'); icon.className = `fas ${category.icon}`;
+        const title = document.createElement('span'); title.textContent = category.title;
+        const leader = document.createElement('strong'); leader.className = 'ranking-ticker-leader';
+        const value = document.createElement('small'); value.className = 'ranking-ticker-value';
+        header.append(icon, title); card.append(header, leader, value); return card;
+    }
+
+    function ensureRankingTicker() {
+        const ticker = document.getElementById('rankingTicker');
+        if (!ticker) return null;
+        ticker.querySelectorAll('.ranking-ticker-sequence').forEach(sequence => {
+            if (sequence.children.length) return;
+            PARTY_RANKING_CATEGORIES.forEach(([field, title, icon, unit]) => sequence.append(createTickerCard({field, title, icon, unit})));
         });
-        const cards = [scoreCard, ...activityCards];
-        const token = ++partyRankingTransition;
-        const board = document.createElement('section'); board.className = 'party-ranking-carousel';
-        const heading = document.createElement('div'); heading.className = 'party-ranking-heading'; heading.textContent = 'PLACAR DA FESTA';
-        const grid = document.createElement('div'); grid.className = 'party-ranking-grid is-visible';
-        board.append(heading, grid);
+        return ticker;
+    }
+
+    function refreshRankingTicker() {
+        const ticker = ensureRankingTicker();
+        if (!ticker) return;
+        const model = rankingModel();
+        ticker.querySelectorAll('.ranking-ticker-card').forEach(card => {
+            const category = model.find(item => item.field === card.dataset.rankingField);
+            const first = category?.entries[0];
+            const leader = card.querySelector('.ranking-ticker-leader');
+            const value = card.querySelector('.ranking-ticker-value');
+            if (leader) leader.textContent = first?.name || 'Ainda não rolou';
+            if (value) value.textContent = first ? `${first.value} ${category.unit}` : '';
+            card.classList.toggle('is-empty', !first);
+        });
+        ticker.hidden = !isPlaying;
+    }
+
+    function showPartyRankingCarousel(onComplete, options = {}) {
+        partyRankingTransition++;
+        const model = rankingModel(), main = model[0], highlights = model.slice(1);
+        const board = document.createElement('section'); board.className = 'party-ranking-board';
+        const heading = document.createElement('header'); heading.className = 'party-ranking-board-heading';
+        const eyebrow = document.createElement('span'); eyebrow.textContent = 'PLACAR DA FESTA';
+        const title = document.createElement('h2'); title.textContent = 'Pontuação geral';
+        heading.append(eyebrow, title);
+        const podium = document.createElement('ol'); podium.className = 'party-ranking-podium';
+        if (!main.entries.length) {
+            const empty = document.createElement('li'); empty.className = 'is-empty'; empty.textContent = 'A festa está só começando'; podium.append(empty);
+        } else main.entries.slice(0, 3).forEach((entry, index) => {
+            const row = document.createElement('li');
+            const position = document.createElement('b'); position.textContent = `${index + 1}º`;
+            const name = document.createElement('strong'); name.textContent = entry.name;
+            const value = document.createElement('span'); value.textContent = `${entry.value} ${main.unit}`;
+            row.append(position, name, value); podium.append(row);
+        });
+        const subtitle = document.createElement('h3'); subtitle.textContent = 'Destaques da festa';
+        const grid = document.createElement('div'); grid.className = 'party-ranking-highlights';
+        highlights.forEach(category => {
+            const card = document.createElement('article'); card.className = 'party-ranking-highlight';
+            const icon = document.createElement('i'); icon.className = `fas ${category.icon}`;
+            const label = document.createElement('span'); label.textContent = category.title;
+            const leader = document.createElement('strong'); leader.textContent = category.entries[0]?.name || 'Ainda não rolou';
+            const value = document.createElement('small'); value.textContent = category.entries[0] ? `${category.entries[0].value} ${category.unit}` : '';
+            card.classList.toggle('is-empty', !category.entries.length);
+            card.append(icon, label, leader, value); grid.append(card);
+        });
+        board.append(heading, podium, subtitle, grid);
         const target = options.target || playerArea || document.getElementById('player');
         if (!target) { onComplete?.(); return; }
-        target.replaceChildren(board);
-        for (const item of cards) {
-            const card = document.createElement('article'); card.className = 'party-ranking-card';
-            const header = document.createElement('header');
-            const icon = document.createElement('i'); icon.className = `fas ${item.icon}`;
-            const title = document.createElement('span'); title.className = 'party-ranking-title'; title.textContent = item.title;
-            header.append(icon, title); card.append(header);
-            const list = document.createElement('ol'); list.className = 'party-ranking-list';
-            if (!item.entries.length) {
-                const empty = document.createElement('li'); empty.className = 'is-empty'; empty.textContent = 'Aguardando participantes'; list.append(empty);
-            } else item.entries.forEach((entry, index) => {
-                const row = document.createElement('li');
-                const position = document.createElement('b'); position.textContent = `${index + 1}º`;
-                const name = document.createElement('strong'); name.textContent = entry.name;
-                const value = document.createElement('small'); value.textContent = `${entry.value} ${item.unit}`;
-                row.append(position, name, value); list.append(row);
-            });
-            card.append(list); grid.append(card);
-        }
-        if (!options.loop) currentCallTimer = setTimeout(() => {
-            if (token === partyRankingTransition) onComplete?.();
-        }, 5500);
+        target.replaceChildren(board); refreshRankingTicker();
+        onComplete?.();
     }
 
     function showComingNext(singerName, onComplete) {
@@ -2489,6 +2539,7 @@
             if (!topInfoBox) topInfoBox = document.getElementById('topInfoBox');
 
             isPlaying = true;
+            refreshRankingTicker();
             stopAmbientMusic();
             forcedScore = null;
 
@@ -2718,6 +2769,8 @@
 
     function showScore(forceScore = null) {
         stopMic();
+        const ticker = document.getElementById('rankingTicker');
+        if (ticker) ticker.hidden = true;
         console.log("📊 [SCORE] showScore iniciado");
 
         // Parar vídeo
@@ -2908,6 +2961,7 @@
 
         // Aplausos já tocaram no showScore, então aqui apenas limpamos
         isPlaying = false;
+        refreshRankingTicker();
         resetTone(); // Garante que o tom resete para TOM: 0 a cada término de música
         queue.shift(); // Remove a música que terminou
 
@@ -2941,7 +2995,6 @@
                 if (currentRoomCode) {
                     db.ref('salas/' + currentRoomCode + '/now_playing').set({ playing: false });
                 }
-                showPartyRankingCarousel(null, {loop: true});
                 checkAmbientMusic();
             };
             // Recados aprovados também entram quando a fila termina. Antes,
@@ -3150,11 +3203,8 @@
         // Se não há URL configurada, mostra uma tela bonita de espera
 
         if (!url) {
-            // Sem fila, o placar completo continua alternando em grupos de três.
-            if (sessionRanking.length > 0 || (PartyHost.ranking?.() || []).length > 0) {
-                showPartyRankingCarousel(null, {loop: true});
-                return;
-            }
+            showPartyRankingCarousel();
+            return;
 
             playerArea.innerHTML = `
 
@@ -3201,9 +3251,7 @@
 
     `;
 
-        if (sessionRanking.length > 0 || (PartyHost.ranking?.() || []).length > 0) {
-            showPartyRankingCarousel(null, {loop: true, target: document.getElementById('ambientOverlayContent')});
-        }
+        showPartyRankingCarousel(null, {target: document.getElementById('ambientOverlayContent')});
 
         setTimeout(() => {
 

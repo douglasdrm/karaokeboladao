@@ -3,7 +3,7 @@
  const stage=document.getElementById('audienceStage'),status=document.getElementById('audienceStatus');
  let hideTimer,observer,observedDocument,scheduled=false,vibeSignature='',vibeUntil=0;
  const mirrors=new WeakMap(),videoSources=new WeakMap();
- const allowed=['#player','.qr-fullscreen-box','#topInfoBox','#djFooter','#screensaver','#publicScoreDisplay','.challenge-screen-bar','#reactionContainer','.applause-overlay','.voice-playback-overlay'];
+ const allowed=['#player','#fsQueueOverlay','#rankingTicker','.qr-fullscreen-box','#topInfoBox','#djFooter','#screensaver','#publicScoreDisplay','.challenge-screen-bar','#reactionContainer','.applause-overlay','.voice-playback-overlay'];
  const frame=document.createElement('main');frame.id='playerContainer';stage.append(frame);
  function showToolbar(){document.body.classList.remove('toolbar-hidden');clearTimeout(hideTimer);hideTimer=setTimeout(()=>document.body.classList.add('toolbar-hidden'),2200);}
  document.addEventListener('pointermove',e=>{if(e.clientY<64)showToolbar();});document.addEventListener('keydown',e=>{if(e.key==='Tab')showToolbar();});showToolbar();

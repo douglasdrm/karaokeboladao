@@ -23,7 +23,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="challenges.css?v=1">
-<link rel="stylesheet" href="party-social.css?v=5">
+<link rel="stylesheet" href="party-social.css?v=6">
 <link rel="stylesheet" href="cabin-layout.css?v=2">
 </head>
 
@@ -138,6 +138,18 @@
 
             <!-- Engajamento em Tempo Real (v22) -->
             <div id="reactionContainer"></div>
+
+            <!-- Camada pública persistente: permanece fora de #player para que
+                 a troca de vídeo não reinicie a animação dos rankings. -->
+            <section id="rankingTicker" class="ranking-ticker" aria-label="Destaques da festa" hidden>
+                <div class="ranking-ticker-shade"></div>
+                <div class="ranking-ticker-viewport">
+                    <div class="ranking-ticker-track">
+                        <div class="ranking-ticker-sequence" data-ranking-copy="primary"></div>
+                        <div class="ranking-ticker-sequence" data-ranking-copy="visual" aria-hidden="true"></div>
+                    </div>
+                </div>
+            </section>
 
             <div class="qr-fullscreen-box" aria-label="Acesso à festa pelo celular">
                 <div id="hostRoomCode" class="qr-party-name">Minha festa</div>
@@ -507,7 +519,7 @@
     <script src="party-social.js?v=4"></script>
     <script src="challenge-core.js?v=1"></script>
     <script src="challenges.js?v=3" defer></script>
-    <script src="audience-host.js?v=1" defer></script><script src="app.js?v=4.6" defer></script>
+    <script src="audience-host.js?v=1" defer></script><script src="app.js?v=4.7" defer></script>
     <script src="tour-host.js" defer></script>
 </body>
 

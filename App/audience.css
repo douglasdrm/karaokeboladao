@@ -33,6 +33,9 @@ body.toolbar-hidden #audienceToolbar{opacity:0;pointer-events:none}
 #audienceStage.vibe-active #publicScoreDisplay{opacity:1;visibility:visible;transform:translateY(0)}
 #audienceStage #reactionContainer{position:absolute;inset:0;z-index:2147483641;pointer-events:none}
 
-/* A segunda tela espelha o placar já montado pela cabine. Mantém os cartões
-   visíveis enquanto a troca de página acontece na janela principal. */
-#audienceStage .party-ranking-grid{opacity:1!important;transform:none!important}
+/* Composição pública: fila no topo, vídeo ao centro e rankings na base. */
+#audienceStage #fsQueueOverlay{top:0!important;bottom:auto!important;max-width:min(1380px,88vw)!important;z-index:8000}
+#audienceStage .ranking-ticker{left:0;right:184px;bottom:72px;z-index:1800}
+#audienceStage .ranking-ticker-track{animation-duration:90s}
+#audienceStage .party-ranking-board{width:100%;height:100%}
+@media(max-width:900px){#audienceStage #fsQueueOverlay{max-width:92vw!important}#audienceStage .ranking-ticker{right:150px;bottom:66px}}
