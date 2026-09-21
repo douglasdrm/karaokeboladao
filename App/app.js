@@ -2283,56 +2283,44 @@
             ['streak', 'Incendiário', 'fa-bolt', 'sequência'],
             ['audios', 'Locutor da festa', 'fa-microphone-lines', 'recados']
         ];
-        const scoreCards = [0, 1, 2].map(index => {
-            const singer = sessionRanking[index];
-            return {
-                title: `Melhores da noite · ${index + 1}º`,
-                icon: 'fa-trophy',
-                unit: 'pontos',
-                name: singer?.singer || 'Posição disponível',
-                value: singer?.score || 0
-            };
-        });
+        const scoreCard = {
+            title: 'Melhores da noite', icon: 'fa-trophy', unit: 'pontos',
+            entries: sessionRanking.slice(0, 5).map(item => ({name: item.singer, value: item.score || 0}))
+        };
         const activityCards = categories.map(([field, title, icon, unit]) => {
             const ordered = rows.slice().sort((a, b) => (b[field] || 0) - (a[field] || 0) || a.name.localeCompare(b.name, 'pt-BR'));
-            const leader = ordered[0], value = leader?.[field] || 0;
-            return {title, icon, unit, name: value ? leader.name : 'Ainda sem líder', value};
+            return {title, icon, unit, entries: ordered.filter(item => (item[field] || 0) > 0).slice(0, 5).map(item => ({name: item.name, value: item[field]}))};
         });
-        const cards = [...scoreCards, ...activityCards];
-        const pages = []; for (let i = 0; i < cards.length; i += 3) pages.push(cards.slice(i, i + 3));
+        const cards = [scoreCard, ...activityCards];
         const token = ++partyRankingTransition;
         const board = document.createElement('section'); board.className = 'party-ranking-carousel';
         const heading = document.createElement('div'); heading.className = 'party-ranking-heading'; heading.textContent = 'PLACAR DA FESTA';
-        const grid = document.createElement('div'); grid.className = 'party-ranking-grid';
-        const dots = document.createElement('div'); dots.className = 'party-ranking-dots';
-        pages.forEach(() => dots.append(document.createElement('i'))); board.append(heading, grid, dots);
+        const grid = document.createElement('div'); grid.className = 'party-ranking-grid is-visible';
+        board.append(heading, grid);
         const target = options.target || playerArea || document.getElementById('player');
         if (!target) { onComplete?.(); return; }
         target.replaceChildren(board);
-        const render = page => {
-            grid.classList.remove('is-visible'); grid.replaceChildren();
-            for (const item of pages[page]) {
-                const card = document.createElement('article'); card.className = 'party-ranking-card';
-                const icon = document.createElement('i'); icon.className = `fas ${item.icon}`;
-                const title = document.createElement('span'); title.className = 'party-ranking-title'; title.textContent = item.title;
-                const name = document.createElement('strong'); name.textContent = item.name;
-                const value = document.createElement('small'); value.textContent = `${item.value} ${item.unit}`;
-                card.append(icon, title, name, value); grid.append(card);
-            }
-            [...dots.children].forEach((dot, i) => dot.classList.toggle('active', i === page));
-            requestAnimationFrame(() => grid.classList.add('is-visible'));
-        };
-        let page = 0; render(page);
-        const advance = () => {
-            if (token !== partyRankingTransition) return;
-            page++;
-            if (page >= pages.length) {
-                if (options.loop) page = 0;
-                else { onComplete?.(); return; }
-            }
-            render(page); currentCallTimer = setTimeout(advance, 1150);
-        };
-        currentCallTimer = setTimeout(advance, options.loop ? 2300 : (pages.length === 1 ? 1500 : 1150));
+        for (const item of cards) {
+            const card = document.createElement('article'); card.className = 'party-ranking-card';
+            const header = document.createElement('header');
+            const icon = document.createElement('i'); icon.className = `fas ${item.icon}`;
+            const title = document.createElement('span'); title.className = 'party-ranking-title'; title.textContent = item.title;
+            header.append(icon, title); card.append(header);
+            const list = document.createElement('ol'); list.className = 'party-ranking-list';
+            if (!item.entries.length) {
+                const empty = document.createElement('li'); empty.className = 'is-empty'; empty.textContent = 'Aguardando participantes'; list.append(empty);
+            } else item.entries.forEach((entry, index) => {
+                const row = document.createElement('li');
+                const position = document.createElement('b'); position.textContent = `${index + 1}º`;
+                const name = document.createElement('strong'); name.textContent = entry.name;
+                const value = document.createElement('small'); value.textContent = `${entry.value} ${item.unit}`;
+                row.append(position, name, value); list.append(row);
+            });
+            card.append(list); grid.append(card);
+        }
+        if (!options.loop) currentCallTimer = setTimeout(() => {
+            if (token === partyRankingTransition) onComplete?.();
+        }, 5500);
     }
 
     function showComingNext(singerName, onComplete) {
