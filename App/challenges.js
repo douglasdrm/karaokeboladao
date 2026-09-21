@@ -22,7 +22,8 @@
    shell.querySelector('.interaction-track').prepend(dock);shell.append(announcement);
   }
   let screenBar=null;
-  if(api.host){screenBar=btn('🔥 Desafios da festa',showList);screenBar.className='challenge-screen-bar';screenBar.setAttribute('aria-live','polite');document.getElementById('playerContainer')?.append(screenBar);}
+  // O acesso aos desafios permanece no painel lateral. A faixa inferior fica
+  // reservada às informações públicas da festa.
   function dialogBox(title){
    if(dialog){dialog.close();dialog.remove();}listBody=null;mode=null;
    dialog=el('dialog',undefined,'challenge-dialog');
