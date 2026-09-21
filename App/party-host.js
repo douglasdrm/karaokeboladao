@@ -104,6 +104,7 @@
         begin, playing, complete, end,
         challenges(items) { if (!party) return; party.challenges = items || {}; backgroundSave(); },
         activity(id, value) { if (!party) return; party.activities ||= {}; if (party.activities[id]) return; party.activities[id] = value; backgroundSave(); },
+        ranking() { return party ? SocialCore.ranking(party.songs, party.activities, party.challenges) : []; },
         toneEdited() { generation++; },
         invalidate() { generation++; }
     };

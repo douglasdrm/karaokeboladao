@@ -31,6 +31,7 @@
     let currentCallAudio = null; // Áudio ativo da apresentação do próximo cantor
 
     let currentCallTimer = null; // Timer ativo da apresentação do próximo cantor
+    let partyRankingTransition = 0;
 
     function safeEscape(str) {
         return String(str || '')
@@ -2261,11 +2262,61 @@
             if (isPlaying) {
                 startVideoPlay(current);
             } else {
-                showComingNext(current.singer, () => startVideoPlay(current));
+                showPartyRankingCarousel(() => showComingNext(current.singer, () => startVideoPlay(current)));
             }
         } catch (err) {
             console.error("Erro em playNext:", err);
         }
+    }
+
+    function showPartyRankingCarousel(onComplete) {
+        const rows = PartyHost.ranking?.() || [];
+        if (!rows.length || !playerArea) { onComplete(); return; }
+        const categories = [
+            ['points', 'Pontuação geral', 'fa-star', 'pts'],
+            ['songs', 'Rei/Rainha do Karaokê', 'fa-microphone', 'músicas'],
+            ['launched', 'Maior desafiador', 'fa-fire', 'desafios'],
+            ['challenges', 'Mais corajoso', 'fa-shield-halved', 'aceitos'],
+            ['groups', 'Parceiro de palco', 'fa-people-group', 'grupos'],
+            ['recruits', 'Recrutador', 'fa-bullhorn', 'convites'],
+            ['receivedVotes', 'Queridinho da galera', 'fa-heart', 'votos'],
+            ['streak', 'Incendiário', 'fa-bolt', 'sequência'],
+            ['audios', 'Locutor da festa', 'fa-microphone-lines', 'recados']
+        ];
+        const cards = categories.map(([field, title, icon, unit]) => {
+            const ordered = rows.slice().sort((a, b) => (b[field] || 0) - (a[field] || 0) || a.name.localeCompare(b.name, 'pt-BR'));
+            const leader = ordered[0], value = leader?.[field] || 0;
+            return {title, icon, unit, name: value ? leader.name : 'Ainda sem líder', value};
+        });
+        const pages = []; for (let i = 0; i < cards.length; i += 3) pages.push(cards.slice(i, i + 3));
+        const token = ++partyRankingTransition;
+        const board = document.createElement('section'); board.className = 'party-ranking-carousel';
+        const heading = document.createElement('div'); heading.className = 'party-ranking-heading'; heading.textContent = 'PLACAR DA FESTA';
+        const grid = document.createElement('div'); grid.className = 'party-ranking-grid';
+        const dots = document.createElement('div'); dots.className = 'party-ranking-dots';
+        pages.forEach(() => dots.append(document.createElement('i'))); board.append(heading, grid, dots);
+        playerArea.replaceChildren(board);
+        const render = page => {
+            grid.classList.remove('is-visible'); grid.replaceChildren();
+            for (const item of pages[page]) {
+                const card = document.createElement('article'); card.className = 'party-ranking-card';
+                const icon = document.createElement('i'); icon.className = `fas ${item.icon}`;
+                const title = document.createElement('span'); title.className = 'party-ranking-title'; title.textContent = item.title;
+                const name = document.createElement('strong'); name.textContent = item.name;
+                const value = document.createElement('small'); value.textContent = `${item.value} ${item.unit}`;
+                card.append(icon, title, name, value); grid.append(card);
+            }
+            [...dots.children].forEach((dot, i) => dot.classList.toggle('active', i === page));
+            requestAnimationFrame(() => grid.classList.add('is-visible'));
+        };
+        let page = 0; render(page);
+        const advance = () => {
+            if (token !== partyRankingTransition) return;
+            page++;
+            if (page >= pages.length) { onComplete(); return; }
+            render(page); currentCallTimer = setTimeout(advance, 1150);
+        };
+        currentCallTimer = setTimeout(advance, pages.length === 1 ? 1500 : 1150);
     }
 
     function showComingNext(singerName, onComplete) {

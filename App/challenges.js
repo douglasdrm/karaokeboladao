@@ -9,7 +9,14 @@
   const launch=btn('Desafios da festa',showList);launch.className='challenge-launch';
   const caption=el('small','Lance uma música ou aceite um desafio.');launch.append(caption);dock.append(launch);
   const announcement=el('div','','challenge-announcement');announcement.hidden=true;announcement.setAttribute('role','status');announcement.setAttribute('aria-live','polite');
-  if(api.host){dock.append(announcement);api.mount().prepend(dock);}else{
+  if(api.host){
+   launch.classList.add('interaction-chip','host-action-card');
+   const icon=el('span',undefined,'interaction-chip-icon');icon.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2c1 4-2 5-2 8 0 1.5 1 2.5 2.5 2.5 2 0 3.5-1.7 3.5-4.5 3 2.5 4 5.2 3 8a8 8 0 1 1-14-7c0 3 1.5 4.5 3 4.5C7 8 10 6 13 2Z"/></svg>';
+   const copy=el('span',undefined,'host-action-copy');copy.append(el('span','Desafios da festa','interaction-chip-label'),caption);launch.replaceChildren(icon,copy);
+   let panel=api.mount().querySelector('.host-interaction-panel');
+   if(!panel){panel=el('section',undefined,'host-interaction-panel');panel.append(el('h4','INTERAÇÃO DA FESTA'),el('div',undefined,'host-interaction-actions'));api.mount().prepend(panel);}
+   dock.append(announcement);panel.querySelector('.host-interaction-actions').prepend(dock);
+  }else{
    let shell=api.mount().querySelector('.interaction-section');if(!shell){shell=el('section',undefined,'interaction-section');shell.setAttribute('aria-label','Interação');shell.append(el('h2','INTERAÇÃO'),el('div',undefined,'interaction-track'));api.mount().prepend(shell);}
    launch.classList.add('interaction-chip');launch.innerHTML='<span class="interaction-chip-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2c1 4-2 5-2 8 0 1.5 1 2.5 2.5 2.5 2 0 3.5-1.7 3.5-4.5 3 2.5 4 5.2 3 8a8 8 0 1 1-14-7c0 3 1.5 4.5 3 4.5C7 8 10 6 13 2Z"/></svg></span><span class="interaction-chip-label">Desafios</span>';
    shell.querySelector('.interaction-track').prepend(dock);shell.append(announcement);
