@@ -3,6 +3,18 @@
  const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
  const button=(text,fn)=>{const b=el('button',text,'challenge-btn');b.type='button';b.onclick=async()=>{b.disabled=true;try{await fn();}catch(e){alert(e.message||'Não foi possível concluir.');}finally{b.disabled=false;}};return b;};
  const name=u=>SocialCore.clean(u?.customName||u?.name||u?.displayName);
+ const interactionIcons={
+  trophy:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Zm0 2H5v1a4 4 0 0 0 4 4m7-5h3v1a4 4 0 0 1-4 4M12 12v5m-4 3h8m-6-3h4"/></svg>',
+  audio:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 10a6.5 6.5 0 0 0 13 0M12 16.5V21m-3 0h6m5-14v6M4 8v4"/></svg>',
+  megaphone:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 10 12-5v14L4 14v-4Zm12-1 3-2v10l-3-2M7 15l1.5 5h4L11 16.5"/></svg>'
+ };
+ function decorate(b,icon,label){b.classList.add('interaction-chip');b.replaceChildren();const holder=el('span',undefined,'interaction-chip-icon');holder.innerHTML=interactionIcons[icon];const text=el('span',label,'interaction-chip-label');b.append(holder,text);return text;}
+ function interactionMount(api){
+  if(api.host)return api.mount();
+  let shell=api.mount().querySelector('.interaction-section');
+  if(!shell){shell=el('section',undefined,'interaction-section');shell.setAttribute('aria-label','Interação');shell.append(el('h2','INTERAÇÃO'),el('div',undefined,'interaction-track'));api.mount().prepend(shell);}
+  return shell.querySelector('.interaction-track');
+ }
  function modal(title,onClose){
   const d=el('dialog',undefined,'challenge-dialog social-dialog'),body=el('div');
   d.append(button('Fechar',()=>d.close()),el('h2',title),body);
@@ -10,7 +22,7 @@
  }
  function dock(api){
   const box=el('div',undefined,'social-dock');let selectedRoom,reference,rows=[];
-  box.append(button('🏆 Participação na festa',()=>{
+  const rankingButton=button('Participação na festa',()=>{
    let field='points';const {d,body}=modal('🏆 Participação na festa');
    const options=el('select');options.setAttribute('aria-label','Ranking');
    for(const [value,title] of [['points','Pontuação geral'],['songs','🎤 Rei/Rainha do Karaokê'],['launched','⚔️ Desafiador'],['challenges','🥊 Corajoso'],['groups','👥 Parceiro de Palco'],['recruits','📣 Recrutador'],['receivedVotes','❤️ Queridinho da Galera'],['streak','🔥 Incendiário'],['audios','🎙️ Locutor']]){const o=el('option',title);o.value=value;options.append(o);}
@@ -21,12 +33,13 @@
    };
    options.onchange=()=>{field=options.value;render();};body.append(options,list,el('p','Solo +10 · dupla +8 por pessoa · grupo +6 por pessoa. Desafio concluído +10 extra; desafio lançado +5. A partir da segunda participação consecutiva +3 extra. Convite confirmado +5. Cada voto recebido +2; cinco votantes diferentes na apresentação dão +5 extra. Recado aprovado pelo DJ +3.','challenge-muted'),el('p','Somente participantes com login. Não há pontos por apresentações puladas nem voto na própria formação. Convites pontuam uma vez por convidado na festa; desafios cancelados perdem seus pontos. Incendiário mostra a maior sequência de apresentações consecutivas. Empates têm a mesma pontuação.','challenge-muted'));
    render();const t=setInterval(render,2000);d.addEventListener('close',()=>clearInterval(t));
-  }));
-  const audioButton=button(api.host?'🎙 Recados de áudio':'🎙 Enviar recado de áudio',()=>api.host?host.showAudio():record(api));if(api.host)audioButton.classList.add('social-audio-host');box.append(audioButton);
-  const invites=button('📣 Chamadas para cantar',()=>showInvites(api));box.append(invites);
-  api.mount().prepend(box);
+  });box.append(rankingButton);
+  if(!api.host)decorate(rankingButton,'trophy','Participação');
+  const audioButton=button(api.host?'Recados de áudio':'Enviar recado de áudio',()=>api.host?host.showAudio():record(api));if(api.host)audioButton.classList.add('social-audio-host');else decorate(audioButton,'audio','Recado de áudio');box.append(audioButton);
+  const invites=button('Chamadas para cantar',()=>showInvites(api));const inviteLabel=api.host?null:decorate(invites,'megaphone','Chamadas');box.append(invites);
+  interactionMount(api).append(box);
   let inviteRef;
-  function sync(){const room=api.room();box.hidden=!room||!api.user();if(room===selectedRoom)return;reference?.off();inviteRef?.off();selectedRoom=room;rows=[];if(!room)return;reference=api.db.ref(`salas/${room}/participation`);reference.on('value',s=>{rows=Object.values(s.val()?.people||{});});inviteRef=api.db.ref(`salas/${room}/socialInvites`);inviteRef.on('value',s=>{const count=Object.values(s.val()||{}).filter(i=>i.targetUid===api.user()?.uid&&i.status==='pending').length;invites.textContent=count?'📣 Você tem '+count+' convite(s) para cantar':'📣 Chamadas para cantar';});}
+  function sync(){const room=api.room();box.hidden=!room||!api.user();if(room===selectedRoom)return;reference?.off();inviteRef?.off();selectedRoom=room;rows=[];if(!room)return;reference=api.db.ref(`salas/${room}/participation`);reference.on('value',s=>{rows=Object.values(s.val()?.people||{});});inviteRef=api.db.ref(`salas/${room}/socialInvites`);inviteRef.on('value',s=>{const count=Object.values(s.val()||{}).filter(i=>i.targetUid===api.user()?.uid&&i.status==='pending').length;if(inviteLabel)inviteLabel.textContent=count?`Chamadas (${count})`:'Chamadas';else invites.textContent=count?'Você tem '+count+' convite(s) para cantar':'Chamadas para cantar';});}
   sync();const t=setInterval(sync,1000);root.addEventListener('pagehide',()=>{clearInterval(t);reference?.off();inviteRef?.off();});
  }
  async function command(api,action,extra){
@@ -50,10 +63,14 @@
  async function record(api){
   const user=api.user(),room=api.room();if(!user||!room)throw Error('Entre na sua conta e na sala.');
   if(!navigator.mediaDevices?.getUserMedia||!root.MediaRecorder)throw Error('Este navegador não oferece gravação de áudio. Use um navegador atualizado.');
-  let stream,recorder,timer,blob,url,closed=false,started=0,duration=0;
-  const release=()=>{clearTimeout(timer);stream?.getTracks().forEach(t=>t.stop());stream=null;};
+  let stream,recorder,timer,clock,blob,url,closed=false,started=0,duration=0;
+  const release=()=>{clearTimeout(timer);clearInterval(clock);stream?.getTracks().forEach(t=>t.stop());stream=null;};
   const {d,body}=modal('🎙 Recado para a festa',()=>{closed=true;if(recorder?.state==='recording')recorder.stop();release();if(url)URL.revokeObjectURL(url);});
-  const status=el('p','Grave até 15 segundos. Você pode chamar alguém para cantar!');
+  body.classList.add('voice-recorder-body');
+  const status=el('p','Grave até 15 segundos. Você pode chamar alguém para cantar!','voice-recorder-status');
+  const recorderUi=el('div',undefined,'voice-recorder-ui'),time=el('span','0:00','voice-recorder-time'),wave=el('div',undefined,'voice-recorder-wave');
+  for(let i=0;i<22;i++)wave.append(el('i'));
+  recorderUi.append(time,wave);
   const preview=el('audio');preview.controls=true;preview.hidden=true;
   const send=button('Enviar recado',async()=>{
    if(!blob||closed)return;if(api.room()!==room||api.user()?.uid!==user.uid)throw Error('A sala mudou. Grave novamente.');
@@ -68,8 +85,8 @@
    timeout=setTimeout(()=>{status.textContent='Sem confirmação da cabine. Consulte o DJ antes de reenviar.';unsubscribe();},20000);
    d.addEventListener('close',unsubscribe);
   });send.disabled=true;
-  const stop=button('Parar gravação',()=>{if(recorder?.state==='recording')recorder.stop();});stop.hidden=true;
-  const start=button('● Gravar recado',async()=>{
+  const stop=button('Parar',()=>{if(recorder?.state==='recording')recorder.stop();});stop.classList.add('voice-stop');stop.hidden=true;
+  const start=button('Gravar',async()=>{
    if(blob){blob=null;send.disabled=true;preview.hidden=true;if(url)URL.revokeObjectURL(url);}
    status.textContent='Autorize o microfone para gravar.';
    stream=await navigator.mediaDevices.getUserMedia({audio:true});
@@ -78,12 +95,15 @@
    try{recorder=new MediaRecorder(stream,{...(type?{mimeType:type}:{}),audioBitsPerSecond:48000});}catch(e){release();throw e;}
    const chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
    recorder.onerror=()=>{release();status.textContent='Não foi possível gravar. Tente novamente.';};
-   recorder.onstop=()=>{duration=Math.min(15,(Date.now()-started)/1000);release();if(closed)return;blob=new Blob(chunks,{type:recorder.mimeType});url=URL.createObjectURL(blob);preview.src=url;preview.hidden=false;start.hidden=false;stop.hidden=true;send.disabled=!blob.size;status.textContent='Ouça antes de enviar. A liberação segue a configuração do DJ; a reprodução ocorre somente no intervalo.';};
+   recorder.onstop=()=>{duration=Math.min(15,(Date.now()-started)/1000);release();recorderUi.classList.remove('is-recording');time.textContent=`0:${String(Math.max(1,Math.round(duration))).padStart(2,'0')}`;if(closed)return;blob=new Blob(chunks,{type:recorder.mimeType});url=URL.createObjectURL(blob);preview.src=url;preview.hidden=false;start.hidden=false;stop.hidden=true;send.disabled=!blob.size;status.textContent='Ouça antes de enviar. A liberação segue a configuração do DJ; a reprodução ocorre somente no intervalo.';};
    started=Date.now();try{recorder.start();}catch(e){release();throw e;}
-   start.hidden=true;stop.hidden=false;status.textContent='🔴 Gravando… a gravação para automaticamente em 15 segundos.';
+   start.hidden=true;stop.hidden=false;recorderUi.classList.add('is-recording');status.textContent='Gravando… toque em parar quando terminar.';
+   time.textContent='0:00';clock=setInterval(()=>{const elapsed=Math.min(15,(Date.now()-started)/1000);time.textContent=`0:${String(Math.floor(elapsed)).padStart(2,'0')}`;},200);
    timer=setTimeout(()=>{if(recorder.state==='recording')recorder.stop();},15000);
   });
-  body.append(status,start,stop,preview,send,el('p','O microfone é usado apenas enquanto você grava. O áudio será liberado automaticamente ou pelo DJ, conforme a configuração da festa, e não altera a fila de cantores.','challenge-muted'));
+  start.classList.add('voice-record');send.classList.add('voice-send');
+  const controls=el('div',undefined,'voice-recorder-actions');controls.append(start,stop,send);
+  body.append(status,recorderUi,controls,preview,el('p','O microfone é usado apenas enquanto você grava. O áudio será liberado automaticamente ou pelo DJ, conforme a configuração da festa, e não altera a fila de cantores.','challenge-muted'));
   root.addEventListener('pagehide',()=>{closed=true;release();},{once:true});
  }
  let api,room=null,audioRef,challengeRef,clips={},chain=Promise.resolve(),active=null,renderAudio=null;
@@ -117,7 +137,7 @@
    else if(Object.values(list).some(c=>c.uid===req.singerUid)){ok=false;message='Você já tem um recado aguardando. Aguarde o DJ.';}
    else if(Object.keys(list).length>=20){ok=false;message='A fila de recados está cheia. Aguarde um intervalo.';}
    const changes={['pedidos/'+key]:null,['audioReceipts/'+key]:{ok,message,at:Date.now()}};
-   if(ok)changes['audioClips/'+key]={uid:req.singerUid,name:name(member),audio:req.audio,duration:req.duration,status:automatic?'approved':'pending',at:Date.now()};
+   if(ok)changes['audioClips/'+key]={uid:req.singerUid,name:name(member),photo:member.photo||'',audio:req.audio,duration:req.duration,status:automatic?'approved':'pending',at:Date.now()};
    await base.update(changes);
    if(ok&&automatic)root.PartyHost?.activity('audio_'+key,{type:'audio',uid:req.singerUid,name:name(member)});
   }).catch(e=>console.warn('Recado pendente:',e));},
@@ -143,7 +163,7 @@
   play(clip,id,transition,proceed){
    if(active)return;
    api.pauseAmbient();
-   const audio=new Audio(clip.audio),token={audio,proceed,timer:null,transition};active=token;audio.volume=.8;
+   const audio=new Audio(clip.audio),token={audio,proceed,timer:null,transition,overlay:this.showPlayback(clip)};active=token;audio.volume=.8;
    const clipRef=id?api.db.ref(`salas/${room}/audioClips/${id}`):null;
    token.clipRef=clipRef;token.consume=!!id;
    const finish=()=>{if(active!==token)return;if(id){delete clips[id];clipRef.remove().catch(console.warn);}this.stopAudio(true);};
@@ -154,8 +174,16 @@
   },
   stopAudio(continuePlayback=false){
    const token=active;if(!token)return;active=null;clearTimeout(token.timer);token.audio.onended=null;token.audio.onerror=null;token.audio.pause();token.audio.removeAttribute('src');
-   if(token.consume)token.clipRef.remove().catch(console.warn);
+   token.overlay?.remove();if(token.consume)token.clipRef.remove().catch(console.warn);
    if(continuePlayback){if(token.proceed)token.proceed();else if(!api.busy())api.resumeAmbient();}
+  },
+  showPlayback(clip){
+   document.querySelector('.voice-playback-overlay')?.remove();
+   const overlay=el('div',undefined,'voice-playback-overlay'),avatar=el('div',undefined,'voice-playback-avatar');
+   if(clip.photo){const img=el('img');img.src=clip.photo;img.alt='';img.onerror=()=>{img.remove();avatar.textContent=(clip.name||'C')[0].toUpperCase();};avatar.append(img);}else avatar.textContent=(clip.name||'C')[0].toUpperCase();
+   const copy=el('div',undefined,'voice-playback-copy');copy.append(el('span','RECADO DE VOZ','voice-playback-label'),el('strong',clip.name||'Participante'));
+   const bars=el('div',undefined,'voice-playback-bars');for(let i=0;i<18;i++)bars.append(el('i'));
+   overlay.append(avatar,copy,bars);document.getElementById('playerContainer')?.append(overlay);return overlay;
   },
   end(){this.stopAudio();audioRef?.off();challengeRef?.off();clips={};room=null;}
  };

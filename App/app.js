@@ -2876,20 +2876,25 @@
         if (queue.length > 0) {
             playNext();
         } else {
-            const infoBox = document.getElementById('topInfoBox');
-            if (infoBox) infoBox.style.display = 'none';
-            const targetPlayer = document.getElementById('player');
-            if (targetPlayer) {
-                targetPlayer.innerHTML = '<div class="placeholder-msg">PRONTO PARA O PRÓXIMO SHOW!</div>';
-            }
-            if (currentRoomCode) {
-                db.ref('salas/' + currentRoomCode + '/now_playing').set({ playing: false });
-            }
-            // Exibe o Ranking Board se houver algum cantor no ranking! (Novo!)
-            if (sessionRanking.length > 0) {
-                renderRankingBoard();
-            }
-            checkAmbientMusic();
+            const enterIdle = () => {
+                const infoBox = document.getElementById('topInfoBox');
+                if (infoBox) infoBox.style.display = 'none';
+                const targetPlayer = document.getElementById('player');
+                if (targetPlayer) {
+                    targetPlayer.innerHTML = '<div class="placeholder-msg">PRONTO PARA O PRÓXIMO SHOW!</div>';
+                }
+                if (currentRoomCode) {
+                    db.ref('salas/' + currentRoomCode + '/now_playing').set({ playing: false });
+                }
+                // Exibe o Ranking Board se houver algum cantor no ranking! (Novo!)
+                if (sessionRanking.length > 0) {
+                    renderRankingBoard();
+                }
+                checkAmbientMusic();
+            };
+            // Recados aprovados também entram quando a fila termina. Antes,
+            // eles só eram consultados se já existisse uma próxima música.
+            if (!SocialHost.beforeNext(enterIdle)) enterIdle();
         }
 
         // Limpa listener de votos e dedômetro para a próxima música

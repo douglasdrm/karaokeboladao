@@ -506,26 +506,29 @@ body {
     padding: 10px 12px 90px;
 }
 .song-card {
-    background: var(--glass);
-    border: 1px solid var(--border);
-    padding: 13px 12px;
-    border-radius: 14px;
-    margin-bottom: 9px;
+    background: linear-gradient(145deg, rgba(24,22,37,.96), rgba(12,13,25,.98));
+    border: 1px solid rgba(255,255,255,.075);
+    padding: 14px 13px;
+    border-radius: 16px;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
     gap: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.025);
+    transition: transform .18s ease, border-color .18s ease;
 }
+.song-card:active { transform: scale(.987); border-color: rgba(217,70,239,.32); }
 .song-card .info { flex-grow: 1; min-width: 0; }
 .song-card .info .title {
-    font-weight: 600;
-    font-size: 0.92rem;
+    font-weight: 700;
+    font-size: 0.94rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.song-card .info .artist { font-size: 0.76rem; color: #9090b0; margin-top: 2px; }
-.song-card .info .lyrics-preview { font-size: 0.7rem; color: var(--blue); font-style: italic; margin-top: 2px; white-space: nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
-.song-card .info .song-id { font-size: 0.65rem; color: rgba(112,0,255,0.7); margin-top: 2px; }
+.song-card .info .artist { font-size: 0.76rem; color: #aaa7bd; margin-top: 3px; }
+.song-card .info .lyrics-preview { font-size: 0.71rem; color: #69dce6; font-style: italic; margin-top: 4px; white-space: nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+.song-card .info .song-id { font-size: 0.65rem; color: rgba(203,120,255,.68); margin-top: 4px; }
 
 .song-actions {
     display: flex;
@@ -549,11 +552,12 @@ body {
     border: none;
     color: white;
     padding: 9px 13px;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 0.9rem;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: 0.2s;
+    box-shadow: 0 6px 16px rgba(45,106,255,.3);
 }
 .btn-request:active { transform: scale(0.9); }
 
