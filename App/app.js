@@ -2269,9 +2269,9 @@
         }
     }
 
-    function showPartyRankingCarousel(onComplete) {
+    function showPartyRankingCarousel(onComplete, options = {}) {
         const rows = PartyHost.ranking?.() || [];
-        if (!rows.length || !playerArea) { onComplete(); return; }
+        if (!rows.length && !sessionRanking.length) { onComplete?.(); return; }
         const categories = [
             ['points', 'Pontuação geral', 'fa-star', 'pts'],
             ['songs', 'Rei/Rainha do Karaokê', 'fa-microphone', 'músicas'],
@@ -2283,11 +2283,22 @@
             ['streak', 'Incendiário', 'fa-bolt', 'sequência'],
             ['audios', 'Locutor da festa', 'fa-microphone-lines', 'recados']
         ];
-        const cards = categories.map(([field, title, icon, unit]) => {
+        const scoreCards = [0, 1, 2].map(index => {
+            const singer = sessionRanking[index];
+            return {
+                title: `Melhores da noite · ${index + 1}º`,
+                icon: 'fa-trophy',
+                unit: 'pontos',
+                name: singer?.singer || 'Posição disponível',
+                value: singer?.score || 0
+            };
+        });
+        const activityCards = categories.map(([field, title, icon, unit]) => {
             const ordered = rows.slice().sort((a, b) => (b[field] || 0) - (a[field] || 0) || a.name.localeCompare(b.name, 'pt-BR'));
             const leader = ordered[0], value = leader?.[field] || 0;
             return {title, icon, unit, name: value ? leader.name : 'Ainda sem líder', value};
         });
+        const cards = [...scoreCards, ...activityCards];
         const pages = []; for (let i = 0; i < cards.length; i += 3) pages.push(cards.slice(i, i + 3));
         const token = ++partyRankingTransition;
         const board = document.createElement('section'); board.className = 'party-ranking-carousel';
@@ -2295,7 +2306,9 @@
         const grid = document.createElement('div'); grid.className = 'party-ranking-grid';
         const dots = document.createElement('div'); dots.className = 'party-ranking-dots';
         pages.forEach(() => dots.append(document.createElement('i'))); board.append(heading, grid, dots);
-        playerArea.replaceChildren(board);
+        const target = options.target || playerArea || document.getElementById('player');
+        if (!target) { onComplete?.(); return; }
+        target.replaceChildren(board);
         const render = page => {
             grid.classList.remove('is-visible'); grid.replaceChildren();
             for (const item of pages[page]) {
@@ -2313,10 +2326,13 @@
         const advance = () => {
             if (token !== partyRankingTransition) return;
             page++;
-            if (page >= pages.length) { onComplete(); return; }
+            if (page >= pages.length) {
+                if (options.loop) page = 0;
+                else { onComplete?.(); return; }
+            }
             render(page); currentCallTimer = setTimeout(advance, 1150);
         };
-        currentCallTimer = setTimeout(advance, pages.length === 1 ? 1500 : 1150);
+        currentCallTimer = setTimeout(advance, options.loop ? 2300 : (pages.length === 1 ? 1500 : 1150));
     }
 
     function showComingNext(singerName, onComplete) {
@@ -2937,10 +2953,7 @@
                 if (currentRoomCode) {
                     db.ref('salas/' + currentRoomCode + '/now_playing').set({ playing: false });
                 }
-                // Exibe o Ranking Board se houver algum cantor no ranking! (Novo!)
-                if (sessionRanking.length > 0) {
-                    renderRankingBoard();
-                }
+                showPartyRankingCarousel(null, {loop: true});
                 checkAmbientMusic();
             };
             // Recados aprovados também entram quando a fila termina. Antes,
@@ -3149,9 +3162,9 @@
         // Se não há URL configurada, mostra uma tela bonita de espera
 
         if (!url) {
-            // Se a fila estiver vazia, mostra o ranking da noite (v20)
-            if (sessionRanking.length > 0) {
-                renderRankingBoard();
+            // Sem fila, o placar completo continua alternando em grupos de três.
+            if (sessionRanking.length > 0 || (PartyHost.ranking?.() || []).length > 0) {
+                showPartyRankingCarousel(null, {loop: true});
                 return;
             }
 
@@ -3200,8 +3213,8 @@
 
     `;
 
-        if (sessionRanking.length > 0) {
-            renderRankingBoard(true);
+        if (sessionRanking.length > 0 || (PartyHost.ranking?.() || []).length > 0) {
+            showPartyRankingCarousel(null, {loop: true, target: document.getElementById('ambientOverlayContent')});
         }
 
         setTimeout(() => {

@@ -32,3 +32,7 @@ body.toolbar-hidden #audienceToolbar{opacity:0;pointer-events:none}
 #audienceStage #publicScoreDisplay{top:clamp(110px,16vh,180px)!important;right:24px;animation:none!important;opacity:0;visibility:hidden;transform:translateY(5px);transition:opacity .3s ease,transform .3s ease,visibility .3s;pointer-events:none}
 #audienceStage.vibe-active #publicScoreDisplay{opacity:1;visibility:visible;transform:translateY(0)}
 #audienceStage #reactionContainer{position:absolute;inset:0;z-index:2147483641;pointer-events:none}
+
+/* A segunda tela espelha o placar já montado pela cabine. Mantém os cartões
+   visíveis enquanto a troca de página acontece na janela principal. */
+#audienceStage .party-ranking-grid{opacity:1!important;transform:none!important}
