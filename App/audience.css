@@ -27,3 +27,8 @@ body.toolbar-hidden #audienceToolbar{opacity:0;pointer-events:none}
 #audienceStage #djFooter{animation:none!important;opacity:1!important;bottom:52px;left:18px;padding:8px 12px;border-radius:10px;border-left:2px solid #c95be9;background:#110d1acc;font:500 13px/1.3 system-ui,sans-serif;letter-spacing:.3px;text-shadow:none;max-width:calc(100% - 210px)}
 #audienceStage #djFooter i{animation:none!important}
 @media(max-height:600px),(max-width:700px){#audienceStage .qr-fullscreen-box{transform:scale(.85)!important;transform-origin:bottom right;right:10px;bottom:46px}#audienceStage #djFooter{bottom:46px}}
+
+/* Audience-only vote toast: 1.5s visible, then a short fade. */
+#audienceStage #publicScoreDisplay{top:clamp(110px,16vh,180px)!important;right:24px;animation:none!important;opacity:0;visibility:hidden;transform:translateY(5px);transition:opacity .3s ease,transform .3s ease,visibility .3s;pointer-events:none}
+#audienceStage.vibe-active #publicScoreDisplay{opacity:1;visibility:visible;transform:translateY(0)}
+#audienceStage #reactionContainer{position:absolute;inset:0;z-index:2147483641;pointer-events:none}
