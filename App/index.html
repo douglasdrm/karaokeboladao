@@ -23,7 +23,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="challenges.css?v=1">
-<link rel="stylesheet" href="party-social.css?v=8">
+<link rel="stylesheet" href="party-social.css?v=9">
 <link rel="stylesheet" href="cabin-layout.css?v=2">
 </head>
 
@@ -357,6 +357,14 @@
                         <label for="setAmbientUrl">Música Ambiente (YouTube Link):</label>
                         <input type="text" id="setAmbientUrl" placeholder="Ex: https://www.youtube.com/watch?v=..." class="full-width">
                         <small>Deixe em branco para usar o padrão (Lounge Instrumental)</small>
+                    </div><div class="setting-item">
+                        <label for="setAmbientRankingMode">Tela de descanso:</label>
+                        <select id="setAmbientRankingMode" class="full-width">
+                            <option value="video">Priorizar vídeo</option>
+                            <option value="balanced" selected>Equilibrado</option>
+                            <option value="rankings">Priorizar rankings</option>
+                        </select>
+                        <small>Define por quanto tempo o vídeo ambiente e os rankings ficam em destaque.</small>
                     </div></section><section class="settings-group"><h3>Pontuação</h3><div class="setting-section">
                         <div class="setting-item">
                             <label class="checkbox-label">
@@ -519,7 +527,7 @@
     <script src="party-social.js?v=4"></script>
     <script src="challenge-core.js?v=1"></script>
     <script src="challenges.js?v=4" defer></script>
-    <script src="audience-host.js?v=1" defer></script><script src="app.js?v=4.8" defer></script>
+    <script src="audience-host.js?v=1" defer></script><script src="app.js?v=4.9" defer></script>
     <script src="tour-host.js" defer></script>
 </body>
 

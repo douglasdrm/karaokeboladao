@@ -8,6 +8,7 @@ html,body{zoom:1!important;width:100%;height:100%;margin:0;overflow:hidden!impor
 body.toolbar-hidden #audienceToolbar{opacity:0;pointer-events:none}
 #audienceStatus{position:fixed;inset:0;z-index:9000000;display:grid;place-content:center;text-align:center;padding:40px;background:#0c0915;color:#eee;font:22px/1.5 system-ui}#audienceStatus[hidden]{display:none}
 .audience-ambient{display:grid;place-content:center;width:100%;height:100%;background:radial-gradient(ellipse,#191033,#05050b);font:500 30px/1.5 system-ui;letter-spacing:5px;color:white;text-align:center}
+#audienceStage #ambientContainer iframe{width:100%!important;height:100%!important;border:0;display:block}
 @media(max-width:700px){#audienceToolbar span{display:none}#audienceStage .qr-fullscreen-box{transform:scale(.8)!important;transform-origin:bottom right}}
 
 /* Compact presentation overlays, away from the song title and bottom ticker. */

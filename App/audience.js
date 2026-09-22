@@ -30,14 +30,19 @@
   if(['SCRIPT','STYLE','LINK','META','OBJECT','EMBED','AUDIO','INPUT','SELECT','TEXTAREA'].includes(tag)||(!root&&tag==='BUTTON'))return null;
   let copy=mirrors.get(original);
   if(!copy){
-   copy=tag==='IFRAME'?document.createElement('div'):document.importNode(original,false);
+   copy=document.importNode(original,false);
    mirrors.set(original,copy);
   }
-  if(tag==='IFRAME'){copy.className='audience-ambient';copy.textContent='KARAOKE PARTY';return copy;}
-  const attrs=new Map([...original.attributes].filter(a=>!/^on/i.test(a.name)&&!['srcdoc','autofocus','autoplay'].includes(a.name)&&!(tag==='VIDEO'&&a.name==='src')).map(a=>[a.name,a.value]));
+  const attrs=new Map([...original.attributes].filter(a=>!/^on/i.test(a.name)&&!['srcdoc','autofocus','autoplay'].includes(a.name)&&!(tag==='VIDEO'&&a.name==='src')).map(a=>{
+   if(tag==='IFRAME'&&a.name==='src'){
+    try{const u=new URL(a.value,location.href);u.searchParams.set('autoplay','1');u.searchParams.set('mute','1');u.searchParams.set('controls','0');return[a.name,u.href];}catch{}
+   }
+   return[a.name,a.value];
+  }));
   for(const a of [...copy.attributes])if(!attrs.has(a.name)&&a.name!=='data-display-video'&&!(tag==='VIDEO'&&a.name==='src'))copy.removeAttribute(a.name);
   for(const [name,value] of attrs)if(copy.getAttribute(name)!==value)copy.setAttribute(name,value);
   if(tag==='VIDEO'){copy.dataset.displayVideo='true';videoSources.set(copy,original);copy.muted=true;copy.defaultMuted=true;copy.volume=0;copy.playsInline=true;copy.controls=false;return copy;}
+  if(tag==='IFRAME'){copy.setAttribute('allow','autoplay; encrypted-media; picture-in-picture');copy.setAttribute('tabindex','-1');return copy;}
   if(tag==='CANVAS'){try{copy.getContext('2d').drawImage(original,0,0);}catch{}return copy;}
   reconcile(copy,[...original.childNodes].map(n=>mirror(n)).filter(Boolean));
   return copy;

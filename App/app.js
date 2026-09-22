@@ -77,6 +77,10 @@
 
     let isDestroyingAmbient = false;
 
+    let ambientRankingTimer = null;
+
+    let ambientRankingPage = 0;
+
     let currentVotes = {}; // Armazena votos por usuário da música atual (v9)
     let currentDedometro = {}; // Armazena votos like/dislike do Dedômetro (Novo!)
     let sessionRanking = []; // Armazena os melhores da noite (v20)
@@ -99,6 +103,8 @@
         autoFullscreen: false,
 
         ambientUrl: "",
+
+        ambientRankingMode: "balanced",
 
         playIntroCall: true,
         autoApproveVoiceMessages: false,
@@ -1213,6 +1219,7 @@
         if (introCallInput) introCallInput.checked = settings.playIntroCall !== false;
 
         document.getElementById('setAmbientUrl').value = settings.ambientUrl || "";
+        document.getElementById('setAmbientRankingMode').value = settings.ambientRankingMode || "balanced";
 
         document.getElementById('setScreensaverTime').value = settings.screensaverTimeout || 30000;
 
@@ -1290,6 +1297,7 @@
         const playIntro = document.getElementById('setPlayIntroCall') ? document.getElementById('setPlayIntroCall').checked : (settings.playIntroCall !== false);
 
         const ambient = document.getElementById('setAmbientUrl').value;
+        const ambientRankingMode = document.getElementById('setAmbientRankingMode').value;
 
         const ssTimeout = parseInt(document.getElementById('setScreensaverTime').value);
 
@@ -1311,6 +1319,8 @@
             autoApproveVoiceMessages: document.getElementById('setAutoApproveVoiceMessages').checked,
 
             ambientUrl: ambient,
+
+            ambientRankingMode,
 
             screensaverTimeout: ssTimeout,
 
@@ -3136,6 +3146,7 @@
 
     function stopAmbientMusic() {
 
+        stopAmbientRankingCycle();
         if (!ytAmbientPlayer) return;
 
         try {
@@ -3194,6 +3205,65 @@
 
     }
 
+    function stopAmbientRankingCycle() {
+        if (ambientRankingTimer) clearTimeout(ambientRankingTimer);
+        ambientRankingTimer = null;
+        document.getElementById('ambientOverlay')?.classList.remove('is-ranking-visible');
+    }
+
+    function renderAmbientRankingPanel() {
+        const panel = document.getElementById('ambientRankingPanel');
+        if (!panel) return;
+        const model = rankingModel();
+        const main = model[0];
+        const secondary = model.slice(1);
+        const offset = (ambientRankingPage % 2) * 4;
+        const shown = secondary.slice(offset, offset + 4);
+        panel.replaceChildren();
+
+        const eyebrow = document.createElement('span'); eyebrow.className = 'ambient-rank-eyebrow'; eyebrow.textContent = 'PLACAR DA FESTA';
+        const heading = document.createElement('h2'); heading.textContent = 'Pontuação geral';
+        const podium = document.createElement('ol'); podium.className = 'ambient-rank-podium';
+        if (!main.entries.length) {
+            const empty = document.createElement('li'); empty.className = 'is-empty'; empty.textContent = 'A festa está só começando'; podium.append(empty);
+        } else main.entries.slice(0, 3).forEach((entry, index) => {
+            const row = document.createElement('li');
+            const place = document.createElement('b'); place.textContent = `${index + 1}º`;
+            const name = document.createElement('strong'); name.textContent = entry.name;
+            const value = document.createElement('small'); value.textContent = `${entry.value} ${main.unit}`;
+            row.append(place, name, value); podium.append(row);
+        });
+        const highlights = document.createElement('div'); highlights.className = 'ambient-rank-highlights';
+        shown.forEach(category => {
+            const row = document.createElement('article');
+            const label = document.createElement('span'); label.textContent = category.title;
+            const leader = document.createElement('strong'); leader.textContent = category.entries[0]?.name || 'Ainda não rolou';
+            const value = document.createElement('small'); value.textContent = category.entries[0] ? `${category.entries[0].value} ${category.unit}` : '';
+            row.append(label, leader, value); highlights.append(row);
+        });
+        panel.append(eyebrow, heading, podium, highlights);
+    }
+
+    function startAmbientRankingCycle() {
+        stopAmbientRankingCycle();
+        const timing = settings.ambientRankingMode === 'video'
+            ? {video: 35000, ranking: 6000}
+            : settings.ambientRankingMode === 'rankings'
+                ? {video: 15000, ranking: 12000}
+                : {video: 25000, ranking: 8000};
+        const showPanel = () => {
+            if (isPlaying || queue.length || !isAmbientPlaying || !document.getElementById('ambientOverlay')) return;
+            renderAmbientRankingPanel();
+            document.getElementById('ambientOverlay').classList.add('is-ranking-visible');
+            ambientRankingTimer = setTimeout(() => {
+                document.getElementById('ambientOverlay')?.classList.remove('is-ranking-visible');
+                ambientRankingPage = (ambientRankingPage + 1) % 2;
+                ambientRankingTimer = setTimeout(showPanel, timing.video);
+            }, timing.ranking);
+        };
+        ambientRankingTimer = setTimeout(showPanel, timing.video);
+    }
+
     function checkAmbientMusic() {
         console.log("🎸 Verificando Música Ambiente... Tocando:", isPlaying, "Fila:", queue.length);
         if (isPlaying || queue.length > 0) return;
@@ -3230,28 +3300,22 @@
 
         if (!videoId && !playlistId) return; // URL inválida
 
+        if (isAmbientPlaying && ytAmbientPlayer && document.getElementById('ambientContainer')) {
+            if (!ambientRankingTimer) startAmbientRankingCycle();
+            return;
+        }
+
         playerArea.innerHTML = `
-
-        <div id="ambientContainer" style="width:100%; height:100%; position:relative;">
-
-            <div id="ytAmbient"></div>
-
-            <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; flex-direction:column; color:white; pointer-events:none;">
-
-                <div id="ambientOverlayContent" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
-                    <div style="position:absolute; top:40px; text-align:center; width:100%;">
-                        <h2 style="font-weight:900; letter-spacing:10px; opacity:0.4; margin:0; font-size:1.4rem;">MÚSICA AMBIENTE</h2>
-                        <div class="placeholder-msg" style="font-size:0.9rem; opacity:0.6; margin-top:2px;">AGUARDANDO PRÓXIMO SHOW...</div>
-                    </div>
+        <div id="ambientContainer" class="ambient-stage">
+            <div id="ytAmbient" class="ambient-video"></div>
+            <div id="ambientOverlay" class="ambient-overlay">
+                <div class="ambient-heading">
+                    <strong>MÚSICA AMBIENTE</strong>
+                    <span>AGUARDANDO O PRÓXIMO SHOW</span>
                 </div>
-
+                <aside id="ambientRankingPanel" class="ambient-ranking-panel" aria-label="Destaques da festa"></aside>
             </div>
-
-        </div>
-
-    `;
-
-        showPartyRankingCarousel(null, {target: document.getElementById('ambientOverlayContent')});
+        </div>`;
 
         setTimeout(() => {
 
@@ -3284,6 +3348,10 @@
                             event.target.playVideo();
 
                             event.target.setVolume(35);
+
+                            isAmbientPlaying = true;
+
+                            startAmbientRankingCycle();
 
                         }
 
