@@ -3,6 +3,7 @@
  const stage=document.getElementById('audienceStage'),status=document.getElementById('audienceStatus');
  let hideTimer,observer,observedDocument,scheduled=false,vibeSignature='',vibeUntil=0;
  const mirrors=new WeakMap(),videoSources=new WeakMap();
+ let ambientMirror={iframe:null,state:null,time:0,stamp:0,rate:1,retryUntil:0,lastCommand:0,video:''};
  const allowed=['#player','#fsQueueOverlay','#rankingTicker','.qr-fullscreen-box','#topInfoBox','#djFooter','#screensaver','#publicScoreDisplay','#reactionContainer','.applause-overlay','.voice-playback-overlay'];
  const frame=document.createElement('main');frame.id='playerContainer';stage.append(frame);
  function showToolbar(){document.body.classList.remove('toolbar-hidden');clearTimeout(hideTimer);hideTimer=setTimeout(()=>document.body.classList.add('toolbar-hidden'),2200);}
@@ -47,6 +48,33 @@
   reconcile(copy,[...original.childNodes].map(n=>mirror(n)).filter(Boolean));
   return copy;
  }
+ function youtubeCommand(iframe,func,args=[]){
+  try{iframe.contentWindow?.postMessage(JSON.stringify({event:'command',func,args}),'*');}catch{}
+ }
+ function syncAmbientPlayback(sourceContainer){
+  const source=sourceContainer.querySelector('#ambientContainer');
+  const target=frame.querySelector('#ambientContainer');
+  const iframe=target?.querySelector('iframe');
+  if(!source||!iframe){ambientMirror={iframe:null,state:null,time:0,stamp:0,rate:1,retryUntil:0,lastCommand:0,video:''};return;}
+  const state=Number(source.dataset.ambientState);
+  const time=Number(source.dataset.ambientTime);
+  const rate=Number(source.dataset.ambientRate)||1;
+  const video=source.dataset.ambientVideo||'';
+  if(!Number.isFinite(state)||!Number.isFinite(time))return;
+  const now=performance.now();
+  const fresh=ambientMirror.iframe!==iframe||ambientMirror.video!==video;
+  if(fresh)ambientMirror={iframe,state:null,time,stamp:now,rate,retryUntil:now+5000,lastCommand:0,video};
+  const estimated=ambientMirror.time+(ambientMirror.state===1?(now-ambientMirror.stamp)/1000*ambientMirror.rate:0);
+  const drift=Math.abs(time-estimated);
+  const stateChanged=ambientMirror.state!==state;
+  const retry=now<ambientMirror.retryUntil&&now-ambientMirror.lastCommand>500;
+  if(fresh||retry||stateChanged||drift>.65){
+   youtubeCommand(iframe,'mute');youtubeCommand(iframe,'setVolume',[0]);youtubeCommand(iframe,'setPlaybackRate',[rate]);youtubeCommand(iframe,'seekTo',[time,true]);
+   if(state===1)youtubeCommand(iframe,'playVideo');
+   else if([0,2,5].includes(state))youtubeCommand(iframe,'pauseVideo');
+   ambientMirror.time=time;ambientMirror.stamp=now;ambientMirror.rate=rate;ambientMirror.state=state;ambientMirror.lastCommand=now;ambientMirror.video=video;
+  }
+ }
  function tick(){
   try{
    if(!window.opener||window.opener.closed){disconnected('A cabine foi fechada. Abra a Segunda tela novamente pela cabine do DJ.');return;}
@@ -63,6 +91,7 @@
    // A root can already belong to another public root; never move it twice.
    const topRoots=roots.filter(n=>!roots.some(other=>other!==n&&other.contains(n)));
    reconcile(frame,topRoots.map(n=>mirror(n,true)).filter(Boolean));
+   syncAmbientPlayback(container);
    const vibe=source.getElementById('publicScoreDisplay');
    const signature=vibe&&vibe.style.display!=='none'?[vibe.querySelector('#publicScoreVal')?.textContent,vibe.querySelector('#likeCount')?.textContent,vibe.querySelector('#dislikeCount')?.textContent].join('|'):'';
    if(signature!==vibeSignature){vibeSignature=signature;vibeUntil=signature?Date.now()+1500:0;}

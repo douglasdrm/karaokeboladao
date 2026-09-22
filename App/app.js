@@ -81,6 +81,8 @@
 
     let ambientRankingPage = 0;
 
+    let ambientStateTimer = null;
+
     let currentVotes = {}; // Armazena votos por usuário da música atual (v9)
     let currentDedometro = {}; // Armazena votos like/dislike do Dedômetro (Novo!)
     let sessionRanking = []; // Armazena os melhores da noite (v20)
@@ -3147,6 +3149,8 @@
     function stopAmbientMusic() {
 
         stopAmbientRankingCycle();
+        if (ambientStateTimer) clearInterval(ambientStateTimer);
+        ambientStateTimer = null;
         if (!ytAmbientPlayer) return;
 
         try {
@@ -3209,6 +3213,23 @@
         if (ambientRankingTimer) clearTimeout(ambientRankingTimer);
         ambientRankingTimer = null;
         document.getElementById('ambientOverlay')?.classList.remove('is-ranking-visible');
+    }
+
+    function publishAmbientState() {
+        const container = document.getElementById('ambientContainer');
+        if (!container || !ytAmbientPlayer) return;
+        try {
+            container.dataset.ambientState = String(ytAmbientPlayer.getPlayerState());
+            container.dataset.ambientTime = (ytAmbientPlayer.getCurrentTime() || 0).toFixed(2);
+            container.dataset.ambientRate = String(ytAmbientPlayer.getPlaybackRate?.() || 1);
+            container.dataset.ambientVideo = ytAmbientPlayer.getVideoData?.().video_id || '';
+        } catch (e) { }
+    }
+
+    function startAmbientStateBroadcast() {
+        if (ambientStateTimer) clearInterval(ambientStateTimer);
+        publishAmbientState();
+        ambientStateTimer = setInterval(publishAmbientState, 200);
     }
 
     function renderAmbientRankingPanel() {
@@ -3353,7 +3374,11 @@
 
                             startAmbientRankingCycle();
 
-                        }
+                            startAmbientStateBroadcast();
+
+                        },
+
+                        'onStateChange': publishAmbientState
 
                     }
 
