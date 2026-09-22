@@ -329,6 +329,14 @@
 
         modal = document.getElementById('customModal');
 
+        const fullscreenContainer = document.getElementById('playerContainer');
+        const syncFullscreenClass = () => fullscreenContainer?.classList.toggle(
+            'is-native-fullscreen',
+            document.fullscreenElement === fullscreenContainer || document.webkitFullscreenElement === fullscreenContainer
+        );
+        document.addEventListener('fullscreenchange', syncFullscreenClass);
+        document.addEventListener('webkitfullscreenchange', syncFullscreenClass);
+
         ensureRankingTicker();
         rankingRefreshTimer = setInterval(refreshRankingTicker, 1500);
         window.addEventListener('pagehide', () => clearInterval(rankingRefreshTimer), {once:true});

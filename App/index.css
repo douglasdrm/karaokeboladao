@@ -4789,16 +4789,18 @@ body.dashboard-mode {
 .dj-footer-badge{top:82px;bottom:auto;left:28px;padding:5px 10px;border-left-width:2px;border-radius:4px 10px 10px 4px;font-size:.62rem;letter-spacing:.8px;z-index:220}
 @media(max-width:1366px),(max-height:768px){.floating-info-box{top:5px;padding:5px 20px;min-width:250px}.fs-queue-box{min-width:470px!important;padding:3px 14px!important}.dj-footer-badge{top:58px;left:20px}}
 /* A cabine em tela cheia usa a mesma composição da segunda tela. */
-#playerContainer:fullscreen{width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#000!important}
-#playerContainer:fullscreen #player{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-height:none!important;margin:0!important;border-radius:0!important;aspect-ratio:auto!important}
-#playerContainer:fullscreen .video-overlay-banner{top:0!important;left:0!important;width:100%!important}
-#playerContainer:fullscreen .floating-info-box{top:6px!important}
-#playerContainer:fullscreen .fs-queue-box{top:5px!important;max-width:min(760px,70vw)!important}
-#playerContainer:fullscreen .qr-fullscreen-box{position:absolute!important;top:auto!important;right:16px!important;bottom:56px!important;width:150px!important;padding:10px!important;gap:7px!important;border:1px solid #aa78d066!important;border-radius:16px!important;background:linear-gradient(150deg,#20142bef,#0d0c17f5)!important;transform:none!important;opacity:1!important}
-#playerContainer:fullscreen #qrcode-fs{width:124px!important;height:124px!important;padding:6px!important;border-radius:9px!important}
-#playerContainer:fullscreen #qrcode-fs img,#playerContainer:fullscreen #qrcode-fs canvas{width:112px!important;height:112px!important}
-#playerContainer:fullscreen .qr-fs-label{font-size:12px!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important}
-#playerContainer:fullscreen .compact-controls-wrapper{position:absolute!important;left:50%!important;bottom:46px!important;transform:translateX(-50%)!important;z-index:10000!important}
-#playerContainer:fullscreen .progress-container{bottom:38px!important}
-#playerContainer:fullscreen .progress-time-display{bottom:48px!important}
-#playerContainer:fullscreen .dj-footer-badge{top:82px!important;bottom:auto!important;left:24px!important}
+:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen){width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#000!important}
+:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) #player{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-height:none!important;margin:0!important;border-radius:0!important;aspect-ratio:auto!important}
+:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) .video-overlay-banner{top:0!important;left:0!important;width:100%!important}
+:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) .floating-info-box{top:6px!important}
+:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) .fs-queue-box{top:5px!important;max-width:min(760px,70vw)!important}
+:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) .qr-fullscreen-box{position:absolute!important;top:auto!important;right:16px!important;bottom:56px!important;width:150px!important;padding:10px!important;gap:7px!important;border:1px solid #aa78d066!important;border-radius:16px!important;background:linear-gradient(150deg,#20142bef,#0d0c17f5)!important;transform:none!important;opacity:1!important}
+:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) #qrcode-fs{width:124px!important;height:124px!important;padding:6px!important;border-radius:9px!important}
+:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) #qrcode-fs img,:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) #qrcode-fs canvas{width:112px!important;height:112px!important}
+:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) .qr-fs-label{font-size:12px!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important}
+:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) .compact-controls-wrapper{position:absolute!important;left:50%!important;bottom:46px!important;transform:translateX(-50%)!important;z-index:10000!important}
+:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) .progress-container{bottom:38px!important}
+:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) .progress-time-display{bottom:48px!important}
+:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) .dj-footer-badge{top:82px!important;bottom:auto!important;left:24px!important}
+
+:is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) #mainVideo{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important}
