@@ -38,3 +38,8 @@ body.toolbar-hidden #audienceToolbar{opacity:0;pointer-events:none}
 #audienceStage .ranking-ticker-track{animation-duration:90s}
 #audienceStage .party-ranking-board{width:100%;height:100%}
 @media(max-width:900px){#audienceStage #fsQueueOverlay{max-width:92vw!important}#audienceStage .ranking-ticker{right:0;bottom:0}}
+
+/* A identidade do DJ fica sob a logo, liberando o rodapé para o placar. */
+#audienceStage #djFooter{top:82px!important;bottom:auto!important;left:24px;padding:5px 9px;font-size:11px;max-width:180px}
+#audienceStage #fsQueueOverlay{top:5px!important;max-width:min(760px,70vw)!important}
+@media(max-height:768px){#audienceStage #djFooter{top:58px!important}}

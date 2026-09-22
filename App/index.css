@@ -4771,3 +4771,20 @@ body.dashboard-mode {
 .score-final-overlay .cn-equalizer {
     margin-top: 40px;
 }
+/* Ajustes finais da apresentação pública: tudo cabe dentro da tarja superior. */
+.floating-info-box{top:7px;z-index:8500;min-width:280px;max-width:46%;padding:6px 24px;border-radius:32px}
+.floating-info-box .info-label{font-size:.46rem;letter-spacing:2px}
+.floating-info-box h1{font-size:1rem;line-height:1.15}
+.floating-info-box p{font-size:.6rem;line-height:1.2}
+.fs-queue-box{top:5px!important;min-width:520px!important;max-width:72%!important;padding:4px 18px!important;border-radius:0 0 13px 13px!important;transform:translateX(-50%) scale(.82)!important;transform-origin:top center!important;z-index:8700}
+.fs-label-header{font-size:.62rem;letter-spacing:3px;margin-bottom:2px}
+.fs-row-container{gap:14px}
+.fs-col-pc{gap:7px}
+.fs-col-pc.current{padding:4px 10px;border-radius:8px}
+.fs-name-pc{font-size:.78rem}
+.fs-col-pc.current .fs-name-pc{font-size:.92rem}
+.fs-col-pc:not(.current) .fs-name-pc{font-size:.72rem}
+.fs-song-pc{font-size:.6rem;max-width:175px}
+.fs-divider-v-pc{height:24px}
+.dj-footer-badge{top:82px;bottom:auto;left:28px;padding:5px 10px;border-left-width:2px;border-radius:4px 10px 10px 4px;font-size:.62rem;letter-spacing:.8px;z-index:220}
+@media(max-width:1366px),(max-height:768px){.floating-info-box{top:5px;padding:5px 20px;min-width:250px}.fs-queue-box{min-width:470px!important;padding:3px 14px!important}.dj-footer-badge{top:58px;left:20px}}
