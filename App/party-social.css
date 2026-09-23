@@ -60,3 +60,8 @@
 .ambient-rank-highlights strong{margin-top:5px;font:700 12px/1.15 system-ui;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ambient-rank-highlights small{margin-top:3px;color:#58dce7;font:700 9px/1.2 system-ui}
 @media(max-width:900px){.ambient-ranking-panel{top:auto;left:3%;right:3%;bottom:6%;width:auto;max-height:46%;padding:16px}.ambient-ranking-panel h2{font-size:19px;margin-bottom:10px}.ambient-rank-podium{grid-template-columns:repeat(3,1fr)}.ambient-rank-podium li{grid-template-columns:25px 1fr;grid-template-rows:auto auto}.ambient-rank-podium li small{grid-column:2}.ambient-rank-highlights{grid-template-columns:repeat(4,1fr)}}
+
+/* Leitura do placar em monitores e teloes, sem aumentar a faixa sobre o video. */
+.ranking-ticker-card-title,.ranking-ticker-card-title i{font-size:11px}
+.ranking-ticker-leader{font-size:14px}
+.ranking-ticker-value{font-size:11px}

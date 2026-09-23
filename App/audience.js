@@ -5,7 +5,7 @@
  const mirrors=new WeakMap(),videoSources=new WeakMap();
  let ambientMirror={iframe:null,state:null,time:0,stamp:0,rate:1,retryUntil:0,lastCommand:0,video:''};
  const allowed=['#player','#fsQueueOverlay','#rankingTicker','.qr-fullscreen-box','#topInfoBox','#djFooter','#screensaver','#publicScoreDisplay','#reactionContainer','.applause-overlay','.voice-playback-overlay'];
- const frame=document.createElement('main');frame.id='playerContainer';stage.append(frame);
+ const frame=document.createElement('main');frame.id='playerContainer';frame.className='is-native-fullscreen';stage.append(frame);
  function showToolbar(){document.body.classList.remove('toolbar-hidden');clearTimeout(hideTimer);hideTimer=setTimeout(()=>document.body.classList.add('toolbar-hidden'),2200);}
  document.addEventListener('pointermove',e=>{if(e.clientY<64)showToolbar();});document.addEventListener('keydown',e=>{if(e.key==='Tab')showToolbar();});showToolbar();
  document.getElementById('audienceFullscreen').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen();}catch{alert('Use a opção de tela cheia do navegador nesta janela.');}};
@@ -89,7 +89,9 @@
    }
    const roots=allowed.flatMap(selector=>[...(selector==='#reactionContainer'?source:container).querySelectorAll(selector)]);
    // A root can already belong to another public root; never move it twice.
-   const topRoots=roots.filter(n=>!roots.some(other=>other!==n&&other.contains(n)));
+   const queue=container.querySelector('#fsQueueOverlay');
+   const queueVisible=queue&&window.opener.getComputedStyle(queue).display!=='none';
+   const topRoots=roots.filter(n=>!(queueVisible&&n.id==='topInfoBox')&&!roots.some(other=>other!==n&&other.contains(n)));
    reconcile(frame,topRoots.map(n=>mirror(n,true)).filter(Boolean));
    syncAmbientPlayback(container);
    const vibe=source.getElementById('publicScoreDisplay');
