@@ -1,0 +1,258 @@
+/* Camada visual exclusiva da Cabine PC. O palco em fullscreen continua em cabin-layout.css. */
+@media (min-width: 1025px) {
+    html {
+        font-size: 100% !important;
+        zoom: 1 !important;
+    }
+
+    body.cabin-pc-page {
+        --pc-bg: #070910;
+        --pc-panel: #0f131e;
+        --pc-panel-soft: #121724;
+        --pc-line: rgba(255, 255, 255, .09);
+        --pc-line-strong: rgba(255, 255, 255, .16);
+        --pc-muted: #8f95a6;
+        --pc-yellow: #ffd93d;
+        --pc-blue: #536dfe;
+        width: 100vw;
+        height: 100dvh;
+        overflow: hidden;
+        background: var(--pc-bg);
+    }
+
+    .cabin-pc-page .bg-glow {
+        position: fixed;
+        width: 520px;
+        height: 520px;
+        filter: blur(150px);
+        opacity: .09;
+        pointer-events: none;
+    }
+    .cabin-pc-page .bg-glow-1 { top: -300px; left: 18%; background: var(--pc-blue); }
+    .cabin-pc-page .bg-glow-2 { right: -320px; bottom: -300px; background: #d946ef; }
+
+    .cabin-pc-page .dashboard {
+        width: 100vw !important;
+        height: 100dvh !important;
+        padding: 10px;
+        gap: 10px;
+        grid-template-columns: minmax(270px, 21vw) minmax(0, 1fr) minmax(260px, 21vw);
+        grid-template-rows: 66px minmax(0, 1fr) 34px;
+        background: transparent;
+    }
+
+    .cabin-pc-page .panel {
+        min-height: 0;
+        padding: 16px;
+        border: 1px solid var(--pc-line);
+        border-radius: 16px;
+        background: rgba(15, 19, 30, .94);
+        box-shadow: none;
+        backdrop-filter: blur(20px);
+    }
+
+    .cabin-pc-page .header.panel {
+        grid-column: 1 / -1;
+        min-width: 0;
+        padding: 0 14px 0 18px;
+        border-radius: 15px;
+        flex-direction: row;
+        gap: 18px;
+    }
+    .cabin-pc-page .header-left { flex: 0 0 auto; display: flex; align-items: center; }
+    .cabin-pc-page .main-logo { width: 112px; height: auto; filter: none; }
+    .cabin-pc-page .header-center { min-width: 0; flex: 1; align-items: flex-start; }
+    .cabin-pc-page .dashboard-eyebrow,
+    .cabin-pc-page .panel-eyebrow {
+        color: var(--pc-yellow);
+        font: 800 .58rem/1 'Montserrat', sans-serif;
+        letter-spacing: .14em;
+    }
+    .cabin-pc-page .brand-title {
+        max-width: min(36vw, 520px);
+        margin: 4px 0 2px;
+        overflow: hidden;
+        color: #f6f7fb;
+        background: none;
+        font: 800 1.05rem/1.1 'Montserrat', sans-serif;
+        letter-spacing: -.015em;
+        text-overflow: ellipsis;
+        text-shadow: none;
+        white-space: nowrap;
+        -webkit-text-fill-color: currentColor;
+        animation: none;
+    }
+    .cabin-pc-page .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #949aaa;
+        font: 700 .56rem/1 'Montserrat', sans-serif;
+        letter-spacing: .1em;
+    }
+    .cabin-pc-page .status-indicator .dot { width: 6px; height: 6px; box-shadow: 0 0 9px #72e6ad; }
+    .cabin-pc-page .header-right { flex: 0 0 auto; display: flex; align-items: center; gap: 7px; }
+    .cabin-pc-page .btn-icon.header-action {
+        width: auto;
+        height: 38px;
+        min-width: 38px;
+        padding: 0 11px;
+        gap: 7px;
+        border: 1px solid var(--pc-line);
+        border-radius: 10px;
+        color: #c9ccd6;
+        background: rgba(255, 255, 255, .025);
+        font: 600 .7rem/1 'Poppins', sans-serif;
+        text-decoration: none;
+        box-shadow: none;
+    }
+    .cabin-pc-page .btn-icon.header-action:hover { color: #fff; border-color: var(--pc-line-strong); background: rgba(255,255,255,.07); transform: none; }
+    .cabin-pc-page .header-action-primary { color: #fff8d2 !important; border-color: rgba(255, 217, 61, .3) !important; background: rgba(255, 217, 61, .08) !important; }
+
+    .cabin-pc-page .sidebar-search,
+    .cabin-pc-page .sidebar-queue { grid-row: 2 / 4; height: auto; overflow: hidden; }
+    .cabin-pc-page .sidebar-search { grid-column: 1; }
+    .cabin-pc-page .sidebar-queue { grid-column: 3; }
+    .cabin-pc-page .catalog-header,
+    .cabin-pc-page .queue-header { min-height: 42px; margin-bottom: 12px; align-items: flex-start; }
+    .cabin-pc-page .catalog-header h3,
+    .cabin-pc-page .queue-header h3 { margin: 5px 0 0; color: #f6f7fb; font: 800 1.03rem/1.15 'Montserrat', sans-serif; letter-spacing: -.02em; }
+    .cabin-pc-page #btnShuffle { width: 36px; height: 36px; margin: 0; padding: 0; display: grid; place-items: center; border-color: var(--pc-line); border-radius: 10px; background: rgba(255,255,255,.035); font-size: .75rem; }
+    .cabin-pc-page #btnShuffle:hover { color: #111; border-color: var(--pc-yellow); background: var(--pc-yellow); box-shadow: none; }
+
+    .cabin-pc-page #djStatsCard { margin-bottom: 10px !important; }
+    .cabin-pc-page #djStatsCard .stat-bubble { min-height: 31px; padding: 5px 9px !important; justify-content: flex-start !important; border-color: var(--pc-line) !important; border-radius: 9px !important; color: #9298a8; background: rgba(255,255,255,.02) !important; font-size: .65rem !important; }
+    .cabin-pc-page .search-box { position: relative; }
+    .cabin-pc-page .search-box > i { position: absolute; z-index: 1; top: 50%; left: 13px; color: #72798c; font-size: .75rem; transform: translateY(-50%); pointer-events: none; }
+    .cabin-pc-page .search-box input { height: 44px; padding: 0 12px 0 36px; border-color: var(--pc-line); border-radius: 11px; color: #f7f7fa; background: #090c14; font-size: .78rem; }
+    .cabin-pc-page .search-box input:focus { border-color: rgba(255,217,61,.55); box-shadow: 0 0 0 3px rgba(255,217,61,.08); }
+    .cabin-pc-page .song-list { margin-top: 10px; padding-right: 3px; }
+    .cabin-pc-page .song-item { min-height: 68px; margin-bottom: 6px; padding: 10px; gap: 8px; border: 1px solid transparent; border-radius: 11px; background: rgba(255,255,255,.018); }
+    .cabin-pc-page .song-item:hover { border-color: var(--pc-line-strong); background: rgba(255,255,255,.055); transform: none; }
+    .cabin-pc-page .song-info { min-width: 0; }
+    .cabin-pc-page .song-info strong,
+    .cabin-pc-page .song-info > span,
+    .cabin-pc-page .song-code { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cabin-pc-page .song-info strong { color: #f2f3f7; font-size: .78rem; font-weight: 700; }
+    .cabin-pc-page .song-info > span { margin-top: 2px; color: #9ba0ae; font-size: .69rem; }
+    .cabin-pc-page .song-code { margin-top: 5px; color: #636979; font: 700 .53rem/1 'Montserrat', sans-serif; letter-spacing: .07em; }
+    .cabin-pc-page .lyrics-preview { display: none !important; }
+    .cabin-pc-page .song-actions { flex: 0 0 auto; display: flex; gap: 5px; }
+    .cabin-pc-page .song-actions button { width: 31px; height: 31px; border: 1px solid var(--pc-line); border-radius: 9px; box-shadow: none; }
+    .cabin-pc-page .btn-song-play { color: #101116; border-color: var(--pc-yellow) !important; background: var(--pc-yellow) !important; }
+    .cabin-pc-page .btn-song-queue { color: #d8dbe4; background: rgba(255,255,255,.04) !important; }
+
+    .cabin-pc-page .main-player {
+        grid-column: 2;
+        grid-row: 2;
+        min-width: 0;
+        padding: 8px;
+        border-radius: 16px;
+        background: #05070c;
+    }
+    .cabin-pc-page .main-player .video-container {
+        width: 100%;
+        height: 100%;
+        max-height: none;
+        aspect-ratio: auto;
+        border-radius: 12px;
+        box-shadow: none;
+    }
+    .cabin-pc-page .placeholder-msg { color: #5f6574; font: 700 .72rem/1.4 'Montserrat', sans-serif; letter-spacing: .16em; }
+    .cabin-pc-page .compact-controls-wrapper { bottom: 14px; width: calc(100% - 24px); }
+    .cabin-pc-page .controls.compact-panel {
+        width: min(100%, 760px);
+        min-width: 0;
+        height: 62px;
+        padding: 0 13px;
+        gap: 10px;
+        border: 1px solid rgba(255,255,255,.15);
+        border-radius: 18px;
+        background: rgba(7,9,15,.9);
+        box-shadow: 0 16px 38px rgba(0,0,0,.38);
+        transform: none;
+    }
+    .cabin-pc-page .control-section { min-width: 0; gap: 8px; }
+    .cabin-pc-page .control-section.left,
+    .cabin-pc-page .control-section.right { flex: 1; }
+    .cabin-pc-page .control-section.right { justify-content: flex-end; }
+    .cabin-pc-page .control-section.center { flex: 0 0 auto; }
+    .cabin-pc-page .tone-control,
+    .cabin-pc-page .volume-control { min-width: 0; gap: 7px; padding: 4px 7px; border-color: var(--pc-line); border-radius: 10px; background: rgba(255,255,255,.025); }
+    .cabin-pc-page .control-label { min-width: 48px; font-size: .57rem; letter-spacing: .04em; }
+    .cabin-pc-page .divider { height: 24px; margin: 0 2px; }
+    .cabin-pc-page .btn-main { width: 46px; height: 46px; color: #101116; background: var(--pc-yellow); font-size: .95rem; box-shadow: none; }
+    .cabin-pc-page .btn-main:hover { transform: scale(1.04); box-shadow: none; }
+    .cabin-pc-page .btn-control { width: 34px; height: 34px; font-size: .72rem; }
+    .cabin-pc-page .btn-mini { width: 28px; height: 28px; font-size: .62rem; }
+
+    .cabin-pc-page .qr-fullscreen-box { width: 136px; right: 14px; bottom: 88px; padding: 9px; gap: 5px; border-color: var(--pc-line-strong); border-radius: 12px; background: rgba(9,11,18,.92); box-shadow: 0 12px 30px rgba(0,0,0,.32); }
+    .cabin-pc-page .qr-party-name { max-height: 30px; font-size: .68rem; }
+    .cabin-pc-page #qrcode-fs { width: 100px; height: 100px; padding: 5px; }
+    .cabin-pc-page #qrcode-fs img,
+    .cabin-pc-page #qrcode-fs canvas { width: 90px !important; height: 90px !important; }
+    .cabin-pc-page .qr-fullscreen-box .qr-fs-label { font-size: .68rem; }
+    .cabin-pc-page .qr-fs-room-code { padding: 4px; }
+    .cabin-pc-page .qr-fs-room-code span { font-size: .55rem; }
+    .cabin-pc-page .qr-fs-room-code strong { font-size: .92rem; letter-spacing: .12em; }
+    .cabin-pc-page .qr-mobile-link { font-size: .58rem; }
+
+    .cabin-pc-page .queue-heading-copy { min-width: 0; display: flex; flex-direction: column; }
+    .cabin-pc-page .queue-count-badge { display: inline-grid; min-width: 22px; height: 22px; margin-left: 4px; place-items: center; border-radius: 999px; color: #111318; background: var(--pc-yellow); font-size: .65rem; vertical-align: middle; }
+    .cabin-pc-page .queue-wait-time { margin-top: 6px; color: #8b91a1; font-size: .57rem; }
+    .cabin-pc-page .queue-list { margin-top: 4px; padding-right: 2px; }
+    .cabin-pc-page .queue-empty-state { min-height: 180px; padding: 24px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666c7b; text-align: center; }
+    .cabin-pc-page .queue-empty-state i { margin-bottom: 14px; color: #555c6c; font-size: 1.55rem; }
+    .cabin-pc-page .queue-empty-state strong { color: #c8cbd4; font: 700 .82rem/1.2 'Montserrat', sans-serif; }
+    .cabin-pc-page .queue-empty-state span { max-width: 210px; margin-top: 7px; font-size: .66rem; line-height: 1.5; }
+    .cabin-pc-page .queue-item { min-height: 62px; margin-bottom: 6px; padding: 9px; gap: 9px; border: 1px solid transparent; border-radius: 11px; background: rgba(255,255,255,.022); }
+    .cabin-pc-page .queue-item.is-current { border-color: rgba(255,217,61,.26); background: rgba(255,217,61,.065); }
+    .cabin-pc-page .queue-item .rank { flex: 0 0 39px; width: 39px; height: 35px; display: grid; place-items: center; border-radius: 9px; color: #777d8d; background: rgba(255,255,255,.045); font: 800 .62rem/1 'Montserrat', sans-serif; }
+    .cabin-pc-page .queue-item.is-current .rank { color: #151515; background: var(--pc-yellow); font-size: .48rem; }
+    .cabin-pc-page .queue-item .info { min-width: 0; flex: 1; }
+    .cabin-pc-page .queue-item .name,
+    .cabin-pc-page .queue-item .song { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cabin-pc-page .queue-item .name { color: #eef0f5; font-size: .74rem; font-weight: 700; }
+    .cabin-pc-page .queue-item .song { margin-top: 3px; color: #8e94a4; font-size: .64rem; }
+    .cabin-pc-page .queue-actions { flex: 0 0 auto; gap: 3px; }
+    .cabin-pc-page .queue-actions i { width: 25px; height: 25px; display: grid; place-items: center; border: 1px solid var(--pc-line); border-radius: 7px; color: #8d93a3; font-size: .58rem; }
+    .cabin-pc-page .queue-actions i:hover { color: #fff; background: rgba(255,255,255,.07); }
+    .cabin-pc-page .queue-actions i.fa-trash:hover { color: #ff9ca7; background: rgba(255,70,90,.08); }
+
+    .cabin-pc-page .sidebar-queue .host-interaction-panel { margin-bottom: 8px; padding: 8px; border-color: var(--pc-line); border-radius: 11px; background: rgba(255,255,255,.018); box-shadow: none; }
+    .cabin-pc-page .sidebar-queue .host-interaction-panel > h4 { margin-bottom: 6px; color: #777d8c; font-size: .54rem; }
+    .cabin-pc-page .sidebar-queue .host-interaction-actions { gap: 5px; }
+    .cabin-pc-page .sidebar-queue .social-dock { gap: 5px; margin: 5px 0 7px; }
+    .cabin-pc-page .sidebar-queue .host-action-card { min-height: 42px !important; padding: 7px 9px !important; border-color: var(--pc-line) !important; border-radius: 9px !important; background: rgba(255,255,255,.025) !important; box-shadow: none !important; font-size: .68rem !important; }
+    .cabin-pc-page .sidebar-queue .host-action-card small { font-size: .58rem; color: #8e94a3; }
+    .cabin-pc-page .sidebar-queue .host-action-card .interaction-chip-icon { width: 20px; height: 20px; flex-basis: 20px; color: #c96cdb; }
+
+    .cabin-pc-page .hotkey-bar { grid-column: 2; grid-row: 3; min-width: 0; gap: 5px 12px; padding: 4px 10px; border: 0; border-radius: 8px; color: #626878; background: transparent; font-size: .55rem; }
+    .cabin-pc-page .hotkey-bar kbd { padding: 1px 4px; border-color: var(--pc-line); color: #9da2b0; background: rgba(255,255,255,.035); font-size: .52rem; }
+}
+
+@media (min-width: 1025px) and (max-width: 1400px) {
+    .cabin-pc-page .dashboard { grid-template-columns: minmax(245px, 20vw) minmax(0, 1fr) minmax(235px, 20vw); }
+    .cabin-pc-page .header-action span { display: none; }
+    .cabin-pc-page .header-action-primary span { display: inline; }
+    .cabin-pc-page .controls.compact-panel { width: calc(100% - 8px); height: 58px; padding-inline: 9px; }
+    .cabin-pc-page .tone-control,
+    .cabin-pc-page .volume-control { padding-inline: 4px; }
+    .cabin-pc-page .control-label { min-width: 42px; }
+    .cabin-pc-page .hotkey-bar span:nth-child(n+6) { display: none; }
+}
+
+@media (min-width: 1025px) and (max-height: 760px) {
+    .cabin-pc-page .dashboard { grid-template-rows: 58px minmax(0, 1fr) 28px; padding: 7px; gap: 7px; }
+    .cabin-pc-page .header.panel { padding-inline: 12px; }
+    .cabin-pc-page .panel { padding: 12px; border-radius: 13px; }
+    .cabin-pc-page .song-item { min-height: 58px; padding: 8px; }
+    .cabin-pc-page .song-code { display: none; }
+    .cabin-pc-page .compact-controls-wrapper { bottom: 9px; }
+    .cabin-pc-page .controls.compact-panel { height: 54px; }
+    .cabin-pc-page .btn-main { width: 42px; height: 42px; }
+    .cabin-pc-page .qr-fullscreen-box { width: 116px; bottom: 72px; }
+    .cabin-pc-page #qrcode-fs { width: 82px; height: 82px; }
+    .cabin-pc-page #qrcode-fs img,
+    .cabin-pc-page #qrcode-fs canvas { width: 72px !important; height: 72px !important; }
+}

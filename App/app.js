@@ -1013,6 +1013,11 @@
 
         }
 
+        const headerPartyName = document.getElementById('headerPartyName');
+        const hostConnectionLabel = document.getElementById('hostConnectionLabel');
+        if (headerPartyName) headerPartyName.textContent = name;
+        if (hostConnectionLabel) hostConnectionLabel.textContent = 'FESTA ONLINE';
+
         console.log(`🚀 [v12] Sala aberta: [${currentRoomCode}] enviando para salas/${currentRoomCode}/queue_sync`);
 
         // Gera QR Code
@@ -1842,6 +1847,8 @@
 
                 <span>${song.title}</span>${song.lyrics ? ` <span class="lyrics-preview">${song.lyrics}</span>` : ''}
 
+                <small class="song-code">CÓDIGO ${String(song.id || '').padStart(5, '0')}</small>
+
             </div>
 
             <div class="song-actions">
@@ -1866,6 +1873,13 @@
 
         queueList.innerHTML = '';
 
+        const queueCountDesktop = document.getElementById('queueCountDesktop');
+        if (queueCountDesktop) queueCountDesktop.textContent = String(queue.length);
+
+        if (queue.length === 0) {
+            queueList.innerHTML = '<div class="queue-empty-state"><i class="fas fa-microphone-lines"></i><strong>Ninguém na fila</strong><span>As músicas escolhidas aparecem aqui na ordem da TV.</span></div>';
+        }
+
         // Sincroniza fila usando o método infalível do JSON String (v13)
 
         // Como o 'Now Playing' funciona, vamos usar a mesma lógica de enviar um único dado atômico.
@@ -1884,11 +1898,11 @@
 
             const div = document.createElement('div');
 
-            div.className = 'queue-item';
+            div.className = `queue-item${index === 0 ? ' is-current' : ''}`;
 
             div.innerHTML = `
 
-            <div class="rank">${index + 1}</div>
+            <div class="rank">${index === 0 ? 'AGORA' : index + 1}</div>
 
             <div class="info">
 
@@ -1898,7 +1912,7 @@
 
             </div>
 
-            <div class="queue-actions">
+            ${index > 0 ? `<div class="queue-actions">
 
                 ${index > 1 ? `<i class="fas fa-chevron-up" onclick="moveQueue(${index}, -1)"></i>` : ''}
 
@@ -1906,7 +1920,7 @@
 
                 <i class="fas fa-trash trash-btn" onclick="removeFromQueue(${index})"></i>
 
-            </div>
+            </div>` : ''}
 
         `;
 

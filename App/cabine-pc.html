@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="challenges.css?v=1">
 <link rel="stylesheet" href="party-social.css?v=10">
 <link rel="stylesheet" href="cabin-layout.css?v=3">
+<link rel="stylesheet" href="cabine-pc-v2.css?v=1">
 </head>
 
 <body class="cabin-pc-page">
@@ -82,22 +83,25 @@
                 <img src="../Assets/logo.png" alt="Logo" class="main-logo">
             </div>
             <div class="header-center">
-                <h1 class="brand-title">KARAOKE PARTY</h1>
+                <span class="dashboard-eyebrow">CABINE DO DJ</span>
+                <h1 class="brand-title" id="headerPartyName">KARAOKE PARTY</h1>
                 <div class="status-indicator">
                     <span class="dot" style="background: #00ff00;"></span>
-                    ONLINE
+                    <span id="hostConnectionLabel">PRONTO</span>
                 </div>
             </div>
             <div class="header-right">
-                <a class="btn-icon" href="cabine.html" title="Trocar modo da Cabine" aria-label="Trocar modo da Cabine" style="text-decoration:none"><i class="fas fa-grip"></i></a><button id="btnSecondScreen" class="btn-icon" title="Abrir apresentação em outro monitor" aria-label="Segunda tela" style="width:auto;gap:8px;padding:0 12px;font-size:14px;font-weight:500;white-space:nowrap"><i class="fas fa-desktop"></i> Segunda tela</button><button id="btnPartySummary" class="btn-icon" title="Festas e resumos" aria-label="Festas e resumos"><i class="fas fa-list-alt"></i></button>
-                <button id="btnSettings" class="btn-icon" title="Configurações"><i class="fas fa-cog"></i></button>
+                <a class="btn-icon header-action" href="cabine.html" title="Trocar modo da Cabine" aria-label="Trocar modo da Cabine"><i class="fas fa-grip"></i><span>Modos</span></a>
+                <button id="btnSecondScreen" class="btn-icon header-action header-action-primary" title="Abrir apresentação em outro monitor" aria-label="Segunda tela"><i class="fas fa-desktop"></i><span>Segunda tela</span></button>
+                <button id="btnPartySummary" class="btn-icon header-action" title="Festas e resumos" aria-label="Festas e resumos"><i class="fas fa-list-alt"></i><span>Festas</span></button>
+                <button id="btnSettings" class="btn-icon header-action" title="Configurações"><i class="fas fa-cog"></i><span>Ajustes</span></button>
             </div>
         </header>
 
         <!-- Sidebar Left: Catálogo (Full Height) -->
         <aside class="sidebar-search panel active-tab" id="tab-catalog">
             <div class="catalog-header">
-                <h3>🎵 Catálogo</h3>
+                <div><span class="panel-eyebrow">MÚSICAS</span><h3>Escolher música</h3></div>
                 <button id="btnShuffle" class="btn-small" title="Música Aleatória"><i
                         class="fas fa-random"></i></button>
             </div>
@@ -110,7 +114,8 @@
                 </div>
             </div>
             <div class="search-box">
-                <input type="text" id="songSearch" placeholder="Busque por artista, música ou código...">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="text" id="songSearch" placeholder="Música, artista ou código">
             </div>
             <div class="song-list" id="songList"></div>
         </aside>
@@ -287,8 +292,9 @@
         <!-- Sidebar Right: Queue & QR en la base -->
         <aside class="sidebar-queue panel" id="tab-queue">
             <div class="queue-header">
-                <div style="display: flex; flex-direction: column;">
-                    <h3>🔥 Próximos Cantores</h3>
+                <div class="queue-heading-copy">
+                    <span class="panel-eyebrow">ORDEM DA TV</span>
+                    <h3>Fila da festa <span id="queueCountDesktop" class="queue-count-badge">0</span></h3>
                     <span id="queueWaitTime" class="queue-wait-time" style="display:none"></span>
                 </div>
             </div>
@@ -527,7 +533,7 @@
     <script src="party-social.js?v=4"></script>
     <script src="challenge-core.js?v=1"></script>
     <script src="challenges.js?v=4" defer></script>
-    <script src="audience-host.js?v=1" defer></script><script src="app.js?v=5.4" defer></script>
+    <script src="audience-host.js?v=1" defer></script><script src="app.js?v=5.5" defer></script>
     <script src="tour-host.js" defer></script>
 </body>
 
