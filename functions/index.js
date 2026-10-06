@@ -3,6 +3,7 @@ const { setGlobalOptions } = require('firebase-functions/v2');
 const admin = require('firebase-admin');
 const { defineSecret } = require('firebase-functions/params');
 const Stripe = require('stripe');
+const crypto = require('crypto');
 
 setGlobalOptions({ region: 'us-central1' });
 
@@ -10,6 +11,88 @@ const STRIPE_SECRET_KEY = defineSecret('STRIPE_SECRET_KEY');
 const STRIPE_WEBHOOK_SECRET = defineSecret('STRIPE_WEBHOOK_SECRET');
 
 admin.initializeApp();
+
+const pairingRef = (id) => admin.database().ref(`tv_pairings/${id}`);
+const pairingHash = (secret) => crypto.createHash('sha256').update(String(secret)).digest('hex');
+
+exports.createTvPairing = onCall(async () => {
+    const pairId = crypto.randomBytes(5).toString('hex').toUpperCase();
+    const tvSecret = crypto.randomBytes(24).toString('base64url');
+    const approvalSecret = crypto.randomBytes(24).toString('base64url');
+    const expiresAt = Date.now() + 10 * 60 * 1000;
+    await pairingRef(pairId).set({
+        tvSecretHash: pairingHash(tvSecret),
+        approvalSecretHash: pairingHash(approvalSecret),
+        status: 'pending',
+        createdAt: admin.database.ServerValue.TIMESTAMP,
+        expiresAt
+    });
+    return { pairId, tvSecret, approvalSecret, expiresAt };
+});
+
+exports.approveTvPairing = onCall(async (request) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'Entre com a conta do DJ.');
+    const pairId = String(request.data?.pairId || '').toUpperCase();
+    const secret = String(request.data?.secret || '');
+    const partyName = String(request.data?.partyName || '').trim().slice(0, 50);
+    if (!/^[A-F0-9]{10}$/.test(pairId) || secret.length < 24 || !partyName) throw new HttpsError('invalid-argument', 'Dados do pareamento incompletos.');
+    const ref = pairingRef(pairId);
+    const pairing = (await ref.once('value')).val();
+    if (!pairing || pairing.approvalSecretHash !== pairingHash(secret) || Number(pairing.expiresAt) < Date.now()) {
+        throw new HttpsError('not-found', 'Este QR Code expirou. Gere outro na TV.');
+    }
+    if (pairing.status !== 'pending' && pairing.djUid !== request.auth.uid) {
+        throw new HttpsError('already-exists', 'Esta TV já foi autorizada por outra conta.');
+    }
+    const banned = (await admin.database().ref(`users/${request.auth.uid}/isBanned`).once('value')).val() === true;
+    if (banned) throw new HttpsError('permission-denied', 'Esta conta não pode abrir festas.');
+    const tvUid = `tv_${pairId.toLowerCase()}`;
+    const djName = request.auth.token.name || request.auth.token.email || 'DJ';
+    const customToken = await admin.auth().createCustomToken(tvUid, { djUid: request.auth.uid, djName, tvPairing: true });
+    await ref.update({
+        status: 'approved',
+        djUid: request.auth.uid,
+        djName,
+        partyName,
+        customToken,
+        approvedAt: admin.database.ServerValue.TIMESTAMP
+    });
+    return { approved: true };
+});
+
+exports.getTvPairing = onCall(async (request) => {
+    const pairId = String(request.data?.pairId || '').toUpperCase();
+    const secret = String(request.data?.secret || '');
+    if (!/^[A-F0-9]{10}$/.test(pairId) || secret.length < 24) throw new HttpsError('invalid-argument', 'Pareamento inválido.');
+    const pairing = (await pairingRef(pairId).once('value')).val();
+    const isTv = pairing?.tvSecretHash === pairingHash(secret);
+    const isApprover = pairing?.approvalSecretHash === pairingHash(secret);
+    if (!pairing || (!isTv && !isApprover)) throw new HttpsError('not-found', 'Pareamento não encontrado.');
+    if (Number(pairing.expiresAt) < Date.now()) throw new HttpsError('deadline-exceeded', 'O pareamento expirou.');
+    return {
+        status: pairing.status,
+        customToken: isTv && pairing.status === 'approved' ? pairing.customToken : null,
+        partyName: pairing.partyName || null,
+        roomCode: pairing.roomCode || null
+    };
+});
+
+exports.completeTvPairing = onCall(async (request) => {
+    if (!request.auth?.token?.tvPairing || !request.auth.token.djUid) throw new HttpsError('permission-denied', 'Sessão de TV inválida.');
+    const pairId = String(request.data?.pairId || '').toUpperCase();
+    const secret = String(request.data?.secret || '');
+    const roomCode = String(request.data?.roomCode || '').toUpperCase();
+    if (!/^[A-F0-9]{10}$/.test(pairId) || secret.length < 24 || !/^[A-Z0-9]{5}$/.test(roomCode)) {
+        throw new HttpsError('invalid-argument', 'Dados da sala inválidos.');
+    }
+    const ref = pairingRef(pairId);
+    const pairing = (await ref.once('value')).val();
+    if (!pairing || pairing.tvSecretHash !== pairingHash(secret) || pairing.djUid !== request.auth.token.djUid) {
+        throw new HttpsError('permission-denied', 'Pareamento inválido.');
+    }
+    await ref.update({ status: 'ready', roomCode, customToken: null, readyAt: admin.database.ServerValue.TIMESTAMP });
+    return { ready: true };
+});
 
 exports.createCheckoutSession = onCall(
     { secrets: [STRIPE_SECRET_KEY] },

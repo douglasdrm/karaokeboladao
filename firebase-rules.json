@@ -19,7 +19,7 @@
       ".write": "false",
       "$room_id": {
         ".read": "auth != null",
-        ".write": "auth != null && root.child('users').child(auth.uid).child('isBanned').val() !== true && ((!data.child('info/hostId').exists() && newData.child('info/hostId').val() === auth.uid) || data.child('info/hostId').val() === auth.uid)",
+        ".write": "auth != null && root.child('users').child(auth.token.djUid != null ? auth.token.djUid : auth.uid).child('isBanned').val() !== true && ((!data.child('info/hostId').exists() && (newData.child('info/hostId').val() === auth.uid || newData.child('info/hostId').val() === auth.token.djUid)) || data.child('info/hostId').val() === auth.uid || data.child('info/hostId').val() === auth.token.djUid)",
         ".validate": "(auth != null && auth.token.email === 'douglasdrm@gmail.com') || (newData.child('info/hostId').isString() && (!data.child('info/hostId').exists() || newData.child('info/hostId').val() === data.child('info/hostId').val()))",
         "active_users": {
           "$uid": {

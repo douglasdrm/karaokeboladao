@@ -15,10 +15,13 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
+    const functions = firebase.functions();
 
     const elements = {
         setup: document.getElementById('tvSetup'), loading: document.getElementById('tvLoading'),
         auth: document.getElementById('tvAuth'), connect: document.getElementById('tvConnect'),
+        pairingBox: document.getElementById('tvPairingBox'), pairingQr: document.getElementById('tvPairingQr'),
+        pairingStatus: document.getElementById('tvPairingStatus'), startPairing: document.getElementById('tvStartPairing'),
         stage: document.getElementById('tvStage'), logout: document.getElementById('tvLogout'),
         authError: document.getElementById('tvAuthError'), roomError: document.getElementById('tvRoomError'),
         partyInput: document.getElementById('tvPartyInput'), identity: document.getElementById('tvIdentity'),
@@ -39,6 +42,8 @@
     };
 
     let currentUser = null;
+    let currentHostUid = '';
+    let currentHostName = '';
     let currentRoom = '';
     let currentPartyName = '';
     let roomRef = null;
@@ -60,6 +65,9 @@
     let controllerRef = null;
     let controllerHandler = null;
     let wakeLock = null;
+    let pairingTimer = null;
+    let activePairing = null;
+    let pairedPartyStarting = false;
 
     function readSession() {
         try {
@@ -161,6 +169,60 @@
     function drawQr(container, text, size) {
         container.replaceChildren();
         new QRCode(container, { text, width: size, height: size, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    }
+
+    function stopPairing() {
+        clearInterval(pairingTimer);
+        pairingTimer = null;
+    }
+
+    async function pollPairing() {
+        if (!activePairing) return;
+        try {
+            const result = await functions.httpsCallable('getTvPairing')({
+                pairId: activePairing.pairId,
+                secret: activePairing.tvSecret
+            });
+            const pairing = result.data || {};
+            if (pairing.status !== 'approved' || !pairing.customToken) return;
+            stopPairing();
+            elements.pairingStatus.textContent = 'Celular confirmado. Abrindo a festa…';
+            activePairing.partyName = pairing.partyName || 'Minha festa';
+            await auth.signInWithCustomToken(pairing.customToken);
+        } catch (error) {
+            const expired = ['functions/not-found', 'functions/deadline-exceeded'].includes(error.code);
+            if (!expired) return;
+            stopPairing();
+            activePairing = null;
+            elements.pairingStatus.textContent = 'Código expirado. Gere um novo QR Code.';
+            elements.startPairing.disabled = false;
+            elements.startPairing.textContent = 'Gerar novo QR Code';
+        }
+    }
+
+    async function startPairing() {
+        stopPairing();
+        showError(elements.authError);
+        elements.startPairing.disabled = true;
+        elements.startPairing.textContent = 'Gerando QR Code…';
+        try {
+            const result = await functions.httpsCallable('createTvPairing')({});
+            activePairing = result.data;
+            const url = new URL('tv-pair.html', window.location.href);
+            url.searchParams.set('id', activePairing.pairId);
+            url.searchParams.set('secret', activePairing.approvalSecret);
+            drawQr(elements.pairingQr, url.href, 132);
+            elements.pairingStatus.textContent = 'Aguardando confirmação…';
+            elements.pairingBox.hidden = false;
+            elements.startPairing.textContent = 'QR Code gerado';
+            pairingTimer = setInterval(pollPairing, 1800);
+            pollPairing();
+        } catch (error) {
+            console.error('Falha ao criar pareamento:', error);
+            showError(elements.authError, 'Não foi possível gerar o QR Code agora. Use o login manual.');
+            elements.startPairing.disabled = false;
+            elements.startPairing.textContent = 'Tentar gerar novamente';
+        }
     }
 
     function renderQr() {
@@ -304,7 +366,7 @@
     async function handleCommand(snapshot) {
         const command = snapshot.val() || {};
         try {
-            if (command.senderUid !== currentUser?.uid) return;
+            if (command.senderUid !== currentHostUid) return;
             const payload = command.payload || {};
             switch (command.action) {
                 case 'play_pause':
@@ -407,7 +469,7 @@
             }
         };
         connectionRef.on('value', connectionHandler);
-        controllerRef = roomRef.child(`dj_controllers/${currentUser.uid}`);
+        controllerRef = roomRef.child(`dj_controllers/${currentHostUid}`);
         controllerHandler = snapshot => {
             const connected = snapshot.numChildren() > 0;
             elements.controllerStatus.textContent = connected ? 'CELULAR DO DJ CONECTADO' : 'AGUARDANDO CELULAR DO DJ';
@@ -429,8 +491,8 @@
     function roomInfo(name) {
         return {
             name,
-            hostId: currentUser.uid,
-            hostName: currentUser.displayName || currentUser.email || 'DJ',
+            hostId: currentHostUid,
+            hostName: currentHostName || 'DJ',
             hostPhoto: currentUser.photoURL || '',
             status: 'online',
             mode: 'tv-standalone',
@@ -485,7 +547,7 @@
         if (previousSession?.uid === currentUser.uid) {
             const previousRef = db.ref(`salas/${previousSession.code}`);
             const previousInfo = (await previousRef.child('info').once('value')).val();
-            if (previousInfo?.hostId === currentUser.uid) await previousRef.remove().catch(() => {});
+            if (previousInfo?.hostId === currentHostUid) await previousRef.remove().catch(() => {});
         }
         clearSession();
         currentRoom = await generateRoomCode();
@@ -503,6 +565,14 @@
         showPartyStage(name);
         saveSession({ currentSongId: '', currentTime: 0, wasPlaying: false });
         startRoomListeners();
+        if (activePairing) {
+            await functions.httpsCallable('completeTvPairing')({
+                pairId: activePairing.pairId,
+                secret: activePairing.tvSecret,
+                roomCode: currentRoom
+            });
+            activePairing = null;
+        }
     }
 
     async function resumeParty() {
@@ -514,7 +584,7 @@
         roomRef = db.ref(`salas/${currentRoom}`);
         const snapshot = await roomRef.once('value');
         const remote = snapshot.val();
-        if (remote?.info?.hostId && remote.info.hostId !== currentUser.uid) throw new Error('O código anterior agora pertence a outra festa.');
+        if (remote?.info?.hostId && remote.info.hostId !== currentHostUid) throw new Error('O código anterior agora pertence a outra festa.');
         queue = remote ? parseQueue(remote.queue_v13) : (Array.isArray(session.queue) ? session.queue : []);
         processedRequestKeys = new Set(Array.isArray(session.processedRequestKeys) ? session.processedRequestKeys : []);
         queue.forEach(item => { if (item.requestKey) processedRequestKeys.add(item.requestKey); });
@@ -569,7 +639,7 @@
         if (session?.uid === currentUser?.uid) {
             const savedRef = db.ref(`salas/${session.code}`);
             const info = (await savedRef.child('info').once('value')).val();
-            if (info?.hostId === currentUser.uid) await savedRef.remove().catch(() => {});
+            if (info?.hostId === currentHostUid) await savedRef.remove().catch(() => {});
         }
         clearSession();
     }
@@ -620,6 +690,7 @@
     });
 
     document.getElementById('tvForgetParty').addEventListener('click', () => forgetSavedParty().catch(console.warn));
+    elements.startPairing.addEventListener('click', startPairing);
 
     elements.logout.addEventListener('click', async () => { if (roomRef) await endParty(); await auth.signOut(); });
     document.getElementById('tvChangeRoom').addEventListener('click', async () => {
@@ -687,11 +758,31 @@
         if (document.visibilityState === 'visible' && !elements.stage.hidden) requestWakeLock();
     });
 
-    auth.onAuthStateChanged(user => {
+    auth.onAuthStateChanged(async user => {
         currentUser = user;
+        currentHostUid = '';
+        currentHostName = '';
         elements.logout.hidden = !user;
         if (!user) { showSetup(elements.auth); return; }
-        elements.identity.textContent = `Conectado como ${user.displayName || user.email || 'DJ'}`;
+        try {
+            const token = await user.getIdTokenResult();
+            currentHostUid = token.claims.djUid || user.uid;
+            currentHostName = token.claims.djName || user.displayName || user.email || 'DJ';
+        } catch {
+            currentHostUid = user.uid;
+            currentHostName = user.displayName || user.email || 'DJ';
+        }
+        elements.identity.textContent = `Conectado como ${currentHostName}`;
+        if (activePairing?.partyName && !pairedPartyStarting) {
+            pairedPartyStarting = true;
+            try { await createParty(activePairing.partyName); }
+            catch (error) {
+                console.error('Falha ao abrir festa pareada:', error);
+                showSetup(elements.auth);
+                showError(elements.authError, error.message || 'Não foi possível abrir a festa pareada.');
+            } finally { pairedPartyStarting = false; }
+            return;
+        }
         try { elements.partyInput.value = localStorage.getItem('lastStandalonePartyName') || ''; } catch {}
         showSetup(elements.connect);
         refreshResumeCard();

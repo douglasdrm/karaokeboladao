@@ -7,11 +7,12 @@
     <title>Cabine na TV | Karaoke Party</title>
     <link rel="icon" type="image/png" href="../Assets/icon.png">
     <link rel="stylesheet" href="cabine-tv-base.css?v=1">
-    <link rel="stylesheet" href="cabine-tv.css?v=4">
+    <link rel="stylesheet" href="cabine-tv.css?v=5">
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-functions-compat.js"></script>
 </head>
 <body>
     <main id="tvSetup" class="tv-setup">
@@ -28,10 +29,19 @@
 
         <section id="tvAuth" class="tv-setup-card" hidden>
             <p class="tv-eyebrow">CABINE AUTÔNOMA · TV BOX</p>
-            <h1>Entre com a conta do DJ</h1>
-            <p class="tv-description">A TV abrirá e reproduzirá a festa. O controle ficará no celular do DJ.</p>
+            <h1>Conecte pelo celular</h1>
+            <p class="tv-description">Use o QR Code para entrar, dar nome à festa e transformar seu celular no controle do DJ.</p>
+            <button id="tvStartPairing" class="tv-primary-button" type="button">Gerar QR Code de conexão</button>
+            <section id="tvPairingBox" class="tv-pairing-box" hidden aria-live="polite">
+                <div id="tvPairingQr" class="tv-pairing-qr" aria-label="QR Code para conectar o celular do DJ"></div>
+                <div>
+                    <span>ESCANEIE COM O CELULAR</span>
+                    <strong id="tvPairingStatus">Aguardando confirmação…</strong>
+                    <small>Este código expira em 10 minutos.</small>
+                </div>
+            </section>
+            <div class="tv-divider"><span>ou entre manualmente</span></div>
             <button id="tvGoogle" class="tv-google-button" type="button"><span aria-hidden="true">G</span> Entrar com Google</button>
-            <div class="tv-divider"><span>ou</span></div>
             <form id="tvEmailForm" class="tv-form">
                 <label><span>E-mail do DJ</span><input id="tvEmail" type="email" autocomplete="email" required></label>
                 <label><span>Senha</span><input id="tvPassword" type="password" autocomplete="current-password" required></label>
@@ -134,6 +144,6 @@
     </main>
 
     <script src="qrcode.min.js"></script>
-    <script src="cabine-tv.js?v=4" defer></script>
+    <script src="cabine-tv.js?v=5" defer></script>
 </body>
 </html>
