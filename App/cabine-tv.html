@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#05070d">
+    <title>Cabine na TV | Karaoke Party</title>
+    <link rel="icon" type="image/png" href="../Assets/icon.png">
+    <link rel="stylesheet" href="tv.css?v=2">
+    <link rel="stylesheet" href="cabine-tv.css?v=1">
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+    <main id="tvSetup" class="tv-setup">
+        <header class="tv-setup-header">
+            <a href="cabine.html" aria-label="Voltar aos modos da Cabine">← Modos</a>
+            <img src="../Assets/logo.png" alt="Karaoke Party">
+            <button id="tvLogout" type="button" hidden>Sair</button>
+        </header>
+
+        <section id="tvLoading" class="tv-setup-card" aria-live="polite">
+            <span class="tv-loader" aria-hidden="true"></span>
+            <p>Preparando a Cabine na TV…</p>
+        </section>
+
+        <section id="tvAuth" class="tv-setup-card" hidden>
+            <p class="tv-eyebrow">CABINE AUTÔNOMA · TV BOX</p>
+            <h1>Entre com a conta do DJ</h1>
+            <p class="tv-description">A TV abrirá e reproduzirá a festa. O controle ficará no celular do DJ.</p>
+            <button id="tvGoogle" class="tv-google-button" type="button"><span aria-hidden="true">G</span> Entrar com Google</button>
+            <div class="tv-divider"><span>ou</span></div>
+            <form id="tvEmailForm" class="tv-form">
+                <label><span>E-mail do DJ</span><input id="tvEmail" type="email" autocomplete="email" required></label>
+                <label><span>Senha</span><input id="tvPassword" type="password" autocomplete="current-password" required></label>
+                <button class="tv-primary-button" type="submit">Entrar</button>
+            </form>
+            <p id="tvAuthError" class="tv-error" role="alert" hidden></p>
+        </section>
+
+        <section id="tvConnect" class="tv-setup-card" hidden>
+            <p class="tv-eyebrow">ABRIR FESTA NESTA TV</p>
+            <h1>TV + controle no celular</h1>
+            <p class="tv-description">Dê um nome à festa. Depois, escaneie o QR do DJ para comandar músicas, fila e reprodução.</p>
+            <form id="tvRoomForm" class="tv-form">
+                <label for="tvPartyInput">Nome da festa</label>
+                <input id="tvPartyInput" type="text" maxlength="50" autocomplete="off" placeholder="Ex.: Festa do Douglas" required>
+                <button class="tv-primary-button" type="submit">Abrir festa na TV</button>
+            </form>
+            <p id="tvRoomError" class="tv-error" role="alert" hidden></p>
+            <p id="tvIdentity" class="tv-identity"></p>
+            <aside class="tv-local-tip">
+                <strong>Como o DJ controla?</strong>
+                Use o QR azul após abrir a festa. Para cantar, o DJ pode alternar para a Área do Cantor no próprio celular.
+            </aside>
+        </section>
+    </main>
+
+    <main id="tvStage" class="tv-stage" hidden aria-label="Apresentação da festa">
+        <video id="tvVideo" class="tv-video" playsinline preload="auto" crossorigin="anonymous"></video>
+        <div class="tv-backdrop" aria-hidden="true"></div>
+
+        <header class="tv-stage-header">
+            <img src="../Assets/logo.png" alt="Karaoke Party">
+            <div class="tv-party-copy">
+                <span id="tvConnection" class="tv-connection">TV COMANDA</span>
+                <strong id="tvPartyName">Minha festa</strong>
+            </div>
+            <span id="tvRoomLabel" class="tv-room-label">SALA -----</span>
+        </header>
+
+        <section id="tvIdle" class="tv-idle">
+            <div class="tv-access-cards" aria-label="Acessos da festa pelo celular">
+                <article class="tv-access-card tv-access-guest">
+                    <div id="tvQrCode" class="tv-qr" aria-label="QR Code dos convidados"></div>
+                    <span>CONVIDADOS</span>
+                    <strong>Escolher música</strong>
+                </article>
+                <article class="tv-access-card tv-access-dj">
+                    <div id="tvDjQrCode" class="tv-qr tv-dj-qr" aria-label="QR Code do controle do DJ"></div>
+                    <span>DJ</span>
+                    <strong>Controlar pelo celular</strong>
+                </article>
+            </div>
+            <div>
+                <p id="tvIdleEyebrow" class="tv-eyebrow">A FESTA ESTÁ ABERTA</p>
+                <h1 id="tvIdleTitle">Escolha sua música</h1>
+                <p id="tvIdleDescription">Convidados entram na fila pelo QR maior. O DJ usa o QR de controle com sua própria conta.</p>
+                <strong id="tvIdleRoom">SALA -----</strong>
+            </div>
+        </section>
+
+        <section id="tvNowPlaying" class="tv-now-playing" hidden>
+            <span id="tvPlaybackLabel">TOCANDO AGORA</span>
+            <h1 id="tvSongTitle">Música</h1>
+            <p><strong id="tvSinger">Cantor</strong><span id="tvSongArtist">Artista</span></p>
+        </section>
+
+        <section id="tvQueuePanel" class="tv-queue-panel" hidden aria-label="Ordem das apresentações">
+            <p>ORDEM DA TV</p>
+            <ol id="tvQueue"></ol>
+        </section>
+
+        <section id="tvScore" class="tv-score" hidden aria-live="polite">
+            <span>NOTA FINAL</span>
+            <strong id="tvScoreValue">0</strong>
+            <p id="tvScoreSinger">Cantor</p>
+        </section>
+
+        <button id="tvStartPlayback" class="tv-start-playback" type="button" hidden>▶ Continuar apresentação</button>
+        <div id="tvProgress" class="tv-progress"><span></span></div>
+
+        <nav id="tvToolbar" class="tv-toolbar" aria-label="Controles da tela">
+            <button id="tvSound" type="button">🔇 Ativar som</button>
+            <button id="tvFullscreen" type="button">⛶ Tela cheia</button>
+            <button id="tvChangeRoom" type="button">Encerrar festa</button>
+        </nav>
+    </main>
+
+    <script src="qrcode.min.js"></script>
+    <script src="cabine-tv.js?v=1" defer></script>
+</body>
+</html>

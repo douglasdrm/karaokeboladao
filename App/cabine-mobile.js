@@ -37,6 +37,7 @@
         playLabel: document.getElementById('mobileDjPlayLabel'),
         volume: document.getElementById('mobileDjVolume'),
         volumeValue: document.getElementById('mobileDjVolumeValue'),
+        toneNote: document.getElementById('mobileDjToneNote'),
         queue: document.getElementById('mobileDjQueue'),
         queueCount: document.getElementById('mobileDjQueueCount'),
         catalogCount: document.getElementById('mobileDjCatalogCount'),
@@ -123,9 +124,19 @@
         hostConnected = connected;
         elements.dashboard.classList.toggle('is-host-offline', !connected);
         document.querySelectorAll('[data-host-command], [data-queue-action], [data-catalog-action]').forEach((control) => {
-            control.disabled = !connected || control.dataset.queueUnavailable === 'true';
+            control.disabled = !connected || control.dataset.queueUnavailable === 'true' || control.dataset.roomUnavailable === 'true';
         });
         elements.volume.disabled = !connected;
+    }
+
+    function setRoomMode(mode) {
+        const standaloneTv = mode === 'tv-standalone';
+        elements.dashboard.classList.toggle('is-standalone-tv', standaloneTv);
+        elements.toneNote.hidden = !standaloneTv;
+        document.querySelectorAll('[data-host-command^="tone_"]').forEach((button) => {
+            button.disabled = standaloneTv || !hostConnected;
+            button.dataset.roomUnavailable = String(standaloneTv);
+        });
     }
 
     function normalizeText(value) {
@@ -365,7 +376,8 @@
                 setFeedback('A sala foi encerrada ou perdeu a conexão.', true);
                 return;
             }
-            elements.connection.textContent = 'CONECTADO À CABINE PC';
+            setRoomMode(info.mode);
+            elements.connection.textContent = info.mode === 'tv-standalone' ? 'CONECTADO À CABINE NA TV' : 'CONECTADO À CABINE PC';
             elements.connection.classList.remove('is-offline');
             elements.partyName.textContent = info.name || 'Minha festa';
         });

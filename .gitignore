@@ -19,3 +19,4 @@ firebase-debug.*.log
 *.zip
 .DS_Store
 Thumbs.db
+__pycache__/

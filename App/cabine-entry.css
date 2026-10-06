@@ -456,6 +456,8 @@ a { color: inherit; }
 .mobile-adjustments input[type='range'] { width: 100%; margin: 14px 0 18px; accent-color: var(--entry-yellow); }
 .tone-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .tone-buttons button { min-height: 40px; border: 1px solid var(--entry-border); border-radius: 11px; color: #dadce5; background: rgba(255, 255, 255, .035); font: 700 .72rem/1 'Poppins', sans-serif; cursor: pointer; }
+.tone-buttons button:disabled { cursor: default; opacity: .3; }
+.mobile-mode-note { display: block; margin-top: 10px; color: #85899a; font-size: .66rem; line-height: 1.45; text-align: center; }
 
 .mobile-catalog-card { padding: 20px; overflow: hidden; }
 .mobile-catalog-search { position: relative; margin-top: 17px; display: block; }
