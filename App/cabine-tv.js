@@ -37,7 +37,9 @@
         playbackLabel: document.getElementById('tvPlaybackLabel'), songTitle: document.getElementById('tvSongTitle'),
         singer: document.getElementById('tvSinger'), artist: document.getElementById('tvSongArtist'),
         queuePanel: document.getElementById('tvQueuePanel'), queue: document.getElementById('tvQueue'),
-        score: document.getElementById('tvScore'), progress: document.querySelector('#tvProgress span'),
+        score: document.getElementById('tvScore'), scoreValue: document.getElementById('tvScoreValue'),
+        scoreSinger: document.getElementById('tvScoreSinger'), reactionLayer: document.getElementById('tvReactionLayer'),
+        progress: document.querySelector('#tvProgress span'),
         startPlayback: document.getElementById('tvStartPlayback'), sound: document.getElementById('tvSound')
     };
 
@@ -64,6 +66,9 @@
     let connectionHandler = null;
     let controllerRef = null;
     let controllerHandler = null;
+    let reactionsRef = null;
+    let reactionHandler = null;
+    let scoreShowing = false;
     let wakeLock = null;
     let pairingTimer = null;
     let activePairing = null;
@@ -345,6 +350,64 @@
         await playCurrent();
     }
 
+    function spawnReaction(reaction) {
+        if (!elements.reactionLayer || !reaction) return;
+        const isMessage = reaction.type === 'message' && String(reaction.text || '').trim();
+        const node = document.createElement('div');
+        if (isMessage) {
+            node.className = 'tv-floating-message';
+            const sender = document.createElement('strong');
+            const text = document.createElement('span');
+            sender.textContent = reaction.sender || 'Convidado';
+            text.textContent = String(reaction.text).slice(0, 80);
+            node.append(sender, text);
+            node.style.setProperty('--reaction-left', `${8 + Math.random() * 36}%`);
+        } else if (reaction.emoji) {
+            node.className = 'tv-floating-emoji';
+            node.textContent = String(reaction.emoji).slice(0, 4);
+            node.style.setProperty('--reaction-left', `${8 + Math.random() * 80}%`);
+            node.style.setProperty('--reaction-drift', `${Math.round(Math.random() * 180 - 90)}px`);
+        } else return;
+        elements.reactionLayer.append(node);
+        setTimeout(() => node.remove(), isMessage ? 6100 : 4700);
+    }
+
+    async function showScoreAndAdvance() {
+        if (!currentSongId || !queue.length || scoreShowing) return;
+        scoreShowing = true;
+        const entry = queue[0];
+        elements.video.pause();
+        await publishPlaying(false).catch(() => {});
+        let votes = {};
+        try { votes = (await roomRef.child('now_playing/votes').once('value')).val() || {}; } catch {}
+        let finalScore = 70 + Math.floor(Math.random() * 25);
+        const values = Object.values(votes).map(vote => Number(vote?.stars)).filter(value => value >= 1 && value <= 5);
+        if (values.length) {
+            const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+            finalScore = Math.round(finalScore * .7 + (average / 5 * 100) * .3);
+        }
+        finalScore = Math.max(0, Math.min(100, finalScore));
+        const payload = {
+            singer: entry.singer || 'Cantor', singerUid: entry.singerUid || null,
+            recipientVersion: 1,
+            recipientUids: [...new Set([entry.singerUid, entry.requesterUid].filter(Boolean))],
+            title: entry.title || '', artist: entry.artist || '', score: finalScore,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        };
+        elements.scoreValue.textContent = finalScore;
+        elements.scoreSinger.textContent = entry.singer || 'Cantor';
+        elements.score.hidden = false;
+        await Promise.all([
+            roomRef.child('display_score').set({ ...payload, timestamp: Date.now(), revealAt: Date.now() }),
+            roomRef.child('last_score').set(payload)
+        ]).catch(error => console.warn('Não foi possível publicar a nota.', error));
+        setTimeout(async () => {
+            elements.score.hidden = true;
+            scoreShowing = false;
+            await finishCurrent();
+        }, 7000);
+    }
+
     function requestPlayback() {
         elements.video.play().then(() => {
             elements.startPlayback.hidden = true;
@@ -367,6 +430,7 @@
         const command = snapshot.val() || {};
         try {
             if (command.senderUid !== currentHostUid) return;
+            if (scoreShowing && ['play_pause', 'restart', 'skip'].includes(command.action)) return;
             const payload = command.payload || {};
             switch (command.action) {
                 case 'play_pause':
@@ -441,7 +505,9 @@
         commandQuery = commandHandler = requestRef = requestHandler = null;
         if (connectionRef && connectionHandler) connectionRef.off('value', connectionHandler);
         if (controllerRef && controllerHandler) controllerRef.off('value', controllerHandler);
+        if (reactionsRef && reactionHandler) reactionsRef.off('child_added', reactionHandler);
         connectionRef = connectionHandler = controllerRef = controllerHandler = null;
+        reactionsRef = reactionHandler = null;
     }
 
     function startRoomListeners() {
@@ -476,6 +542,12 @@
             elements.controllerStatus.classList.toggle('is-connected', connected);
         };
         controllerRef.on('value', controllerHandler);
+        reactionsRef = roomRef.child('reactions');
+        reactionHandler = snapshot => {
+            spawnReaction(snapshot.val());
+            setTimeout(() => snapshot.ref.remove().catch(() => {}), 6500);
+        };
+        reactionsRef.on('child_added', reactionHandler);
     }
 
     async function generateRoomCode() {
@@ -710,7 +782,7 @@
     elements.startPlayback.addEventListener('click', requestPlayback);
     elements.video.addEventListener('play', () => { if (!suppressVideoEvents) publishPlaying(true).catch(console.warn); });
     elements.video.addEventListener('pause', () => { if (!suppressVideoEvents && currentSongId && !elements.video.ended) publishPlaying(false).catch(console.warn); });
-    elements.video.addEventListener('ended', () => finishCurrent().catch(console.error));
+    elements.video.addEventListener('ended', () => showScoreAndAdvance().catch(console.error));
     elements.video.addEventListener('timeupdate', () => {
         const total = Number(elements.video.duration) || 0;
         const current = Number(elements.video.currentTime) || 0;

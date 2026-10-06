@@ -7,7 +7,7 @@
     <title>Cabine na TV | Karaoke Party</title>
     <link rel="icon" type="image/png" href="../Assets/icon.png">
     <link rel="stylesheet" href="cabine-tv-base.css?v=1">
-    <link rel="stylesheet" href="cabine-tv.css?v=5">
+    <link rel="stylesheet" href="cabine-tv.css?v=6">
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
@@ -132,6 +132,8 @@
             <p id="tvScoreSinger">Cantor</p>
         </section>
 
+        <div id="tvReactionLayer" class="tv-reaction-layer" aria-live="polite" aria-atomic="false"></div>
+
         <button id="tvStartPlayback" class="tv-start-playback" type="button" hidden>▶ Continuar apresentação</button>
         <div id="tvProgress" class="tv-progress"><span></span></div>
 
@@ -144,6 +146,6 @@
     </main>
 
     <script src="qrcode.min.js"></script>
-    <script src="cabine-tv.js?v=5" defer></script>
+    <script src="cabine-tv.js?v=6" defer></script>
 </body>
 </html>
