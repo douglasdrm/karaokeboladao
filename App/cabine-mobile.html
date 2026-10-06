@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#080a12">
     <title>Cabine no celular | Karaoke Party</title>
     <link rel="icon" type="image/png" href="../Assets/icon.png">
-    <link rel="stylesheet" href="cabine-entry.css?v=6">
+    <link rel="stylesheet" href="cabine-entry.css?v=7">
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
@@ -141,9 +141,21 @@
             <nav class="mobile-role-switch" aria-label="Alternar função">
                 <div>
                     <span>Também vai cantar?</span>
-                    <strong>Use a mesma conta como participante.</strong>
+                    <strong>A Área do Cantor abre separada e mantém este controle ativo.</strong>
                 </div>
-                <a id="mobileDjSingerLink" href="mobile.html">Área do cantor →</a>
+                <a id="mobileDjSingerLink" href="mobile.html" target="_blank" rel="noopener">Abrir Área do Cantor ↗</a>
+            </nav>
+
+            <nav class="mobile-dj-dock" aria-label="Controles rápidos do DJ">
+                <div class="mobile-dj-dock-song">
+                    <span>MODO DJ</span>
+                    <strong id="mobileDjDockTitle">Nenhuma música no palco</strong>
+                </div>
+                <button class="mobile-dj-dock-play" type="button" data-host-command="play_pause" aria-label="Reproduzir ou pausar">
+                    <span id="mobileDjDockPlayIcon" aria-hidden="true">▶</span>
+                </button>
+                <button type="button" data-host-command="skip" aria-label="Pular música"><span aria-hidden="true">≫</span></button>
+                <a id="mobileDjDockSingerLink" href="mobile.html" target="_blank" rel="noopener" aria-label="Abrir Área do Cantor em outra aba">🎤<small>Cantar</small></a>
             </nav>
 
             <p id="mobileDjFeedback" class="mobile-command-feedback" role="status" aria-live="polite"></p>
@@ -172,6 +184,6 @@
         </section>
     </div>
 
-    <script src="cabine-mobile.js?v=10" defer></script>
+    <script src="cabine-mobile.js?v=11" defer></script>
 </body>
 </html>

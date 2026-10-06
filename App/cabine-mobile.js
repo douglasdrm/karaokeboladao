@@ -50,6 +50,9 @@
         singerName: document.getElementById('mobileDjSingerName'),
         addNext: document.getElementById('mobileDjAddNext'),
         singerLink: document.getElementById('mobileDjSingerLink'),
+        dockSingerLink: document.getElementById('mobileDjDockSingerLink'),
+        dockTitle: document.getElementById('mobileDjDockTitle'),
+        dockPlayIcon: document.getElementById('mobileDjDockPlayIcon'),
         feedback: document.getElementById('mobileDjFeedback')
     };
 
@@ -354,6 +357,8 @@
             : 'A fila aparecerá aqui quando a festa começar.';
         elements.playIcon.textContent = playing ? 'Ⅱ' : '▶';
         elements.playLabel.textContent = playing ? 'Pausar' : (hasSong ? 'Continuar' : 'Iniciar');
+        elements.dockTitle.textContent = hasSong ? value.title : 'Nenhuma música no palco';
+        elements.dockPlayIcon.textContent = playing ? 'Ⅱ' : '▶';
     }
 
     async function sendCommand(action, payload = {}, successMessage = 'Comando enviado para a Cabine PC.') {
@@ -388,7 +393,9 @@
         history.replaceState(null, '', `${nextUrl.pathname}${nextUrl.search}`);
 
         elements.roomLabel.textContent = `Sala ${code}`;
-        elements.singerLink.href = `mobile.html?room=${encodeURIComponent(code)}&from=dj`;
+        const singerUrl = `mobile.html?room=${encodeURIComponent(code)}&from=dj`;
+        elements.singerLink.href = singerUrl;
+        elements.dockSingerLink.href = singerUrl;
 
         const base = db.ref(`salas/${code}`);
         listen(base.child('info'), 'value', (snapshot) => {

@@ -399,7 +399,7 @@ a { color: inherit; }
 .mobile-error { margin: 16px 0 0; padding: 11px 13px; border: 1px solid rgba(255, 100, 116, .28); border-radius: 11px; color: #ffadb6; background: rgba(255, 77, 96, .08); font-size: .78rem; line-height: 1.5; }
 .mobile-identity { margin: 18px 0 0; color: #777b8d; font-size: .74rem; text-align: center; }
 
-.mobile-dashboard { display: grid; gap: 16px; }
+.mobile-dashboard { display: grid; gap: 16px; padding-bottom: 88px; }
 .mobile-party-heading { padding: 8px 3px 12px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .connection-label { margin: 0 0 7px; color: var(--entry-green); font: 800 .66rem/1 'Montserrat', sans-serif; letter-spacing: .13em; }
 .connection-label.is-offline { color: #ff8c98; }
@@ -546,10 +546,54 @@ body.has-mobile-sheet { overflow: hidden; }
 .mobile-role-switch strong { margin-top: 3px; font-size: .78rem; }
 .mobile-role-switch a { flex: 0 0 auto; color: #f5c7ff; font-size: .72rem; font-weight: 700; text-decoration: none; }
 
+.mobile-dj-dock {
+    position: fixed;
+    left: 50%;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    z-index: 45;
+    width: min(calc(100% - 20px), 660px);
+    min-height: 68px;
+    padding: 8px 9px 8px 14px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 50px 44px 55px;
+    gap: 7px;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, .14);
+    border-radius: 18px;
+    background: rgba(9, 12, 21, .94);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .52);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transform: translateX(-50%);
+}
+.mobile-dj-dock-song { min-width: 0; }
+.mobile-dj-dock-song span, .mobile-dj-dock-song strong { display: block; }
+.mobile-dj-dock-song span { margin-bottom: 5px; color: var(--entry-yellow); font: 800 .55rem/1 'Montserrat', sans-serif; letter-spacing: .12em; }
+.mobile-dj-dock-song strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .73rem; }
+.mobile-dj-dock button, .mobile-dj-dock a {
+    min-width: 0;
+    height: 46px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: 1px solid var(--entry-border);
+    border-radius: 13px;
+    color: #e9eaf0;
+    background: rgba(255, 255, 255, .04);
+    font: 700 .7rem/1 'Poppins', sans-serif;
+    text-decoration: none;
+}
+.mobile-dj-dock .mobile-dj-dock-play { color: #090b12; border-color: transparent; background: var(--entry-yellow); font-size: 1.1rem; }
+.mobile-dj-dock a { color: #f5c7ff; border-color: rgba(223, 83, 245, .28); background: rgba(223, 83, 245, .08); font-size: .92rem; }
+.mobile-dj-dock a small { font-size: .52rem; }
+.mobile-dj-dock button:disabled { opacity: .35; }
+
 .mobile-command-feedback {
     position: fixed;
     left: 50%;
-    bottom: calc(18px + env(safe-area-inset-bottom));
+    bottom: calc(90px + env(safe-area-inset-bottom));
     z-index: 50;
     max-width: calc(100% - 32px);
     margin: 0;
