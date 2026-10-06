@@ -7,7 +7,7 @@
     <title>Cabine na TV | Karaoke Party</title>
     <link rel="icon" type="image/png" href="../Assets/icon.png">
     <link rel="stylesheet" href="cabine-tv-base.css?v=1">
-    <link rel="stylesheet" href="cabine-tv.css?v=6">
+    <link rel="stylesheet" href="cabine-tv.css?v=7">
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
@@ -121,16 +121,38 @@
             <p><strong id="tvSinger">Cantor</strong><span id="tvSongArtist">Artista</span></p>
         </section>
 
+        <section id="tvSingerIntro" class="tv-show-overlay tv-singer-intro" hidden aria-live="polite">
+            <div class="tv-show-glow" aria-hidden="true"></div>
+            <span class="tv-show-badge">🎤 PRÓXIMO SHOW</span>
+            <p id="tvIntroLead">Atenção, porque agora o microfone tem dono:</p>
+            <strong id="tvIntroSinger">CANTOR</strong>
+            <p id="tvIntroTrail"></p>
+            <div class="tv-equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </section>
+
         <section id="tvQueuePanel" class="tv-queue-panel" hidden aria-label="Ordem das apresentações">
             <p>ORDEM DA TV</p>
             <ol id="tvQueue"></ol>
         </section>
 
         <section id="tvScore" class="tv-score" hidden aria-live="polite">
-            <span>NOTA FINAL</span>
+            <span id="tvScoreLabel">NOTA FINAL</span>
             <strong id="tvScoreValue">0</strong>
             <p id="tvScoreSinger">Cantor</p>
+            <small id="tvScorePhrase"></small>
+            <div class="tv-equalizer tv-equalizer-fast" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         </section>
+
+        <section id="tvRanking" class="tv-show-overlay tv-ranking" hidden aria-live="polite">
+            <div class="tv-show-glow" aria-hidden="true"></div>
+            <span class="tv-show-badge">🏆 RANKING DA FESTA</span>
+            <h2>Melhores da noite</h2>
+            <ol id="tvRankingList"></ol>
+        </section>
+
+        <aside id="tvRankingTicker" class="tv-ranking-ticker" hidden>
+            <span>🏆 LÍDER DA FESTA</span><strong id="tvRankingLeader">A festa está começando</strong><small id="tvRankingLeaderScore"></small>
+        </aside>
 
         <div id="tvReactionLayer" class="tv-reaction-layer" aria-live="polite" aria-atomic="false"></div>
 
@@ -146,6 +168,6 @@
     </main>
 
     <script src="qrcode.min.js"></script>
-    <script src="cabine-tv.js?v=7" defer></script>
+    <script src="cabine-tv.js?v=8" defer></script>
 </body>
 </html>

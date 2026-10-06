@@ -25,6 +25,46 @@
 @media (prefers-reduced-motion: reduce) {
     .tv-floating-emoji, .tv-floating-message { animation-duration: 2s; }
 }
+
+.tv-show-overlay { position: absolute; inset: 0; z-index: 16; display: grid; place-content: center; justify-items: center; padding: 5vw; overflow: hidden; text-align: center; background: radial-gradient(circle at 50% 46%, rgba(54,75,196,.45), rgba(3,5,12,.98) 64%); }
+.tv-show-overlay[hidden] { display: none; }
+.tv-show-glow { position: absolute; width: min(72vw,1000px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle,rgba(82,104,255,.24),transparent 66%); animation: tv-glow-pulse 2.2s ease-in-out infinite; }
+.tv-show-badge { z-index: 1; padding: 10px 17px; border: 1px solid rgba(255,217,61,.48); border-radius: 999px; color: var(--tv-yellow); background: rgba(255,217,61,.07); font: 900 clamp(.65rem,1vw,1rem)/1 'Montserrat',sans-serif; letter-spacing: .14em; }
+.tv-singer-intro p { z-index: 1; max-width: 900px; margin: clamp(18px,3vh,34px) 0 0; color: #d8dbe5; font: 700 clamp(1.3rem,3.1vw,3.2rem)/1.15 'Montserrat',sans-serif; }
+.tv-singer-intro strong { z-index: 1; display: block; max-width: 92vw; margin: 12px 0 0; color: #fff; font: 900 clamp(4rem,12vw,11rem)/.88 'Montserrat',sans-serif; letter-spacing: -.06em; text-transform: uppercase; text-shadow: 0 0 55px rgba(82,104,255,.4); animation: tv-name-arrive .7s cubic-bezier(.2,.8,.2,1) both; }
+.tv-singer-intro #tvIntroTrail:empty { display: none; }
+.tv-singer-intro { transition: opacity .45s ease, transform .45s ease; }
+.tv-singer-intro.is-leaving { opacity: 0; transform: scale(1.025); }
+.tv-equalizer { z-index: 1; height: 54px; margin-top: clamp(24px,5vh,52px); display: flex; align-items: end; gap: 8px; }
+.tv-equalizer i { width: 8px; height: 22%; border-radius: 8px; background: var(--tv-yellow); animation: tv-eq .8s ease-in-out infinite alternate; }
+.tv-equalizer i:nth-child(2),.tv-equalizer i:nth-child(6){animation-delay:-.2s}.tv-equalizer i:nth-child(3),.tv-equalizer i:nth-child(5){animation-delay:-.45s}.tv-equalizer i:nth-child(4){animation-delay:-.65s}
+.tv-equalizer-fast i { animation-duration: .38s; }
+
+.tv-score { padding: 5vw; overflow: hidden; }
+.tv-score span,.tv-score strong,.tv-score p,.tv-score small,.tv-score .tv-equalizer { position: relative; z-index: 1; }
+.tv-score small { max-width: min(90vw,1050px); color: #d9dce6; font: 700 clamp(1rem,2vw,2rem)/1.35 'Montserrat',sans-serif; }
+.tv-score.is-suspense strong { font-size: clamp(6rem,19vw,18rem); animation: tv-score-tick .18s ease-in-out infinite alternate; }
+.tv-score.is-final strong { animation: tv-score-reveal .7s cubic-bezier(.2,.9,.2,1) both; }
+
+.tv-ranking h2 { z-index: 1; margin: 22px 0 28px; font: 900 clamp(2.2rem,5vw,5rem)/1 'Montserrat',sans-serif; letter-spacing: -.04em; }
+.tv-ranking ol { z-index: 1; width: min(86vw,1100px); margin: 0; padding: 0; display: grid; gap: 10px; list-style: none; }
+.tv-ranking li { min-height: clamp(58px,8vh,88px); padding: 0 24px; display: grid; grid-template-columns: 70px minmax(0,1fr) auto; align-items: center; gap: 16px; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; text-align: left; background: rgba(18,23,38,.9); animation: tv-rank-arrive .5s both; }
+.tv-ranking li:first-child { border-color: rgba(255,217,61,.55); background: linear-gradient(100deg,rgba(255,217,61,.14),rgba(18,23,38,.92)); }
+.tv-ranking li b { color: var(--tv-yellow); font: 900 clamp(1.2rem,2vw,2rem)/1 'Montserrat',sans-serif; }
+.tv-ranking li strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 clamp(1.1rem,2vw,2rem)/1 'Montserrat',sans-serif; }
+.tv-ranking li span { color: #aeb9ff; font: 900 clamp(1rem,1.8vw,1.7rem)/1 'Montserrat',sans-serif; }
+.tv-ranking-ticker { position: absolute; left: 0; right: 0; bottom: 0; z-index: 11; min-height: 38px; padding: 0 3vw; display: flex; align-items: center; justify-content: center; gap: 12px; border-top: 1px solid rgba(255,217,61,.24); background: rgba(6,8,15,.86); backdrop-filter: blur(12px); }
+.tv-ranking-ticker[hidden] { display: none; }
+.tv-ranking-ticker span { color: var(--tv-yellow); font: 900 clamp(.55rem,.8vw,.8rem)/1 'Montserrat',sans-serif; letter-spacing: .12em; }
+.tv-ranking-ticker strong { font: 800 clamp(.72rem,1vw,1rem)/1 'Montserrat',sans-serif; }
+.tv-ranking-ticker small { color: #aeb9ff; font-weight: 800; }
+
+@keyframes tv-glow-pulse { 50% { transform: scale(1.1); opacity: .72; } }
+@keyframes tv-name-arrive { from { opacity: 0; transform: translateY(45px) scale(.9); } }
+@keyframes tv-eq { to { height: 100%; background: #7082ff; } }
+@keyframes tv-score-tick { to { transform: scale(1.025); opacity: .8; } }
+@keyframes tv-score-reveal { from { opacity: 0; transform: scale(1.65) rotate(-4deg); } }
+@keyframes tv-rank-arrive { from { opacity: 0; transform: translateX(40px); } }
 .tv-status-line { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 12px; }
 .tv-controller-status { color: var(--tv-muted); font: 800 .56rem/1 'Montserrat', sans-serif; letter-spacing: .1em; }
 .tv-controller-status::before { content: ''; width: 7px; height: 7px; margin-right: 6px; display: inline-block; border-radius: 50%; background: #7d8291; }

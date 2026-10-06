@@ -12,6 +12,22 @@
     };
     const CDN_BASE_URL = 'https://media.unodev.com.br/file/karaoke-midia/Musicas/';
     const SESSION_KEY = 'karaokeStandaloneTvSession';
+    const INTRO_PHRASES = [
+        'Atenção, porque agora o microfone tem dono: [Nome]!',
+        'Pode abrir espaço que [Nome] chegou para cantar!',
+        'O palco está pronto. Agora é com [Nome]!',
+        'Preparem os ouvidos e o coração: chegou [Nome]!',
+        'Senhoras e senhores... com vocês, [Nome]!',
+        'Segura essa, porque [Nome] vem aí!',
+        'A próxima música já tem protagonista: [Nome]!',
+        'Pode preparar os aplausos: [Nome] está na área!'
+    ];
+    const SCORE_PHRASES = {
+        low: ['A coragem valeu mais que a afinação!', 'O importante é que o microfone sobreviveu!', 'A próxima vem ainda melhor!'],
+        medium: ['Você aqueceu a voz e a festa junto!', 'O palco gostou de você!', 'Mandou bem e deixou gostinho de bis!'],
+        high: ['Arrasou! A plateia sentiu daqui!', 'Essa performance merece replay!', 'Cantou bonito e dominou o palco!'],
+        max: ['Nota máxima! Zerou o karaokê!', 'Perfeição desbloqueada!', 'Cem pontos e o respeito da festa inteira!']
+    };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
@@ -36,9 +52,15 @@
         qrCode: document.getElementById('tvQrCode'), djQrCode: document.getElementById('tvDjQrCode'),
         playbackLabel: document.getElementById('tvPlaybackLabel'), songTitle: document.getElementById('tvSongTitle'),
         singer: document.getElementById('tvSinger'), artist: document.getElementById('tvSongArtist'),
+        singerIntro: document.getElementById('tvSingerIntro'), introLead: document.getElementById('tvIntroLead'),
+        introSinger: document.getElementById('tvIntroSinger'), introTrail: document.getElementById('tvIntroTrail'),
         queuePanel: document.getElementById('tvQueuePanel'), queue: document.getElementById('tvQueue'),
         score: document.getElementById('tvScore'), scoreValue: document.getElementById('tvScoreValue'),
-        scoreSinger: document.getElementById('tvScoreSinger'), reactionLayer: document.getElementById('tvReactionLayer'),
+        scoreLabel: document.getElementById('tvScoreLabel'), scoreSinger: document.getElementById('tvScoreSinger'),
+        scorePhrase: document.getElementById('tvScorePhrase'), ranking: document.getElementById('tvRanking'),
+        rankingList: document.getElementById('tvRankingList'), rankingTicker: document.getElementById('tvRankingTicker'),
+        rankingLeader: document.getElementById('tvRankingLeader'), rankingLeaderScore: document.getElementById('tvRankingLeaderScore'),
+        reactionLayer: document.getElementById('tvReactionLayer'),
         progress: document.querySelector('#tvProgress span'),
         startPlayback: document.getElementById('tvStartPlayback'), sound: document.getElementById('tvSound')
     };
@@ -70,6 +92,9 @@
     let reactionHandler = null;
     let scoreShowing = false;
     let forcedScore = null;
+    let transitionBusy = false;
+    let transitionAudio = null;
+    let sessionRanking = [];
     let wakeLock = null;
     let pairingTimer = null;
     let activePairing = null;
@@ -95,6 +120,7 @@
             currentTime: Number(elements.video.currentTime) || 0,
             wasPlaying: Boolean(currentSongId && !elements.video.paused),
             volume,
+            sessionRanking,
             updatedAt: Date.now(),
             ...patch
         };
@@ -105,6 +131,89 @@
         try { localStorage.removeItem(SESSION_KEY); } catch {}
         elements.resumeCard.hidden = true;
         elements.newPartyDivider.hidden = true;
+    }
+
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+    function stopTransitionAudio() {
+        if (!transitionAudio) return;
+        transitionAudio.onended = null;
+        transitionAudio.onerror = null;
+        try { transitionAudio.pause(); } catch {}
+        transitionAudio = null;
+    }
+
+    function playTransitionAudio(path, fallbackMs) {
+        return new Promise(resolve => {
+            if (!soundEnabled) { setTimeout(resolve, fallbackMs); return; }
+            stopTransitionAudio();
+            const audio = new Audio(path);
+            transitionAudio = audio;
+            let done = false;
+            const finish = () => {
+                if (done) return;
+                done = true;
+                audio.onended = audio.onerror = null;
+                if (transitionAudio === audio) transitionAudio = null;
+                resolve();
+            };
+            audio.onended = finish;
+            audio.onerror = finish;
+            audio.play().catch(() => setTimeout(finish, fallbackMs));
+            setTimeout(finish, Math.max(fallbackMs, 10000));
+        });
+    }
+
+    async function showSingerIntro(entry) {
+        transitionBusy = true;
+        const template = INTRO_PHRASES[Math.floor(Math.random() * INTRO_PHRASES.length)];
+        const [lead = '', trail = ''] = template.split('[Nome]');
+        elements.introLead.textContent = lead.trim();
+        elements.introSinger.textContent = entry.singer || 'CANTOR';
+        elements.introTrail.textContent = trail.trim();
+        elements.singerIntro.hidden = false;
+        const choices = ['Chamada_1.mp3', 'Chamada_2.mp3', 'Chamada_3.mp3'];
+        await playTransitionAudio(`../SFX/${choices[Math.floor(Math.random() * choices.length)]}`, 4000);
+        elements.singerIntro.classList.add('is-leaving');
+        await wait(450);
+        elements.singerIntro.hidden = true;
+        elements.singerIntro.classList.remove('is-leaving');
+        transitionBusy = false;
+    }
+
+    function renderRanking() {
+        elements.rankingList.replaceChildren();
+        sessionRanking.forEach((item, index) => {
+            const row = document.createElement('li');
+            row.style.animationDelay = `${index * 90}ms`;
+            const place = document.createElement('b'); place.textContent = `${index + 1}º`;
+            const name = document.createElement('strong'); name.textContent = item.singer;
+            const value = document.createElement('span'); value.textContent = `${item.score} pts`;
+            row.append(place, name, value); elements.rankingList.append(row);
+        });
+        const leader = sessionRanking[0];
+        elements.rankingTicker.hidden = !leader;
+        elements.rankingLeader.textContent = leader?.singer || 'A festa está começando';
+        elements.rankingLeaderScore.textContent = leader ? `${leader.score} pontos` : '';
+    }
+
+    function updateRanking(entry, score) {
+        const singer = entry.singer || 'Cantor';
+        const existing = sessionRanking.findIndex(item => item.singer.toLocaleUpperCase('pt-BR') === singer.toLocaleUpperCase('pt-BR'));
+        const result = { singer, title: entry.title || '', score, at: Date.now() };
+        if (existing < 0) sessionRanking.push(result);
+        else if (score >= sessionRanking[existing].score) sessionRanking[existing] = result;
+        sessionRanking.sort((a, b) => b.score - a.score || a.at - b.at);
+        sessionRanking = sessionRanking.slice(0, 5);
+        renderRanking();
+        saveSession();
+    }
+
+    async function showRanking() {
+        if (!sessionRanking.length) return;
+        elements.ranking.hidden = false;
+        await wait(5000);
+        elements.ranking.hidden = true;
     }
 
     function refreshResumeCard() {
@@ -299,7 +408,7 @@
         saveSession({ wasPlaying: playing });
     }
 
-    async function playCurrent({ resumeAt = 0, autoplay = true } = {}) {
+    async function playCurrent({ resumeAt = 0, autoplay = true, intro = true } = {}) {
         if (!queue.length || !roomRef) {
             currentSongId = '';
             elements.idle.hidden = false;
@@ -311,6 +420,10 @@
             return;
         }
         const current = queue[0];
+        if (intro) {
+            await showSingerIntro(current);
+            if (!queue.length || queue[0] !== current || !roomRef) return;
+        }
         currentSongId = String(current.id).padStart(5, '0');
         elements.idle.hidden = true;
         elements.nowPlaying.hidden = false;
@@ -374,6 +487,12 @@
         setTimeout(() => node.remove(), isMessage ? 6100 : 4700);
     }
 
+    function spawnApplauseBurst() {
+        for (let index = 0; index < 14; index++) {
+            setTimeout(() => spawnReaction({ emoji: index % 4 === 0 ? '🎉' : '👏' }), index * 105);
+        }
+    }
+
     async function showScoreAndAdvance() {
         if (!currentSongId || !queue.length || scoreShowing) return;
         scoreShowing = true;
@@ -397,18 +516,44 @@
             title: entry.title || '', artist: entry.artist || '', score: finalScore,
             timestamp: firebase.database.ServerValue.TIMESTAMP
         };
+        elements.score.classList.add('is-suspense');
+        elements.score.classList.remove('is-final');
+        elements.scoreLabel.textContent = 'DANDO NOTA…';
+        elements.scoreValue.textContent = '--';
+        elements.scoreSinger.textContent = `Segura o coração, ${entry.singer || 'Cantor'}!`;
+        elements.scorePhrase.textContent = '';
+        elements.score.hidden = false;
+        spawnApplauseBurst();
+        playTransitionAudio('../SFX/Aplausos.mp3', 1800).catch(() => {});
+        await wait(1800);
+        let tickerValue = 0;
+        const ticker = setInterval(() => {
+            tickerValue = Math.floor(Math.random() * 101);
+            elements.scoreValue.textContent = tickerValue;
+        }, 75);
+        await playTransitionAudio('../SFX/Dando_nota.mp3', 6000);
+        clearInterval(ticker);
+        const category = finalScore >= 95 ? 'max' : finalScore >= 85 ? 'high' : finalScore >= 70 ? 'medium' : 'low';
+        const sound = category === 'max' ? 'Nota_maxima.mp3' : category === 'high' ? 'Nota_alta.mp3' : category === 'medium' ? 'Nota_media.mp3' : 'Nota_baixa.mp3';
+        const phrases = SCORE_PHRASES[category];
+        elements.score.classList.remove('is-suspense');
+        elements.score.classList.add('is-final');
+        elements.scoreLabel.textContent = 'NOTA FINAL';
         elements.scoreValue.textContent = finalScore;
         elements.scoreSinger.textContent = entry.singer || 'Cantor';
-        elements.score.hidden = false;
+        elements.scorePhrase.textContent = phrases[Math.floor(Math.random() * phrases.length)];
+        playTransitionAudio(`../SFX/${sound}`, 1800).catch(() => {});
         await Promise.all([
             roomRef.child('display_score').set({ ...payload, timestamp: Date.now(), revealAt: Date.now() }),
             roomRef.child('last_score').set(payload)
         ]).catch(error => console.warn('Não foi possível publicar a nota.', error));
-        setTimeout(async () => {
-            elements.score.hidden = true;
-            scoreShowing = false;
-            await finishCurrent();
-        }, 7000);
+        updateRanking(entry, finalScore);
+        await wait(7000);
+        elements.score.hidden = true;
+        elements.score.classList.remove('is-final');
+        await showRanking();
+        scoreShowing = false;
+        await finishCurrent();
     }
 
     function requestPlayback() {
@@ -433,7 +578,7 @@
         const command = snapshot.val() || {};
         try {
             if (command.senderUid !== currentHostUid) return;
-            if (scoreShowing && ['play_pause', 'restart', 'skip'].includes(command.action)) return;
+            if ((scoreShowing || transitionBusy) && ['play_pause', 'restart', 'skip'].includes(command.action)) return;
             const payload = command.payload || {};
             switch (command.action) {
                 case 'play_pause':
@@ -631,6 +776,8 @@
         currentRoom = await generateRoomCode();
         roomRef = db.ref(`salas/${currentRoom}`);
         queue = [];
+        sessionRanking = [];
+        renderRanking();
         processedRequestKeys = new Set();
         currentSongId = '';
         await roomRef.set({
@@ -664,6 +811,8 @@
         const remote = snapshot.val();
         if (remote?.info?.hostId && remote.info.hostId !== currentHostUid) throw new Error('O código anterior agora pertence a outra festa.');
         queue = remote ? parseQueue(remote.queue_v13) : (Array.isArray(session.queue) ? session.queue : []);
+        sessionRanking = Array.isArray(session.sessionRanking) ? session.sessionRanking.slice(0, 5) : [];
+        renderRanking();
         processedRequestKeys = new Set(Array.isArray(session.processedRequestKeys) ? session.processedRequestKeys : []);
         queue.forEach(item => { if (item.requestKey) processedRequestKeys.add(item.requestKey); });
         volume = Math.max(0, Math.min(1, Number(remote?.host_state?.volume ?? session.volume ?? .7)));
@@ -681,14 +830,18 @@
         });
         await armDisconnectState();
         showPartyStage(currentPartyName);
-        if (hasCurrent) await playCurrent({ resumeAt, autoplay: Boolean(wasPlaying) });
-        else if (queue.length) await playCurrent({ autoplay: false });
+        if (hasCurrent) await playCurrent({ resumeAt, autoplay: Boolean(wasPlaying), intro: false });
+        else if (queue.length) await playCurrent({ autoplay: false, intro: false });
         else saveSession({ currentSongId: '', currentTime: 0, wasPlaying: false });
         startRoomListeners();
     }
 
     async function endParty() {
         stopRoomListeners();
+        stopTransitionAudio();
+        transitionBusy = false;
+        scoreShowing = false;
+        [elements.singerIntro, elements.score, elements.ranking].forEach(element => { element.hidden = true; });
         elements.stage.classList.remove('show-access', 'toolbar-visible');
         elements.showAccess.textContent = '▦ Mostrar QR Codes';
         if (wakeLock) await wakeLock.release().catch(() => {});
