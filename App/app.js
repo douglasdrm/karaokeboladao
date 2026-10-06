@@ -2962,6 +2962,11 @@
                 score: finalScore,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             };
+            db.ref(`salas/${scoreRoomCode}/display_score`).set({
+                ...scorePayload,
+                timestamp: Date.now(),
+                revealAt: Date.now() + 8000
+            }).catch(e => console.warn('[SCORE] Falha ao sincronizar a nota com a TV:', e));
             setTimeout(() => {
                 if (currentRoomCode !== scoreRoomCode) return;
                 db.ref(`salas/${scoreRoomCode}/last_score`).set(scorePayload)
@@ -4463,4 +4468,3 @@
     window.spawnEmoji = typeof spawnFloatingEmoji !== 'undefined' ? spawnFloatingEmoji : null;
 
 })();
-
