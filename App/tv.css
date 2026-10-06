@@ -67,8 +67,14 @@ button { cursor: pointer; }
 .tv-idle { position: absolute; inset: 0; z-index: 2; padding: 8vh 8vw; display: flex; align-items: center; justify-content: center; gap: clamp(35px, 6vw, 90px); }
 .tv-idle h1 { margin: 14px 0 12px; font: 900 clamp(3rem, 6.6vw, 7rem)/.96 'Montserrat', sans-serif; letter-spacing: -.055em; }
 .tv-idle p:not(.tv-eyebrow) { max-width: 680px; margin: 0 0 22px; color: #bdc1cf; font-size: clamp(1rem, 1.8vw, 1.6rem); }
-.tv-idle strong { color: var(--tv-yellow); font: 800 clamp(1rem, 1.5vw, 1.4rem)/1 'Montserrat', sans-serif; letter-spacing: .12em; }
-.tv-qr { flex: 0 0 auto; width: min(29vw, 330px); aspect-ratio: 1; padding: 16px; border: 7px solid #fff; border-radius: 24px; background: #fff; box-shadow: 0 30px 80px rgba(0,0,0,.4); }
+.tv-idle > div:last-child > strong { color: var(--tv-yellow); font: 800 clamp(1rem, 1.5vw, 1.4rem)/1 'Montserrat', sans-serif; letter-spacing: .12em; }
+.tv-access-cards { flex: 0 0 auto; display: flex; align-items: flex-end; gap: clamp(12px, 1.8vw, 24px); }
+.tv-access-card { margin: 0; display: grid; justify-items: center; }
+.tv-access-card > span { margin-top: 11px; color: var(--tv-yellow); font: 800 clamp(.52rem, .7vw, .68rem)/1 'Montserrat', sans-serif; letter-spacing: .14em; }
+.tv-access-card > strong { margin-top: 5px; color: #eef0f6; font: 700 clamp(.62rem, .85vw, .8rem)/1.2 'Poppins', sans-serif; letter-spacing: 0; white-space: nowrap; }
+.tv-access-dj > span { color: #9facff; }
+.tv-qr { flex: 0 0 auto; width: min(24vw, 300px); aspect-ratio: 1; padding: 14px; border: 6px solid #fff; border-radius: 22px; background: #fff; box-shadow: 0 30px 80px rgba(0,0,0,.4); }
+.tv-dj-qr { width: min(13.5vw, 170px); padding: 8px; border-width: 4px; border-color: #aeb8ff; border-radius: 16px; }
 .tv-qr img, .tv-qr canvas { width: 100% !important; height: 100% !important; display: block; }
 .tv-now-playing { position: absolute; z-index: 6; top: 15px; left: 50%; width: min(56vw, 760px); padding: 9px 22px 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 0 0 16px 16px; text-align: center; background: rgba(4,6,12,.8); backdrop-filter: blur(16px); transform: translateX(-50%); }
 .tv-now-playing > span { color: var(--tv-yellow); font: 800 .58rem/1 'Montserrat', sans-serif; letter-spacing: .14em; }
@@ -104,7 +110,11 @@ button { cursor: pointer; }
     .tv-party-copy { display: none; }
     .tv-idle { padding: 80px 24px 45px; gap: 24px; }
     .tv-idle h1 { font-size: clamp(2.1rem, 7vw, 4rem); }
-    .tv-qr { width: min(31vw, 220px); padding: 8px; border-width: 4px; border-radius: 14px; }
+    .tv-access-cards { gap: 10px; }
+    .tv-qr { width: min(25vw, 190px); padding: 8px; border-width: 4px; border-radius: 14px; }
+    .tv-dj-qr { width: min(14vw, 110px); padding: 5px; border-width: 3px; border-radius: 10px; }
+    .tv-access-card > span { margin-top: 7px; }
+    .tv-access-card > strong { font-size: .52rem; }
     .tv-queue-panel { bottom: 16px; width: 94vw; }
     .tv-queue-panel ol { grid-template-columns: repeat(3, minmax(0,1fr)); }
     .tv-queue-panel li:nth-child(n+4) { display: none; }
@@ -112,7 +122,8 @@ button { cursor: pointer; }
 }
 @media (max-width: 520px) and (orientation: portrait) {
     .tv-idle { flex-direction: column; text-align: center; }
-    .tv-qr { width: min(58vw, 260px); }
+    .tv-qr { width: min(45vw, 220px); }
+    .tv-dj-qr { width: min(28vw, 135px); }
     .tv-now-playing { width: 88vw; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }

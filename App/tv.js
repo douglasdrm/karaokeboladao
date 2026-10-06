@@ -37,6 +37,7 @@
         roomLabel: document.getElementById('tvRoomLabel'),
         idleRoom: document.getElementById('tvIdleRoom'),
         qrCode: document.getElementById('tvQrCode'),
+        djQrCode: document.getElementById('tvDjQrCode'),
         playbackLabel: document.getElementById('tvPlaybackLabel'),
         songTitle: document.getElementById('tvSongTitle'),
         singer: document.getElementById('tvSinger'),
@@ -113,19 +114,28 @@
         return new URL(`mobile.html?room=${encodeURIComponent(code)}`, window.location.href).href;
     }
 
+    function buildDjControlUrl(code) {
+        return new URL(`cabine-mobile.html?room=${encodeURIComponent(code)}&from=tv`, window.location.href).href;
+    }
+
+    function drawQr(container, text, size) {
+        container.replaceChildren();
+        new QRCode(container, {
+            text,
+            width: size,
+            height: size,
+            colorDark: '#000000',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    }
+
     function renderQr(code) {
-        elements.qrCode.replaceChildren();
         try {
-            new QRCode(elements.qrCode, {
-                text: buildGuestUrl(code),
-                width: 300,
-                height: 300,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.M
-            });
+            drawQr(elements.qrCode, buildGuestUrl(code), 300);
+            drawQr(elements.djQrCode, buildDjControlUrl(code), 170);
         } catch (error) {
-            console.warn('Não foi possível criar o QR Code da TV.', error);
+            console.warn('Não foi possível criar os QR Codes da TV.', error);
         }
     }
 
@@ -150,7 +160,7 @@
             elements.idleTitle.textContent = next ? (next.singer || 'Próximo cantor') : 'Escolha sua música';
             elements.idleDescription.textContent = next
                 ? [next.title, next.artist].filter(Boolean).join(' · ')
-                : 'Aponte a câmera do celular para o QR Code e entre na fila.';
+                : 'Convidados usam o QR maior. O DJ usa o QR de controle com sua própria conta.';
         }
     }
 

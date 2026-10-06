@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#05070d">
     <title>Tela da festa | Karaoke Party</title>
     <link rel="icon" type="image/png" href="../Assets/icon.png">
-    <link rel="stylesheet" href="tv.css?v=1">
+    <link rel="stylesheet" href="tv.css?v=2">
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
@@ -70,11 +70,22 @@
         </header>
 
         <section id="tvIdle" class="tv-idle">
-            <div id="tvQrCode" class="tv-qr" aria-label="QR Code para entrar na festa"></div>
+            <div class="tv-access-cards" aria-label="Acessos da festa pelo celular">
+                <article class="tv-access-card tv-access-guest">
+                    <div id="tvQrCode" class="tv-qr" aria-label="QR Code dos convidados"></div>
+                    <span>CONVIDADOS</span>
+                    <strong>Escolher música</strong>
+                </article>
+                <article class="tv-access-card tv-access-dj">
+                    <div id="tvDjQrCode" class="tv-qr tv-dj-qr" aria-label="QR Code do controle do DJ"></div>
+                    <span>DJ</span>
+                    <strong>Controlar pelo celular</strong>
+                </article>
+            </div>
             <div>
                 <p id="tvIdleEyebrow" class="tv-eyebrow">A FESTA ESTÁ ABERTA</p>
                 <h1 id="tvIdleTitle">Escolha sua música</h1>
-                <p id="tvIdleDescription">Aponte a câmera do celular para o QR Code e entre na fila.</p>
+                <p id="tvIdleDescription">Convidados entram na fila pelo QR maior. O DJ usa o QR de controle com sua própria conta.</p>
                 <strong id="tvIdleRoom">SALA -----</strong>
             </div>
         </section>
@@ -107,6 +118,6 @@
     </main>
 
     <script src="qrcode.min.js"></script>
-    <script src="tv.js?v=1" defer></script>
+    <script src="tv.js?v=2" defer></script>
 </body>
 </html>
