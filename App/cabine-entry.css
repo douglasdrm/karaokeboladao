@@ -169,8 +169,6 @@ a { color: inherit; }
 .mode-copy small { max-width: 480px; color: var(--entry-muted); font-size: .93rem; line-height: 1.55; }
 .mode-action { position: relative; z-index: 1; margin-top: auto; padding-top: 26px; color: #fff; font-size: .86rem; font-weight: 700; }
 
-.mode-card-compact { min-height: 250px; }
-.mode-card-compact .mode-icon { margin-top: 10px; }
 
 .singer-callout {
     margin-top: 62px;
@@ -246,7 +244,6 @@ a { color: inherit; }
     .role-preview,
     .display-shell { grid-template-columns: 1fr; }
     .mode-card { min-height: 280px; padding: 23px; }
-    .mode-card-compact { min-height: 230px; }
     .singer-callout { align-items: flex-start; flex-direction: column; gap: 20px; }
     .singer-callout a { width: 100%; }
     .detail-shell,
