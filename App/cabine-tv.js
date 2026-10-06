@@ -172,7 +172,7 @@
         elements.introSinger.textContent = entry.singer || 'CANTOR';
         elements.introTrail.textContent = trail.trim();
         elements.singerIntro.hidden = false;
-        const choices = ['Chamada_1.mp3', 'Chamada_2.mp3', 'Chamada_3.mp3'];
+        const choices = ['Chamada_1.mp3', 'Chamada_2.mp3'];
         await playTransitionAudio(`../SFX/${choices[Math.floor(Math.random() * choices.length)]}`, 4000);
         elements.singerIntro.classList.add('is-leaving');
         await wait(450);
