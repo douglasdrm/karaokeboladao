@@ -6,10 +6,11 @@
     <meta name="theme-color" content="#080a12">
     <title>Cabine no celular | Karaoke Party</title>
     <link rel="icon" type="image/png" href="../Assets/icon.png">
-    <link rel="stylesheet" href="cabine-entry.css?v=4">
+    <link rel="stylesheet" href="cabine-entry.css?v=5">
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
 </head>
 <body class="mobile-control-page">
     <div class="entry-glow entry-glow-left" aria-hidden="true"></div>
@@ -107,6 +108,22 @@
                 </div>
             </section>
 
+            <section class="mobile-catalog-card" aria-labelledby="mobileCatalogTitle">
+                <div class="mobile-section-heading">
+                    <div>
+                        <p class="eyebrow">CATÁLOGO DO DJ</p>
+                        <h2 id="mobileCatalogTitle">Adicionar música</h2>
+                    </div>
+                    <span id="mobileDjCatalogCount">Carregando…</span>
+                </div>
+                <label class="mobile-catalog-search" for="mobileDjSongSearch">
+                    <span aria-hidden="true">⌕</span>
+                    <input id="mobileDjSongSearch" type="search" autocomplete="off" placeholder="Música, artista ou código">
+                </label>
+                <div id="mobileDjCatalogStatus" class="mobile-catalog-status" role="status">Sincronizando o catálogo da festa…</div>
+                <ul id="mobileDjSongResults" class="mobile-song-results" aria-label="Resultados do catálogo"></ul>
+            </section>
+
             <section class="mobile-queue-card" aria-labelledby="mobileQueueTitle">
                 <div class="mobile-section-heading">
                     <div>
@@ -132,6 +149,28 @@
         </section>
     </main>
 
-    <script src="cabine-mobile.js?v=7" defer></script>
+    <div id="mobileDjSongSheet" class="mobile-song-sheet" hidden>
+        <button class="mobile-song-sheet-backdrop" type="button" data-close-song-sheet aria-label="Fechar"></button>
+        <section class="mobile-song-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="mobileDjSelectedTitle">
+            <div class="mobile-song-sheet-handle" aria-hidden="true"></div>
+            <p class="eyebrow">ADICIONAR À FILA</p>
+            <h2 id="mobileDjSelectedTitle">Música</h2>
+            <p id="mobileDjSelectedArtist" class="mobile-selected-artist"></p>
+            <form id="mobileDjAddSongForm">
+                <label for="mobileDjSingerName">Quem vai cantar?</label>
+                <div class="mobile-singer-input">
+                    <input id="mobileDjSingerName" type="text" maxlength="40" autocomplete="off" placeholder="Nome do cantor ou mesa" required>
+                    <button id="mobileDjUseMyName" type="button">Eu</button>
+                </div>
+                <div class="mobile-song-sheet-actions">
+                    <button type="button" class="sheet-secondary-action" data-close-song-sheet>Cancelar</button>
+                    <button id="mobileDjAddNext" type="button" class="sheet-next-action" data-catalog-action>Próxima</button>
+                    <button type="submit" class="sheet-primary-action" data-catalog-action>Adicionar</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <script src="cabine-mobile.js?v=8" defer></script>
 </body>
 </html>

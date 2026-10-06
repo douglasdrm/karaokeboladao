@@ -39,6 +39,15 @@
         volumeValue: document.getElementById('mobileDjVolumeValue'),
         queue: document.getElementById('mobileDjQueue'),
         queueCount: document.getElementById('mobileDjQueueCount'),
+        catalogCount: document.getElementById('mobileDjCatalogCount'),
+        catalogStatus: document.getElementById('mobileDjCatalogStatus'),
+        songSearch: document.getElementById('mobileDjSongSearch'),
+        songResults: document.getElementById('mobileDjSongResults'),
+        songSheet: document.getElementById('mobileDjSongSheet'),
+        selectedTitle: document.getElementById('mobileDjSelectedTitle'),
+        selectedArtist: document.getElementById('mobileDjSelectedArtist'),
+        singerName: document.getElementById('mobileDjSingerName'),
+        addNext: document.getElementById('mobileDjAddNext'),
         singerLink: document.getElementById('mobileDjSingerLink'),
         feedback: document.getElementById('mobileDjFeedback')
     };
@@ -50,6 +59,9 @@
     let hostConnected = false;
     let feedbackTimer = null;
     let authStateVersion = 0;
+    let catalog = [];
+    let selectedSong = null;
+    let catalogPromise = null;
     const roomListeners = [];
 
     function showOnly(target) {
@@ -110,10 +122,128 @@
     function setHostConnected(connected) {
         hostConnected = connected;
         elements.dashboard.classList.toggle('is-host-offline', !connected);
-        document.querySelectorAll('[data-host-command], [data-queue-action]').forEach((control) => {
+        document.querySelectorAll('[data-host-command], [data-queue-action], [data-catalog-action]').forEach((control) => {
             control.disabled = !connected || control.dataset.queueUnavailable === 'true';
         });
         elements.volume.disabled = !connected;
+    }
+
+    function normalizeText(value) {
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+    }
+
+    function processCatalog(items) {
+        catalog = (Array.isArray(items) ? items : []).map((item) => ({
+            id: String(item.codigo ?? item.id ?? '').padStart(5, '0'),
+            artist: item.artista ?? item.artist ?? 'Artista não informado',
+            title: item.titulo ?? item.title ?? 'Música sem título',
+            lyrics: item.inicioletra ?? item.lyrics ?? '',
+            estilo: item.estilo || 'Pop',
+            idioma: item.idioma || 'BRA'
+        })).filter((item) => item.id !== '00000' && item.title);
+        elements.catalogCount.textContent = `${catalog.length} músicas`;
+        elements.catalogStatus.hidden = catalog.length > 0;
+        renderCatalogResults(catalog.slice(0, 12));
+    }
+
+    async function loadCatalog() {
+        if (catalog.length) return catalog;
+        if (catalogPromise) return catalogPromise;
+        elements.catalogStatus.hidden = false;
+        elements.catalogStatus.textContent = 'Sincronizando o catálogo da festa…';
+        catalogPromise = (async () => {
+            try {
+                const configSnapshot = await db.ref('config/catalog').once('value');
+                const config = configSnapshot.val() || {};
+                if (config.mode === 'fragmented' && Number(config.totalChunks) > 0) {
+                    const reads = Array.from({ length: Number(config.totalChunks) }, (_, index) =>
+                        db.ref(`catalog_chunks/part_${index}`).once('value').then((snapshot) => snapshot.val() || [])
+                    );
+                    processCatalog((await Promise.all(reads)).flat());
+                } else if (config.url && firebase.storage) {
+                    const blob = await firebase.storage().ref('songs.json').getBlob();
+                    const data = JSON.parse(await blob.text());
+                    processCatalog(data.musicas || []);
+                } else {
+                    const response = await fetch('songs.json');
+                    if (!response.ok) throw new Error(`Catálogo local indisponível (${response.status})`);
+                    const data = await response.json();
+                    processCatalog(data.musicas || []);
+                }
+            } catch (error) {
+                console.error('Falha ao carregar o catálogo da Cabine móvel:', error);
+                elements.catalogCount.textContent = 'Indisponível';
+                elements.catalogStatus.hidden = false;
+                elements.catalogStatus.textContent = 'Não foi possível carregar o catálogo agora.';
+            } finally {
+                catalogPromise = null;
+            }
+            return catalog;
+        })();
+        return catalogPromise;
+    }
+
+    function renderCatalogResults(items) {
+        elements.songResults.replaceChildren();
+        if (!items.length) {
+            elements.catalogStatus.hidden = false;
+            elements.catalogStatus.textContent = catalog.length ? 'Nenhuma música encontrada.' : 'Sincronizando o catálogo da festa…';
+            return;
+        }
+        elements.catalogStatus.hidden = true;
+        items.forEach((song) => {
+            const row = document.createElement('li');
+            const copy = document.createElement('div');
+            const title = document.createElement('strong');
+            const artist = document.createElement('span');
+            const code = document.createElement('small');
+            const add = document.createElement('button');
+            title.textContent = song.title;
+            artist.textContent = song.artist;
+            code.textContent = `CÓDIGO ${song.id}`;
+            copy.append(title, artist, code);
+            add.type = 'button';
+            add.dataset.catalogSong = song.id;
+            add.dataset.catalogAction = 'select';
+            add.textContent = 'Adicionar';
+            add.disabled = !hostConnected;
+            row.append(copy, add);
+            elements.songResults.append(row);
+        });
+    }
+
+    function openSongSheet(song) {
+        selectedSong = song;
+        elements.selectedTitle.textContent = song.title;
+        elements.selectedArtist.textContent = `${song.artist} · Código ${song.id}`;
+        elements.singerName.value = currentUser?.displayName || '';
+        elements.songSheet.hidden = false;
+        document.body.classList.add('has-mobile-sheet');
+        setTimeout(() => elements.singerName.focus(), 60);
+    }
+
+    function closeSongSheet() {
+        selectedSong = null;
+        elements.songSheet.hidden = true;
+        document.body.classList.remove('has-mobile-sheet');
+    }
+
+    async function addSelectedSong(playNext) {
+        const singer = elements.singerName.value.trim();
+        if (!selectedSong || !singer) {
+            elements.singerName.focus();
+            return;
+        }
+        const sent = await sendCommand('queue_add', {
+            songId: selectedSong.id,
+            singer,
+            playNext
+        }, playNext ? 'Música enviada para a próxima posição.' : 'Música adicionada à fila.');
+        if (sent) closeSongSheet();
     }
 
     function queueCommandPayload(item, index) {
@@ -192,10 +322,10 @@
     }
 
     async function sendCommand(action, payload = {}, successMessage = 'Comando enviado para a Cabine PC.') {
-        if (!currentRoom || !currentUser) return;
+        if (!currentRoom || !currentUser) return false;
         if (!hostConnected) {
             setFeedback('A Cabine PC está desconectada.', true);
-            return;
+            return false;
         }
         try {
             await db.ref(`salas/${currentRoom}/host_commands`).push().set({
@@ -205,9 +335,11 @@
                 createdAt: firebase.database.ServerValue.TIMESTAMP
             });
             setFeedback(successMessage);
+            return true;
         } catch (error) {
             console.error('Falha ao enviar comando:', error);
             setFeedback('Não foi possível controlar a Cabine PC.', true);
+            return false;
         }
     }
 
@@ -352,6 +484,52 @@
         button.addEventListener('click', () => sendCommand(button.dataset.hostCommand));
     });
 
+    let catalogSearchTimer = null;
+    elements.songSearch.addEventListener('input', () => {
+        clearTimeout(catalogSearchTimer);
+        catalogSearchTimer = setTimeout(() => {
+            const term = normalizeText(elements.songSearch.value);
+            if (term.length < 2) {
+                renderCatalogResults(catalog.slice(0, 12));
+                return;
+            }
+            const matches = catalog.filter((song) =>
+                normalizeText(song.id).includes(term) ||
+                normalizeText(song.title).includes(term) ||
+                normalizeText(song.artist).includes(term) ||
+                normalizeText(song.lyrics).includes(term)
+            ).slice(0, 30);
+            renderCatalogResults(matches);
+        }, 100);
+    });
+
+    elements.songResults.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-catalog-song]');
+        if (!button || button.disabled) return;
+        const song = catalog.find((item) => item.id === button.dataset.catalogSong);
+        if (song) openSongSheet(song);
+    });
+
+    document.querySelectorAll('[data-close-song-sheet]').forEach((button) => {
+        button.addEventListener('click', closeSongSheet);
+    });
+
+    document.getElementById('mobileDjUseMyName').addEventListener('click', () => {
+        elements.singerName.value = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'DJ';
+        elements.singerName.focus();
+    });
+
+    document.getElementById('mobileDjAddSongForm').addEventListener('submit', (event) => {
+        event.preventDefault();
+        addSelectedSong(false);
+    });
+
+    elements.addNext.addEventListener('click', () => addSelectedSong(true));
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !elements.songSheet.hidden) closeSongSheet();
+    });
+
     elements.queue.addEventListener('click', (event) => {
         const button = event.target.closest('[data-queue-action]');
         if (!button || button.disabled) return;
@@ -396,6 +574,7 @@
         }
 
         elements.identity.textContent = `Conectado como ${user.displayName || user.email || 'DJ'}`;
+        loadCatalog();
         // A autenticação já terminou. Mostra a próxima etapa imediatamente e
         // restaura uma sala anterior em segundo plano.
         showOnly(elements.connect);

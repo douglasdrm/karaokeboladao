@@ -411,6 +411,7 @@ a { color: inherit; }
 .icon-text-button { flex: 0 0 auto; padding: 9px 11px; border: 1px solid var(--entry-border); border-radius: 10px; color: #d8dae4; background: rgba(255, 255, 255, .03); font: 600 .7rem/1 'Poppins', sans-serif; cursor: pointer; }
 
 .now-playing-card,
+.mobile-catalog-card,
 .mobile-queue-card,
 .mobile-role-switch {
     border: 1px solid var(--entry-border);
@@ -456,6 +457,35 @@ a { color: inherit; }
 .tone-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .tone-buttons button { min-height: 40px; border: 1px solid var(--entry-border); border-radius: 11px; color: #dadce5; background: rgba(255, 255, 255, .035); font: 700 .72rem/1 'Poppins', sans-serif; cursor: pointer; }
 
+.mobile-catalog-card { padding: 20px; overflow: hidden; }
+.mobile-catalog-search { position: relative; margin-top: 17px; display: block; }
+.mobile-catalog-search > span { position: absolute; top: 50%; left: 14px; color: #74798b; font-size: 1.25rem; line-height: 1; transform: translateY(-52%); pointer-events: none; }
+.mobile-catalog-search input {
+    width: 100%;
+    min-height: 50px;
+    padding: 0 14px 0 43px;
+    border: 1px solid var(--entry-border);
+    border-radius: 13px;
+    outline: none;
+    color: #fff;
+    background: rgba(5, 7, 14, .66);
+    font: 500 .88rem/1 'Poppins', sans-serif;
+}
+.mobile-catalog-search input:focus { border-color: var(--entry-yellow); box-shadow: 0 0 0 3px rgba(255, 217, 61, .09); }
+.mobile-catalog-search input::-webkit-search-cancel-button { filter: invert(1); opacity: .55; }
+.mobile-catalog-status { padding: 22px 4px 5px; color: #777b8d; font-size: .76rem; text-align: center; }
+.mobile-song-results { max-height: 430px; margin: 12px 0 0; padding: 0; overflow-y: auto; list-style: none; overscroll-behavior: contain; }
+.mobile-song-results li { min-height: 72px; padding: 11px 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; border-top: 1px solid rgba(255, 255, 255, .07); }
+.mobile-song-results li > div { min-width: 0; }
+.mobile-song-results strong,
+.mobile-song-results span,
+.mobile-song-results small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mobile-song-results strong { color: #f2f3f7; font-size: .82rem; }
+.mobile-song-results span { margin-top: 3px; color: #9296a7; font-size: .72rem; }
+.mobile-song-results small { margin-top: 5px; color: #686d7e; font: 700 .56rem/1 'Montserrat', sans-serif; letter-spacing: .07em; }
+.mobile-song-results button { min-height: 36px; padding: 0 12px; border: 1px solid rgba(255, 217, 61, .34); border-radius: 10px; color: #fff4b5; background: rgba(255, 217, 61, .075); font: 700 .68rem/1 'Poppins', sans-serif; cursor: pointer; }
+.mobile-song-results button:disabled { cursor: default; opacity: .3; }
+
 .mobile-queue-card { padding: 20px; }
 .mobile-section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
 .mobile-section-heading h2 { margin: 6px 0 0; font: 800 1.3rem/1.2 'Montserrat', sans-serif; }
@@ -477,7 +507,38 @@ a { color: inherit; }
 .mobile-queue-actions .queue-remove-action { color: #ffadb6; }
 .mobile-queue-actions button:disabled { cursor: default; opacity: .28; }
 .mobile-dashboard.is-host-offline .now-playing-card,
+.mobile-dashboard.is-host-offline .mobile-catalog-card,
 .mobile-dashboard.is-host-offline .mobile-queue-card { border-color: rgba(255, 100, 116, .18); }
+
+body.has-mobile-sheet { overflow: hidden; }
+.mobile-song-sheet { position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
+.mobile-song-sheet[hidden] { display: none; }
+.mobile-song-sheet-backdrop { position: absolute; inset: 0; width: 100%; border: 0; background: rgba(1, 3, 8, .76); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); cursor: pointer; }
+.mobile-song-sheet-panel {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 680px);
+    padding: 12px 20px calc(22px + env(safe-area-inset-bottom));
+    border: 1px solid rgba(255, 255, 255, .11);
+    border-bottom: 0;
+    border-radius: 26px 26px 0 0;
+    background: #111521;
+    box-shadow: 0 -24px 70px rgba(0, 0, 0, .46);
+}
+.mobile-song-sheet-handle { width: 42px; height: 4px; margin: 0 auto 22px; border-radius: 999px; background: #3d4252; }
+.mobile-song-sheet-panel h2 { margin: 10px 0 5px; font: 800 1.45rem/1.15 'Montserrat', sans-serif; letter-spacing: -.025em; }
+.mobile-selected-artist { margin: 0 0 22px; color: #9397a8; font-size: .78rem; }
+.mobile-song-sheet-panel form > label { display: block; margin-bottom: 8px; color: #c4c7d3; font-size: .74rem; font-weight: 600; }
+.mobile-singer-input { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.mobile-singer-input input { width: 100%; min-width: 0; min-height: 50px; padding: 0 14px; border: 1px solid var(--entry-border); border-radius: 12px; outline: none; color: #fff; background: #090c14; font: 500 .9rem/1 'Poppins', sans-serif; }
+.mobile-singer-input input:focus { border-color: var(--entry-yellow); box-shadow: 0 0 0 3px rgba(255, 217, 61, .09); }
+.mobile-singer-input button { min-width: 52px; border: 1px solid var(--entry-border); border-radius: 12px; color: #d7d9e2; background: rgba(255,255,255,.04); font: 700 .75rem/1 'Poppins', sans-serif; cursor: pointer; }
+.mobile-song-sheet-actions { margin-top: 18px; display: grid; grid-template-columns: auto 1fr 1.2fr; gap: 8px; }
+.mobile-song-sheet-actions button { min-height: 46px; padding: 0 12px; border-radius: 12px; font: 700 .72rem/1 'Poppins', sans-serif; cursor: pointer; }
+.sheet-secondary-action { border: 1px solid var(--entry-border); color: #aeb1bf; background: transparent; }
+.sheet-next-action { border: 1px solid rgba(83, 109, 254, .5); color: #dce2ff; background: rgba(83, 109, 254, .12); }
+.sheet-primary-action { border: 0; color: #111318; background: var(--entry-yellow); }
+.mobile-song-sheet-actions button:disabled { cursor: default; opacity: .35; }
 
 .mobile-role-switch { padding: 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-color: rgba(223, 83, 245, .22); background: rgba(223, 83, 245, .055); }
 .mobile-role-switch span,

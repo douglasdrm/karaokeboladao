@@ -1145,6 +1145,17 @@
                         if (index > 0) removeFromQueue(index);
                         break;
                     }
+                    case 'queue_add': {
+                        const requestedId = String(command.payload?.songId || '').padStart(5, '0');
+                        const song = catalog.find(item => item.id === requestedId);
+                        const singer = String(command.payload?.singer || '').trim().slice(0, 40);
+                        if (song && singer) {
+                            if (!Object.values(activeUsers).find(user => user.name === singer)) updateRecentSingers(singer);
+                            incrementPeakHour();
+                            enqueue({ ...song, singer, time: Date.now() }, command.payload?.playNext === true);
+                        }
+                        break;
+                    }
                     default:
                         console.warn('Comando remoto ignorado:', command.action);
                 }
