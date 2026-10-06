@@ -28,6 +28,11 @@
         high: ['Arrasou! A plateia sentiu daqui!', 'Essa performance merece replay!', 'Cantou bonito e dominou o palco!'],
         max: ['Nota máxima! Zerou o karaokê!', 'Perfeição desbloqueada!', 'Cem pontos e o respeito da festa inteira!']
     };
+    const AUDIO_DURATIONS = {
+        'Chamada_1.mp3': 10449, 'Chamada_2.mp3': 3720, 'Aplausos.mp3': 3620,
+        'Dando_nota.mp3': 12950, 'Nota_baixa.mp3': 3031, 'Nota_media.mp3': 4555,
+        'Nota_alta.mp3': 1353, 'Nota_maxima.mp3': 11309
+    };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
@@ -94,6 +99,7 @@
     let forcedScore = null;
     let transitionBusy = false;
     let transitionAudio = null;
+    let transitionAudioFinish = null;
     let sessionRanking = [];
     let wakeLock = null;
     let pairingTimer = null;
@@ -137,30 +143,49 @@
 
     function stopTransitionAudio() {
         if (!transitionAudio) return;
-        transitionAudio.onended = null;
-        transitionAudio.onerror = null;
-        try { transitionAudio.pause(); } catch {}
-        transitionAudio = null;
+        const audio = transitionAudio;
+        const finish = transitionAudioFinish;
+        try { audio.pause(); } catch {}
+        finish?.();
     }
 
-    function playTransitionAudio(path, fallbackMs) {
+    function playTransitionAudio(path, silentMs) {
         return new Promise(resolve => {
-            if (!soundEnabled) { setTimeout(resolve, fallbackMs); return; }
+            const file = path.split('/').pop();
+            const expectedMs = AUDIO_DURATIONS[file] || silentMs || 5000;
+            if (!soundEnabled) { setTimeout(resolve, expectedMs); return; }
             stopTransitionAudio();
             const audio = new Audio(path);
             transitionAudio = audio;
             let done = false;
+            let safetyTimer = null;
             const finish = () => {
                 if (done) return;
                 done = true;
-                audio.onended = audio.onerror = null;
-                if (transitionAudio === audio) transitionAudio = null;
+                clearTimeout(safetyTimer);
+                audio.onended = audio.onerror = audio.onloadedmetadata = null;
+                if (transitionAudio === audio) {
+                    transitionAudio = null;
+                    transitionAudioFinish = null;
+                }
                 resolve();
+            };
+            transitionAudioFinish = finish;
+            const armSafety = milliseconds => {
+                clearTimeout(safetyTimer);
+                safetyTimer = setTimeout(finish, milliseconds);
             };
             audio.onended = finish;
             audio.onerror = finish;
-            audio.play().catch(() => setTimeout(finish, fallbackMs));
-            setTimeout(finish, Math.max(fallbackMs, 10000));
+            audio.onloadedmetadata = () => {
+                const measuredMs = Number.isFinite(audio.duration) ? audio.duration * 1000 : expectedMs;
+                armSafety(Math.max(measuredMs, expectedMs) + 2000);
+            };
+            armSafety(expectedMs + 3000);
+            audio.play().catch(() => {
+                clearTimeout(safetyTimer);
+                setTimeout(finish, silentMs || expectedMs);
+            });
         });
     }
 
@@ -524,14 +549,14 @@
         elements.scorePhrase.textContent = '';
         elements.score.hidden = false;
         spawnApplauseBurst();
-        playTransitionAudio('../SFX/Aplausos.mp3', 1800).catch(() => {});
-        await wait(1800);
+        await playTransitionAudio('../SFX/Aplausos.mp3', AUDIO_DURATIONS['Aplausos.mp3']);
+        await wait(250);
         let tickerValue = 0;
         const ticker = setInterval(() => {
             tickerValue = Math.floor(Math.random() * 101);
             elements.scoreValue.textContent = tickerValue;
         }, 75);
-        await playTransitionAudio('../SFX/Dando_nota.mp3', 6000);
+        await playTransitionAudio('../SFX/Dando_nota.mp3', AUDIO_DURATIONS['Dando_nota.mp3']);
         clearInterval(ticker);
         const category = finalScore >= 95 ? 'max' : finalScore >= 85 ? 'high' : finalScore >= 70 ? 'medium' : 'low';
         const sound = category === 'max' ? 'Nota_maxima.mp3' : category === 'high' ? 'Nota_alta.mp3' : category === 'medium' ? 'Nota_media.mp3' : 'Nota_baixa.mp3';
@@ -542,13 +567,13 @@
         elements.scoreValue.textContent = finalScore;
         elements.scoreSinger.textContent = entry.singer || 'Cantor';
         elements.scorePhrase.textContent = phrases[Math.floor(Math.random() * phrases.length)];
-        playTransitionAudio(`../SFX/${sound}`, 1800).catch(() => {});
+        const finalAudio = playTransitionAudio(`../SFX/${sound}`, AUDIO_DURATIONS[sound]);
         await Promise.all([
             roomRef.child('display_score').set({ ...payload, timestamp: Date.now(), revealAt: Date.now() }),
             roomRef.child('last_score').set(payload)
         ]).catch(error => console.warn('Não foi possível publicar a nota.', error));
         updateRanking(entry, finalScore);
-        await wait(7000);
+        await Promise.all([finalAudio, wait(7000)]);
         elements.score.hidden = true;
         elements.score.classList.remove('is-final');
         await showRanking();
