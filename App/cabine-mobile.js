@@ -61,6 +61,8 @@
     let currentNowPlaying = null;
     let currentQueue = [];
     let hostConnected = false;
+    let networkConnected = true;
+    let currentRoomMode = '';
     let feedbackTimer = null;
     let authStateVersion = 0;
     let catalog = [];
@@ -122,11 +124,14 @@
         controllerPresenceRef = db.ref(`salas/${code}/dj_controllers/${currentUser.uid}/${connectionId}`);
         controllerConnectionRef = db.ref('.info/connected');
         controllerConnectionHandler = (snapshot) => {
-            if (snapshot.val() !== true || !controllerPresenceRef) return;
+            networkConnected = snapshot.val() === true;
+            setHostConnected(hostConnected);
+            if (!networkConnected || !controllerPresenceRef) return;
             controllerPresenceRef.onDisconnect().remove().then(() => controllerPresenceRef.set({
                 connectedAt: firebase.database.ServerValue.TIMESTAMP,
                 name: currentUser.displayName || currentUser.email || 'DJ'
             })).catch(console.warn);
+            db.ref(`salas/${code}/info`).once('value').then(snapshot => applyRoomInfo(snapshot.val())).catch(console.warn);
         };
         controllerConnectionRef.on('value', controllerConnectionHandler);
     }
@@ -149,11 +154,37 @@
 
     function setHostConnected(connected) {
         hostConnected = connected;
-        elements.dashboard.classList.toggle('is-host-offline', !connected);
+        const available = connected && networkConnected;
+        elements.dashboard.classList.toggle('is-host-offline', !available);
         document.querySelectorAll('[data-host-command], [data-queue-action], [data-catalog-action]').forEach((control) => {
-            control.disabled = !connected || control.dataset.queueUnavailable === 'true' || control.dataset.roomUnavailable === 'true';
+            control.disabled = !available || control.dataset.queueUnavailable === 'true' || control.dataset.roomUnavailable === 'true';
         });
-        elements.volume.disabled = !connected;
+        elements.volume.disabled = !available;
+        renderConnectionStatus();
+    }
+
+    function renderConnectionStatus() {
+        if (!networkConnected) {
+            elements.connection.textContent = 'CELULAR SEM INTERNET · RECONECTANDO';
+            elements.connection.classList.add('is-offline');
+            return;
+        }
+        if (!hostConnected) {
+            elements.connection.textContent = 'CABINE DESCONECTADA · AGUARDANDO';
+            elements.connection.classList.add('is-offline');
+            return;
+        }
+        elements.connection.textContent = currentRoomMode === 'tv-standalone' ? 'CONECTADO À CABINE NA TV' : 'CONECTADO À CABINE PC';
+        elements.connection.classList.remove('is-offline');
+    }
+
+    function applyRoomInfo(info) {
+        currentRoomMode = info?.mode || '';
+        const connected = Boolean(info && info.status !== 'offline');
+        setHostConnected(connected);
+        if (!connected) return;
+        setRoomMode(currentRoomMode);
+        elements.partyName.textContent = info.name || 'Minha festa';
     }
 
     function setRoomMode(mode) {
@@ -361,10 +392,10 @@
         elements.dockPlayIcon.textContent = playing ? 'Ⅱ' : '▶';
     }
 
-    async function sendCommand(action, payload = {}, successMessage = 'Comando enviado para a Cabine PC.') {
+    async function sendCommand(action, payload = {}, successMessage = 'Comando enviado para a Cabine.') {
         if (!currentRoom || !currentUser) return false;
-        if (!hostConnected) {
-            setFeedback('A Cabine PC está desconectada.', true);
+        if (!hostConnected || !networkConnected) {
+            setFeedback(networkConnected ? 'A Cabine está desconectada.' : 'O celular está sem internet.', true);
             return false;
         }
         try {
@@ -378,7 +409,7 @@
             return true;
         } catch (error) {
             console.error('Falha ao enviar comando:', error);
-            setFeedback('Não foi possível controlar a Cabine PC.', true);
+            setFeedback('Não foi possível controlar a Cabine.', true);
             return false;
         }
     }
@@ -399,19 +430,7 @@
 
         const base = db.ref(`salas/${code}`);
         listen(base.child('info'), 'value', (snapshot) => {
-            const info = snapshot.val();
-            const connected = Boolean(info && info.status !== 'offline');
-            setHostConnected(connected);
-            if (!connected) {
-                elements.connection.textContent = 'CABINE PC DESCONECTADA';
-                elements.connection.classList.add('is-offline');
-                setFeedback('A sala foi encerrada ou perdeu a conexão.', true);
-                return;
-            }
-            setRoomMode(info.mode);
-            elements.connection.textContent = info.mode === 'tv-standalone' ? 'CONECTADO À CABINE NA TV' : 'CONECTADO À CABINE PC';
-            elements.connection.classList.remove('is-offline');
-            elements.partyName.textContent = info.name || 'Minha festa';
+            applyRoomInfo(snapshot.val());
         });
         listen(base.child('queue_v13'), 'value', (snapshot) => renderQueue(parseQueue(snapshot.val())));
         listen(base.child('now_playing'), 'value', (snapshot) => renderNowPlaying(snapshot.val()));

@@ -398,6 +398,13 @@
             const online = snapshot.val() === true;
             elements.connection.textContent = online ? 'TV ONLINE' : 'TV SEM INTERNET';
             elements.connection.classList.toggle('is-offline', !online);
+            elements.stage.classList.toggle('is-offline', !online);
+            if (online && roomRef) {
+                roomRef.child('info').update({
+                    status: 'online',
+                    reconnectedAt: firebase.database.ServerValue.TIMESTAMP
+                }).then(() => armDisconnectState()).catch(error => console.warn('Não foi possível restaurar a presença da TV.', error));
+            }
         };
         connectionRef.on('value', connectionHandler);
         controllerRef = roomRef.child(`dj_controllers/${currentUser.uid}`);
