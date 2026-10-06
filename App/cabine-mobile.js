@@ -38,6 +38,7 @@
         volume: document.getElementById('mobileDjVolume'),
         volumeValue: document.getElementById('mobileDjVolumeValue'),
         toneNote: document.getElementById('mobileDjToneNote'),
+        force100: document.getElementById('mobileDjForce100'),
         queue: document.getElementById('mobileDjQueue'),
         queueCount: document.getElementById('mobileDjQueueCount'),
         catalogCount: document.getElementById('mobileDjCatalogCount'),
@@ -157,7 +158,8 @@
         const available = connected && networkConnected;
         elements.dashboard.classList.toggle('is-host-offline', !available);
         document.querySelectorAll('[data-host-command], [data-queue-action], [data-catalog-action]').forEach((control) => {
-            control.disabled = !available || control.dataset.queueUnavailable === 'true' || control.dataset.roomUnavailable === 'true';
+            const scoreUnavailable = control.dataset.hostCommand === 'score_100' && !currentNowPlaying?.title;
+            control.disabled = !available || scoreUnavailable || control.dataset.queueUnavailable === 'true' || control.dataset.roomUnavailable === 'true';
         });
         elements.volume.disabled = !available;
         renderConnectionStatus();
@@ -377,6 +379,8 @@
     }
 
     function renderNowPlaying(value) {
+        const previousSong = currentNowPlaying?.songId || currentNowPlaying?.title || '';
+        const nextSong = value?.songId || value?.title || '';
         currentNowPlaying = value || null;
         const playing = value?.playing === true;
         const hasSong = Boolean(value?.title);
@@ -390,6 +394,8 @@
         elements.playLabel.textContent = playing ? 'Pausar' : (hasSong ? 'Continuar' : 'Iniciar');
         elements.dockTitle.textContent = hasSong ? value.title : 'Nenhuma música no palco';
         elements.dockPlayIcon.textContent = playing ? 'Ⅱ' : '▶';
+        elements.force100.disabled = !hasSong || !hostConnected || !networkConnected;
+        if (!hasSong || previousSong !== nextSong) elements.force100.classList.remove('is-armed');
     }
 
     async function sendCommand(action, payload = {}, successMessage = 'Comando enviado para a Cabine.') {
@@ -544,7 +550,15 @@
     });
 
     document.querySelectorAll('[data-host-command]').forEach((button) => {
-        button.addEventListener('click', () => sendCommand(button.dataset.hostCommand));
+        button.addEventListener('click', async () => {
+            const action = button.dataset.hostCommand;
+            if (action === 'score_100' && !currentNowPlaying?.title) {
+                setFeedback('Nenhuma música está no palco.', true);
+                return;
+            }
+            const sent = await sendCommand(action, {}, action === 'score_100' ? 'Nota 100 armada para esta música.' : 'Comando enviado para a Cabine.');
+            if (sent && action === 'score_100') button.classList.add('is-armed');
+        });
     });
 
     let catalogSearchTimer = null;

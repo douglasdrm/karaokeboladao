@@ -69,6 +69,7 @@
     let reactionsRef = null;
     let reactionHandler = null;
     let scoreShowing = false;
+    let forcedScore = null;
     let wakeLock = null;
     let pairingTimer = null;
     let activePairing = null;
@@ -344,6 +345,7 @@
 
     async function finishCurrent() {
         if (!currentSongId) return;
+        forcedScore = null;
         queue.shift();
         currentSongId = '';
         await publishQueue();
@@ -380,13 +382,14 @@
         await publishPlaying(false).catch(() => {});
         let votes = {};
         try { votes = (await roomRef.child('now_playing/votes').once('value')).val() || {}; } catch {}
-        let finalScore = 70 + Math.floor(Math.random() * 25);
+        let finalScore = typeof forcedScore === 'number' ? forcedScore : 70 + Math.floor(Math.random() * 25);
         const values = Object.values(votes).map(vote => Number(vote?.stars)).filter(value => value >= 1 && value <= 5);
-        if (values.length) {
+        if (values.length && forcedScore === null) {
             const average = values.reduce((sum, value) => sum + value, 0) / values.length;
             finalScore = Math.round(finalScore * .7 + (average / 5 * 100) * .3);
         }
         finalScore = Math.max(0, Math.min(100, finalScore));
+        forcedScore = null;
         const payload = {
             singer: entry.singer || 'Cantor', singerUid: entry.singerUid || null,
             recipientVersion: 1,
@@ -449,6 +452,9 @@
                     elements.video.volume = volume;
                     await roomRef.child('host_state').update({ volume, updatedAt: firebase.database.ServerValue.TIMESTAMP });
                     saveSession();
+                    break;
+                case 'score_100':
+                    if (currentSongId) forcedScore = 100;
                     break;
                 case 'queue_add': {
                     const song = catalog.find(item => item.id === String(payload.songId || '').padStart(5, '0'));

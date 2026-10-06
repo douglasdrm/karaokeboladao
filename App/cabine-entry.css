@@ -455,6 +455,14 @@ a { color: inherit; }
 .tone-buttons button { min-height: 40px; border: 1px solid var(--entry-border); border-radius: 11px; color: #dadce5; background: rgba(255, 255, 255, .035); font: 700 .72rem/1 'Poppins', sans-serif; cursor: pointer; }
 .tone-buttons button:disabled { cursor: default; opacity: .3; }
 .mobile-mode-note { display: block; margin-top: 10px; color: #85899a; font-size: .66rem; line-height: 1.45; text-align: center; }
+.mobile-secret-score { width: 100%; min-height: 50px; margin-top: 14px; padding: 9px 13px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px dashed rgba(255,217,61,.28); border-radius: 13px; color: #d8d9e1; background: rgba(255,217,61,.035); cursor: pointer; }
+.mobile-secret-score > span:first-child { color: var(--entry-yellow); font-size: 1rem; }
+.mobile-secret-score > span:last-child { display: grid; gap: 2px; text-align: left; }
+.mobile-secret-score small { color: #777c8d; font: 800 .52rem/1 'Montserrat',sans-serif; letter-spacing: .12em; }
+.mobile-secret-score strong { font: 700 .72rem/1.2 'Poppins',sans-serif; }
+.mobile-secret-score.is-armed { border-style: solid; border-color: var(--entry-yellow); color: #090b12; background: var(--entry-yellow); }
+.mobile-secret-score.is-armed > span:first-child, .mobile-secret-score.is-armed small { color: #090b12; }
+.mobile-secret-score:disabled { cursor: default; opacity: .3; }
 
 .mobile-catalog-card { padding: 20px; overflow: hidden; }
 .mobile-catalog-search { position: relative; margin-top: 17px; display: block; }

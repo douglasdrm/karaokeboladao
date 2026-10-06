@@ -1125,6 +1125,9 @@
                     case 'tone_up':
                         changeTone(0.05);
                         break;
+                    case 'score_100':
+                        if (queue.length) forcedScore = 100;
+                        break;
                     case 'queue_move': {
                         const index = hostCommandQueueIndex(command.payload);
                         const direction = Number(command.payload?.direction);

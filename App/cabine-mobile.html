@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#080a12">
     <title>Cabine no celular | Karaoke Party</title>
     <link rel="icon" type="image/png" href="../Assets/icon.png">
-    <link rel="stylesheet" href="cabine-entry.css?v=7">
+    <link rel="stylesheet" href="cabine-entry.css?v=8">
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
@@ -106,6 +106,10 @@
                         <button type="button" data-host-command="tone_up">Tom +</button>
                     </div>
                     <small id="mobileDjToneNote" class="mobile-mode-note" hidden>O ajuste de tom requer a Cabine PC.</small>
+                    <button id="mobileDjForce100" class="mobile-secret-score" type="button" data-host-command="score_100" disabled>
+                        <span aria-hidden="true">★</span>
+                        <span><small>BÔNUS SECRETO</small><strong>Armar nota 100</strong></span>
+                    </button>
                 </div>
             </section>
 
@@ -184,6 +188,6 @@
         </section>
     </div>
 
-    <script src="cabine-mobile.js?v=12" defer></script>
+    <script src="cabine-mobile.js?v=13" defer></script>
 </body>
 </html>
