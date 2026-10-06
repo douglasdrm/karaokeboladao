@@ -63,6 +63,9 @@
     let catalog = [];
     let selectedSong = null;
     let catalogPromise = null;
+    let controllerPresenceRef = null;
+    let controllerConnectionRef = null;
+    let controllerConnectionHandler = null;
     const roomListeners = [];
 
     function showOnly(target) {
@@ -97,11 +100,32 @@
     }
 
     function detachRoom() {
+        if (controllerConnectionRef && controllerConnectionHandler) controllerConnectionRef.off('value', controllerConnectionHandler);
+        controllerConnectionRef = controllerConnectionHandler = null;
+        if (controllerPresenceRef) {
+            controllerPresenceRef.onDisconnect().cancel().catch(() => {});
+            controllerPresenceRef.remove().catch(() => {});
+            controllerPresenceRef = null;
+        }
         roomListeners.splice(0).forEach(({ reference, event, handler }) => reference.off(event, handler));
         currentRoom = '';
         currentNowPlaying = null;
         currentQueue = [];
         setHostConnected(false);
+    }
+
+    function startControllerPresence(code) {
+        const connectionId = `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+        controllerPresenceRef = db.ref(`salas/${code}/dj_controllers/${currentUser.uid}/${connectionId}`);
+        controllerConnectionRef = db.ref('.info/connected');
+        controllerConnectionHandler = (snapshot) => {
+            if (snapshot.val() !== true || !controllerPresenceRef) return;
+            controllerPresenceRef.onDisconnect().remove().then(() => controllerPresenceRef.set({
+                connectedAt: firebase.database.ServerValue.TIMESTAMP,
+                name: currentUser.displayName || currentUser.email || 'DJ'
+            })).catch(console.warn);
+        };
+        controllerConnectionRef.on('value', controllerConnectionHandler);
     }
 
     function listen(reference, event, handler) {
@@ -357,6 +381,7 @@
     function bindRoom(code) {
         detachRoom();
         currentRoom = code;
+        startControllerPresence(code);
         try { localStorage.setItem('lastDjRemoteRoom', code); } catch {}
         const nextUrl = new URL(window.location.href);
         nextUrl.searchParams.set('room', code);

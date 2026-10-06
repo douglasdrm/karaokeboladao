@@ -7,7 +7,7 @@
     <title>Cabine na TV | Karaoke Party</title>
     <link rel="icon" type="image/png" href="../Assets/icon.png">
     <link rel="stylesheet" href="cabine-tv-base.css?v=1">
-    <link rel="stylesheet" href="cabine-tv.css?v=2">
+    <link rel="stylesheet" href="cabine-tv.css?v=3">
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
@@ -75,7 +75,10 @@
         <header class="tv-stage-header">
             <img src="../Assets/logo.png" alt="Karaoke Party">
             <div class="tv-party-copy">
-                <span id="tvConnection" class="tv-connection">TV COMANDA</span>
+                <div class="tv-status-line">
+                    <span id="tvConnection" class="tv-connection">TV ONLINE</span>
+                    <span id="tvControllerStatus" class="tv-controller-status">AGUARDANDO CELULAR DO DJ</span>
+                </div>
                 <strong id="tvPartyName">Minha festa</strong>
             </div>
             <span id="tvRoomLabel" class="tv-room-label">SALA -----</span>
@@ -124,12 +127,13 @@
 
         <nav id="tvToolbar" class="tv-toolbar" aria-label="Controles da tela">
             <button id="tvSound" type="button">🔇 Ativar som</button>
+            <button id="tvShowAccess" type="button">▦ Mostrar QR Codes</button>
             <button id="tvFullscreen" type="button">⛶ Tela cheia</button>
             <button id="tvChangeRoom" type="button">Encerrar festa</button>
         </nav>
     </main>
 
     <script src="qrcode.min.js"></script>
-    <script src="cabine-tv.js?v=2" defer></script>
+    <script src="cabine-tv.js?v=3" defer></script>
 </body>
 </html>

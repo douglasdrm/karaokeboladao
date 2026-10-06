@@ -28,6 +28,7 @@
         idleEyebrow: document.getElementById('tvIdleEyebrow'), idleTitle: document.getElementById('tvIdleTitle'),
         idleDescription: document.getElementById('tvIdleDescription'), nowPlaying: document.getElementById('tvNowPlaying'),
         connection: document.getElementById('tvConnection'), partyName: document.getElementById('tvPartyName'),
+        controllerStatus: document.getElementById('tvControllerStatus'), showAccess: document.getElementById('tvShowAccess'),
         roomLabel: document.getElementById('tvRoomLabel'), idleRoom: document.getElementById('tvIdleRoom'),
         qrCode: document.getElementById('tvQrCode'), djQrCode: document.getElementById('tvDjQrCode'),
         playbackLabel: document.getElementById('tvPlaybackLabel'), songTitle: document.getElementById('tvSongTitle'),
@@ -54,6 +55,11 @@
     let toolbarTimer = null;
     let lastTimePublish = 0;
     let suppressVideoEvents = false;
+    let connectionRef = null;
+    let connectionHandler = null;
+    let controllerRef = null;
+    let controllerHandler = null;
+    let wakeLock = null;
 
     function readSession() {
         try {
@@ -371,6 +377,9 @@
         if (commandQuery && commandHandler) commandQuery.off('child_added', commandHandler);
         if (requestRef && requestHandler) requestRef.off('child_added', requestHandler);
         commandQuery = commandHandler = requestRef = requestHandler = null;
+        if (connectionRef && connectionHandler) connectionRef.off('value', connectionHandler);
+        if (controllerRef && controllerHandler) controllerRef.off('value', controllerHandler);
+        connectionRef = connectionHandler = controllerRef = controllerHandler = null;
     }
 
     function startRoomListeners() {
@@ -384,6 +393,20 @@
         requestRef = roomRef.child('pedidos');
         requestHandler = snapshot => handleRequest(snapshot).catch(console.error);
         requestRef.on('child_added', requestHandler);
+        connectionRef = db.ref('.info/connected');
+        connectionHandler = snapshot => {
+            const online = snapshot.val() === true;
+            elements.connection.textContent = online ? 'TV ONLINE' : 'TV SEM INTERNET';
+            elements.connection.classList.toggle('is-offline', !online);
+        };
+        connectionRef.on('value', connectionHandler);
+        controllerRef = roomRef.child(`dj_controllers/${currentUser.uid}`);
+        controllerHandler = snapshot => {
+            const connected = snapshot.numChildren() > 0;
+            elements.controllerStatus.textContent = connected ? 'CELULAR DO DJ CONECTADO' : 'AGUARDANDO CELULAR DO DJ';
+            elements.controllerStatus.classList.toggle('is-connected', connected);
+        };
+        controllerRef.on('value', controllerHandler);
     }
 
     async function generateRoomCode() {
@@ -413,12 +436,31 @@
         elements.partyName.textContent = name;
         elements.roomLabel.textContent = `SALA ${currentRoom}`;
         elements.idleRoom.textContent = `SALA ${currentRoom}`;
-        elements.connection.textContent = 'TV COMANDA';
+        elements.connection.textContent = 'TV ONLINE';
+        elements.controllerStatus.textContent = 'AGUARDANDO CELULAR DO DJ';
+        elements.controllerStatus.classList.remove('is-connected');
         renderQr();
         renderQueue();
         elements.setup.hidden = true;
         elements.stage.hidden = false;
         elements.sound.textContent = soundEnabled ? '🔊 Desativar som' : '🔇 Ativar som';
+        requestWakeLock();
+    }
+
+    async function requestWakeLock() {
+        if (!('wakeLock' in navigator) || document.visibilityState !== 'visible' || wakeLock) return;
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakeLock.addEventListener('release', () => { wakeLock = null; }, { once: true });
+        } catch (error) { console.info('A TV não permitiu manter a tela ativa.', error); }
+    }
+
+    function toggleAccess(force) {
+        const show = typeof force === 'boolean' ? force : !elements.stage.classList.contains('show-access');
+        elements.stage.classList.toggle('show-access', show);
+        elements.idle.hidden = show ? false : Boolean(currentSongId);
+        elements.showAccess.textContent = show ? '✕ Fechar QR Codes' : '▦ Mostrar QR Codes';
+        showToolbar();
     }
 
     function armDisconnectState() {
@@ -492,6 +534,10 @@
 
     async function endParty() {
         stopRoomListeners();
+        elements.stage.classList.remove('show-access', 'toolbar-visible');
+        elements.showAccess.textContent = '▦ Mostrar QR Codes';
+        if (wakeLock) await wakeLock.release().catch(() => {});
+        wakeLock = null;
         suppressVideoEvents = true;
         elements.video.pause();
         elements.video.removeAttribute('src');
@@ -582,6 +628,7 @@
         try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); else await document.exitFullscreen(); }
         catch { alert('Use a opção de tela cheia do navegador.'); }
     });
+    elements.showAccess.addEventListener('click', () => toggleAccess());
     elements.startPlayback.addEventListener('click', requestPlayback);
     elements.video.addEventListener('play', () => { if (!suppressVideoEvents) publishPlaying(true).catch(console.warn); });
     elements.video.addEventListener('pause', () => { if (!suppressVideoEvents && currentSongId && !elements.video.ended) publishPlaying(false).catch(console.warn); });
@@ -607,9 +654,30 @@
     }
     elements.stage.addEventListener('pointermove', showToolbar);
     window.addEventListener('keydown', event => {
-        showToolbar();
-        if (event.key.toLowerCase() === 'f') document.getElementById('tvFullscreen').click();
-        if (event.key.toLowerCase() === 'm') elements.sound.click();
+        const key = event.key.toLowerCase();
+        const stageVisible = !elements.stage.hidden;
+        if (stageVisible) showToolbar();
+        if (stageVisible && key === 'f') document.getElementById('tvFullscreen').click();
+        if (stageVisible && key === 'm') elements.sound.click();
+        if (stageVisible && key === 'q') elements.showAccess.click();
+        if ((event.key === 'Escape' || event.key === 'BrowserBack') && elements.stage.classList.contains('show-access')) {
+            event.preventDefault();
+            toggleAccess(false);
+            elements.showAccess.focus();
+            return;
+        }
+        if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+        if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+        const focusable = [...document.querySelectorAll('button:not([disabled]), a[href], input:not([disabled])')]
+            .filter(node => !node.closest('[hidden]') && node.getClientRects().length);
+        if (!focusable.length) return;
+        event.preventDefault();
+        const current = focusable.indexOf(document.activeElement);
+        const step = ['ArrowLeft', 'ArrowUp'].includes(event.key) ? -1 : 1;
+        focusable[(current + step + focusable.length) % focusable.length].focus();
+    });
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && !elements.stage.hidden) requestWakeLock();
     });
 
     auth.onAuthStateChanged(user => {
