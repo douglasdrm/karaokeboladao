@@ -46,6 +46,8 @@
     let currentUser = null;
     let currentRoom = '';
     let currentNowPlaying = null;
+    let currentQueue = [];
+    let hostConnected = false;
     let feedbackTimer = null;
     let authStateVersion = 0;
     const roomListeners = [];
@@ -85,6 +87,8 @@
         roomListeners.splice(0).forEach(({ reference, event, handler }) => reference.off(event, handler));
         currentRoom = '';
         currentNowPlaying = null;
+        currentQueue = [];
+        setHostConnected(false);
     }
 
     function listen(reference, event, handler) {
@@ -103,7 +107,24 @@
         }
     }
 
+    function setHostConnected(connected) {
+        hostConnected = connected;
+        elements.dashboard.classList.toggle('is-host-offline', !connected);
+        document.querySelectorAll('[data-host-command], [data-queue-action]').forEach((control) => {
+            control.disabled = !connected || control.dataset.queueUnavailable === 'true';
+        });
+        elements.volume.disabled = !connected;
+    }
+
+    function queueCommandPayload(item, index) {
+        return {
+            index,
+            itemTime: String(item?.time || '')
+        };
+    }
+
     function renderQueue(items) {
+        currentQueue = items;
         elements.queue.replaceChildren();
         elements.queueCount.textContent = `${items.length} ${items.length === 1 ? 'música' : 'músicas'}`;
         if (!items.length) {
@@ -121,12 +142,37 @@
             position.className = 'mobile-queue-position';
             position.textContent = index === 0 ? 'NO PALCO' : String(index + 1).padStart(2, '0');
             const copy = document.createElement('div');
+            copy.className = 'mobile-queue-copy';
             const singer = document.createElement('strong');
             singer.textContent = item.singer || 'Cantor';
             const song = document.createElement('span');
             song.textContent = [item.title, item.artist].filter(Boolean).join(' · ') || 'Música';
             copy.append(singer, song);
             row.append(position, copy);
+            if (index > 0) {
+                const actions = document.createElement('div');
+                actions.className = 'mobile-queue-actions';
+                const controls = [
+                    ['next', 'Próxima', 'Colocar como próxima música', index === 1],
+                    ['up', '↑', 'Subir na fila', index === 1],
+                    ['down', '↓', 'Descer na fila', index === items.length - 1],
+                    ['remove', '×', 'Remover da fila', false]
+                ];
+                controls.forEach(([action, label, ariaLabel, unavailable]) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.dataset.queueAction = action;
+                    button.dataset.queueIndex = String(index);
+                    button.dataset.queueUnavailable = String(unavailable);
+                    button.textContent = label;
+                    button.setAttribute('aria-label', `${ariaLabel}: ${item.singer || 'Cantor'} — ${item.title || 'Música'}`);
+                    button.disabled = unavailable || !hostConnected;
+                    if (action === 'remove') button.className = 'queue-remove-action';
+                    if (action === 'next') button.className = 'queue-next-action';
+                    actions.append(button);
+                });
+                row.append(actions);
+            }
             elements.queue.append(row);
         });
     }
@@ -145,8 +191,12 @@
         elements.playLabel.textContent = playing ? 'Pausar' : (hasSong ? 'Continuar' : 'Iniciar');
     }
 
-    async function sendCommand(action, payload = {}) {
+    async function sendCommand(action, payload = {}, successMessage = 'Comando enviado para a Cabine PC.') {
         if (!currentRoom || !currentUser) return;
+        if (!hostConnected) {
+            setFeedback('A Cabine PC está desconectada.', true);
+            return;
+        }
         try {
             await db.ref(`salas/${currentRoom}/host_commands`).push().set({
                 action,
@@ -154,7 +204,7 @@
                 senderUid: currentUser.uid,
                 createdAt: firebase.database.ServerValue.TIMESTAMP
             });
-            setFeedback('Comando enviado para a Cabine PC.');
+            setFeedback(successMessage);
         } catch (error) {
             console.error('Falha ao enviar comando:', error);
             setFeedback('Não foi possível controlar a Cabine PC.', true);
@@ -175,7 +225,9 @@
         const base = db.ref(`salas/${code}`);
         listen(base.child('info'), 'value', (snapshot) => {
             const info = snapshot.val();
-            if (!info) {
+            const connected = Boolean(info && info.status !== 'offline');
+            setHostConnected(connected);
+            if (!connected) {
                 elements.connection.textContent = 'CABINE PC DESCONECTADA';
                 elements.connection.classList.add('is-offline');
                 setFeedback('A sala foi encerrada ou perdeu a conexão.', true);
@@ -214,6 +266,10 @@
         const info = snapshot.val();
         if (!info) {
             showError(elements.roomError, 'Sala não encontrada. Confirme o código exibido na Cabine PC.');
+            return false;
+        }
+        if (info.status === 'offline') {
+            showError(elements.roomError, 'A Cabine PC desta sala está desconectada.');
             return false;
         }
         if (info.hostId !== currentUser?.uid) {
@@ -294,6 +350,31 @@
 
     document.querySelectorAll('[data-host-command]').forEach((button) => {
         button.addEventListener('click', () => sendCommand(button.dataset.hostCommand));
+    });
+
+    elements.queue.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-queue-action]');
+        if (!button || button.disabled) return;
+        const index = Number(button.dataset.queueIndex);
+        const item = currentQueue[index];
+        if (!item || index <= 0) return;
+        const payload = queueCommandPayload(item, index);
+        switch (button.dataset.queueAction) {
+            case 'next':
+                sendCommand('queue_next', payload, 'Pedido enviado para a próxima posição.');
+                break;
+            case 'up':
+                sendCommand('queue_move', { ...payload, direction: -1 }, 'Pedido movido para cima.');
+                break;
+            case 'down':
+                sendCommand('queue_move', { ...payload, direction: 1 }, 'Pedido movido para baixo.');
+                break;
+            case 'remove':
+                if (window.confirm(`Remover ${item.singer || 'Cantor'} — ${item.title || 'Música'} da fila?`)) {
+                    sendCommand('queue_remove', payload, 'Pedido removido da fila.');
+                }
+                break;
+        }
     });
 
     let volumeTimer = null;

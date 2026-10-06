@@ -987,6 +987,8 @@
 
             hostPhoto: hostUser.photoURL || '',
 
+            status: 'online',
+
             timestamp: firebase.database.ServerValue.TIMESTAMP
 
         });
@@ -1066,6 +1068,21 @@
 
     }
 
+    function hostCommandQueueIndex(payload) {
+
+        const itemTime = String(payload?.itemTime || '');
+        if (itemTime) {
+            const matchingIndex = queue.findIndex(item => String(item?.time || '') === itemTime);
+            return matchingIndex;
+        }
+
+        const requestedIndex = Number(payload?.index);
+        return Number.isInteger(requestedIndex) && requestedIndex >= 0 && requestedIndex < queue.length
+            ? requestedIndex
+            : -1;
+
+    }
+
     function startHostCommandListener() {
 
         stopHostCommandListener();
@@ -1103,6 +1120,26 @@
                     case 'tone_up':
                         changeTone(0.05);
                         break;
+                    case 'queue_move': {
+                        const index = hostCommandQueueIndex(command.payload);
+                        const direction = Number(command.payload?.direction);
+                        if (index > 0 && (direction === -1 || direction === 1)) moveQueue(index, direction);
+                        break;
+                    }
+                    case 'queue_next': {
+                        const index = hostCommandQueueIndex(command.payload);
+                        if (index > 1) {
+                            const [item] = queue.splice(index, 1);
+                            queue.splice(1, 0, item);
+                            renderQueue();
+                        }
+                        break;
+                    }
+                    case 'queue_remove': {
+                        const index = hostCommandQueueIndex(command.payload);
+                        if (index > 0) removeFromQueue(index);
+                        break;
+                    }
                     default:
                         console.warn('Comando remoto ignorado:', command.action);
                 }
