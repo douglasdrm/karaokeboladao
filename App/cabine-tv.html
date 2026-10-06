@@ -7,7 +7,7 @@
     <title>Cabine na TV | Karaoke Party</title>
     <link rel="icon" type="image/png" href="../Assets/icon.png">
     <link rel="stylesheet" href="cabine-tv-base.css?v=1">
-    <link rel="stylesheet" href="cabine-tv.css?v=1">
+    <link rel="stylesheet" href="cabine-tv.css?v=2">
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
@@ -44,6 +44,16 @@
             <p class="tv-eyebrow">ABRIR FESTA NESTA TV</p>
             <h1>TV + controle no celular</h1>
             <p class="tv-description">Dê um nome à festa. Depois, escaneie o QR do DJ para comandar músicas, fila e reprodução.</p>
+            <section id="tvResumeCard" class="tv-resume-card" hidden>
+                <div>
+                    <span>ÚLTIMA FESTA NESTA TV</span>
+                    <strong id="tvResumeName">Minha festa</strong>
+                    <small id="tvResumeMeta">Sala -----</small>
+                </div>
+                <button id="tvResumeParty" type="button">Retomar</button>
+                <button id="tvForgetParty" type="button" aria-label="Esquecer festa anterior">×</button>
+            </section>
+            <div id="tvNewPartyDivider" class="tv-new-party-divider" hidden><span>ou abrir uma nova</span></div>
             <form id="tvRoomForm" class="tv-form">
                 <label for="tvPartyInput">Nome da festa</label>
                 <input id="tvPartyInput" type="text" maxlength="50" autocomplete="off" placeholder="Ex.: Festa do Douglas" required>
@@ -120,6 +130,6 @@
     </main>
 
     <script src="qrcode.min.js"></script>
-    <script src="cabine-tv.js?v=1" defer></script>
+    <script src="cabine-tv.js?v=2" defer></script>
 </body>
 </html>

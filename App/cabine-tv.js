@@ -11,6 +11,7 @@
         appId: '1:1059879567957:web:d4cb88563b39fe08934adc'
     };
     const CDN_BASE_URL = 'https://media.unodev.com.br/file/karaoke-midia/Musicas/';
+    const SESSION_KEY = 'karaokeStandaloneTvSession';
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
@@ -21,6 +22,8 @@
         stage: document.getElementById('tvStage'), logout: document.getElementById('tvLogout'),
         authError: document.getElementById('tvAuthError'), roomError: document.getElementById('tvRoomError'),
         partyInput: document.getElementById('tvPartyInput'), identity: document.getElementById('tvIdentity'),
+        resumeCard: document.getElementById('tvResumeCard'), resumeName: document.getElementById('tvResumeName'),
+        resumeMeta: document.getElementById('tvResumeMeta'), newPartyDivider: document.getElementById('tvNewPartyDivider'),
         video: document.getElementById('tvVideo'), idle: document.getElementById('tvIdle'),
         idleEyebrow: document.getElementById('tvIdleEyebrow'), idleTitle: document.getElementById('tvIdleTitle'),
         idleDescription: document.getElementById('tvIdleDescription'), nowPlaying: document.getElementById('tvNowPlaying'),
@@ -36,8 +39,10 @@
 
     let currentUser = null;
     let currentRoom = '';
+    let currentPartyName = '';
     let roomRef = null;
     let queue = [];
+    let processedRequestKeys = new Set();
     let catalog = [];
     let currentSongId = '';
     let soundEnabled = true;
@@ -49,6 +54,56 @@
     let toolbarTimer = null;
     let lastTimePublish = 0;
     let suppressVideoEvents = false;
+
+    function readSession() {
+        try {
+            const value = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+            if (!value || !value.code || !value.uid || Date.now() - Number(value.updatedAt || 0) > 24 * 60 * 60 * 1000) return null;
+            return value;
+        } catch { return null; }
+    }
+
+    function saveSession(patch = {}) {
+        if (!currentUser || !currentRoom) return;
+        const state = {
+            uid: currentUser.uid,
+            code: currentRoom,
+            name: currentPartyName || 'Minha festa',
+            queue,
+            processedRequestKeys: [...processedRequestKeys],
+            currentSongId,
+            currentTime: Number(elements.video.currentTime) || 0,
+            wasPlaying: Boolean(currentSongId && !elements.video.paused),
+            volume,
+            updatedAt: Date.now(),
+            ...patch
+        };
+        try { localStorage.setItem(SESSION_KEY, JSON.stringify(state)); } catch {}
+    }
+
+    function clearSession() {
+        try { localStorage.removeItem(SESSION_KEY); } catch {}
+        elements.resumeCard.hidden = true;
+        elements.newPartyDivider.hidden = true;
+    }
+
+    function refreshResumeCard() {
+        const session = readSession();
+        const canResume = Boolean(session && currentUser && session.uid === currentUser.uid);
+        elements.resumeCard.hidden = !canResume;
+        elements.newPartyDivider.hidden = !canResume;
+        if (!canResume) return;
+        elements.resumeName.textContent = session.name || 'Minha festa';
+        elements.resumeMeta.textContent = `Sala ${session.code} · ${Array.isArray(session.queue) ? session.queue.length : 0} músicas`;
+    }
+
+    function parseQueue(value) {
+        if (!value) return [];
+        try {
+            const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+            return Array.isArray(parsed) ? parsed : Object.values(parsed || {});
+        } catch { return []; }
+    }
 
     function showSetup(target) {
         elements.setup.hidden = false;
@@ -134,6 +189,7 @@
     async function publishQueue() {
         renderQueue();
         if (roomRef) await roomRef.child('queue_v13').set(JSON.stringify(queue));
+        saveSession();
     }
 
     function rebalanceQueue() {
@@ -166,9 +222,10 @@
         await roomRef.child('now_playing/playing').set(playing);
         await roomRef.child('host_state').update({ playing, updatedAt: firebase.database.ServerValue.TIMESTAMP });
         elements.playbackLabel.textContent = playing ? 'TOCANDO AGORA' : 'PAUSADO';
+        saveSession({ wasPlaying: playing });
     }
 
-    async function playCurrent() {
+    async function playCurrent({ resumeAt = 0, autoplay = true } = {}) {
         if (!queue.length || !roomRef) {
             currentSongId = '';
             elements.idle.hidden = false;
@@ -176,6 +233,7 @@
             elements.stage.classList.remove('is-playing');
             await roomRef?.child('now_playing').set({ playing: false });
             renderQueue();
+            saveSession({ currentSongId: '', currentTime: 0, wasPlaying: false });
             return;
         }
         const current = queue[0];
@@ -183,7 +241,7 @@
         elements.idle.hidden = true;
         elements.nowPlaying.hidden = false;
         elements.stage.classList.add('is-playing');
-        elements.playbackLabel.textContent = 'TOCANDO AGORA';
+        elements.playbackLabel.textContent = autoplay ? 'TOCANDO AGORA' : 'PAUSADO';
         elements.songTitle.textContent = current.title;
         elements.singer.textContent = current.singer;
         elements.artist.textContent = current.artist;
@@ -191,9 +249,9 @@
         renderQueue();
         await roomRef.child('now_playing').set({
             title: current.title, artist: current.artist, singer: current.singer,
-            songId: currentSongId, playing: true, pitch: 1,
+            songId: currentSongId, playing: autoplay, pitch: 1,
             requesterUid: current.requesterUid || current.singerUid || null,
-            time: { current: 0, total: 0 }
+            time: { current: resumeAt, total: 0 }
         });
         suppressVideoEvents = true;
         elements.video.src = `${CDN_BASE_URL}${currentSongId}.mp4`;
@@ -201,7 +259,14 @@
         elements.video.muted = !soundEnabled;
         elements.video.load();
         suppressVideoEvents = false;
-        requestPlayback();
+        if (resumeAt > 0) {
+            elements.video.addEventListener('loadedmetadata', () => {
+                try { elements.video.currentTime = Math.min(resumeAt, Math.max(0, elements.video.duration - 1)); } catch {}
+                if (autoplay) requestPlayback();
+            }, { once: true });
+        } else if (autoplay) requestPlayback();
+        if (!autoplay) elements.startPlayback.hidden = false;
+        saveSession({ currentSongId, currentTime: resumeAt, wasPlaying: autoplay });
     }
 
     async function finishCurrent() {
@@ -251,6 +316,7 @@
                     volume = Math.max(0, Math.min(1, Number(payload.value)));
                     elements.video.volume = volume;
                     await roomRef.child('host_state').update({ volume, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+                    saveSession();
                     break;
                 case 'queue_add': {
                     const song = catalog.find(item => item.id === String(payload.songId || '').padStart(5, '0'));
@@ -287,13 +353,17 @@
     async function handleRequest(snapshot) {
         const request = snapshot.val() || {};
         if (request.processed || request.kind) return;
+        if (processedRequestKeys.has(snapshot.key) || queue.some(item => item.requestKey === snapshot.key)) return;
         const song = catalog.find(item => item.id === String(request.id || '').padStart(5, '0'));
         if (!song || !request.singer) return;
         await enqueue(song, request.singer, false, {
             singerUid: request.singerUid || null,
             requesterUid: request.requesterUid || request.singerUid || null,
+            requestKey: snapshot.key,
             time: Number(request.timestamp) || Date.now()
         });
+        processedRequestKeys.add(snapshot.key);
+        saveSession();
         snapshot.ref.update({ processed: true }).catch(() => {});
     }
 
@@ -326,35 +396,98 @@
         throw new Error('Não foi possível gerar uma sala livre.');
     }
 
-    async function createParty(name) {
-        showError(elements.roomError);
-        await loadCatalog();
-        if (!catalog.length) throw new Error('O catálogo não pôde ser carregado.');
-        currentRoom = await generateRoomCode();
-        roomRef = db.ref(`salas/${currentRoom}`);
-        queue = [];
-        currentSongId = '';
-        await roomRef.set({
-            info: {
-                name, hostId: currentUser.uid, hostName: currentUser.displayName || currentUser.email || 'DJ',
-                hostPhoto: currentUser.photoURL || '', status: 'online', mode: 'tv-standalone',
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            },
-            queue_v13: '[]',
-            host_state: { playing: false, volume, pitch: 1, toneAvailable: false, updatedAt: firebase.database.ServerValue.TIMESTAMP }
-        });
-        roomRef.onDisconnect().remove();
-        try { localStorage.setItem('lastStandalonePartyName', name); } catch {}
+    function roomInfo(name) {
+        return {
+            name,
+            hostId: currentUser.uid,
+            hostName: currentUser.displayName || currentUser.email || 'DJ',
+            hostPhoto: currentUser.photoURL || '',
+            status: 'online',
+            mode: 'tv-standalone',
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        };
+    }
+
+    function showPartyStage(name) {
+        currentPartyName = name;
         elements.partyName.textContent = name;
         elements.roomLabel.textContent = `SALA ${currentRoom}`;
         elements.idleRoom.textContent = `SALA ${currentRoom}`;
         elements.connection.textContent = 'TV COMANDA';
         renderQr();
         renderQueue();
-        startRoomListeners();
         elements.setup.hidden = true;
         elements.stage.hidden = false;
-        elements.sound.textContent = '🔊 Desativar som';
+        elements.sound.textContent = soundEnabled ? '🔊 Desativar som' : '🔇 Ativar som';
+    }
+
+    function armDisconnectState() {
+        return roomRef.child('info').onDisconnect().update({
+            status: 'offline',
+            disconnectedAt: firebase.database.ServerValue.TIMESTAMP
+        });
+    }
+
+    async function createParty(name) {
+        showError(elements.roomError);
+        await loadCatalog();
+        if (!catalog.length) throw new Error('O catálogo não pôde ser carregado.');
+        const previousSession = readSession();
+        if (previousSession?.uid === currentUser.uid) {
+            const previousRef = db.ref(`salas/${previousSession.code}`);
+            const previousInfo = (await previousRef.child('info').once('value')).val();
+            if (previousInfo?.hostId === currentUser.uid) await previousRef.remove().catch(() => {});
+        }
+        clearSession();
+        currentRoom = await generateRoomCode();
+        roomRef = db.ref(`salas/${currentRoom}`);
+        queue = [];
+        processedRequestKeys = new Set();
+        currentSongId = '';
+        await roomRef.set({
+            info: roomInfo(name),
+            queue_v13: '[]',
+            host_state: { playing: false, volume, pitch: 1, toneAvailable: false, updatedAt: firebase.database.ServerValue.TIMESTAMP }
+        });
+        await armDisconnectState();
+        try { localStorage.setItem('lastStandalonePartyName', name); } catch {}
+        showPartyStage(name);
+        saveSession({ currentSongId: '', currentTime: 0, wasPlaying: false });
+        startRoomListeners();
+    }
+
+    async function resumeParty() {
+        const session = readSession();
+        if (!session || session.uid !== currentUser?.uid) throw new Error('A festa anterior não está mais disponível.');
+        await loadCatalog();
+        currentRoom = session.code;
+        currentPartyName = session.name || 'Minha festa';
+        roomRef = db.ref(`salas/${currentRoom}`);
+        const snapshot = await roomRef.once('value');
+        const remote = snapshot.val();
+        if (remote?.info?.hostId && remote.info.hostId !== currentUser.uid) throw new Error('O código anterior agora pertence a outra festa.');
+        queue = remote ? parseQueue(remote.queue_v13) : (Array.isArray(session.queue) ? session.queue : []);
+        processedRequestKeys = new Set(Array.isArray(session.processedRequestKeys) ? session.processedRequestKeys : []);
+        queue.forEach(item => { if (item.requestKey) processedRequestKeys.add(item.requestKey); });
+        volume = Math.max(0, Math.min(1, Number(remote?.host_state?.volume ?? session.volume ?? .7)));
+        const remoteSongId = String(remote?.now_playing?.songId || '');
+        const savedSongId = String(session.currentSongId || '');
+        const candidateSongId = remoteSongId || savedSongId;
+        const hasCurrent = Boolean(queue[0] && String(queue[0].id).padStart(5, '0') === candidateSongId.padStart(5, '0'));
+        const resumeAt = Number(remote?.now_playing?.time?.current ?? session.currentTime) || 0;
+        const wasPlaying = remote?.now_playing?.playing ?? session.wasPlaying ?? false;
+        currentSongId = '';
+        await roomRef.update({
+            info: roomInfo(currentPartyName),
+            queue_v13: JSON.stringify(queue),
+            host_state: { playing: Boolean(hasCurrent && wasPlaying), volume, pitch: 1, toneAvailable: false, updatedAt: firebase.database.ServerValue.TIMESTAMP }
+        });
+        await armDisconnectState();
+        showPartyStage(currentPartyName);
+        if (hasCurrent) await playCurrent({ resumeAt, autoplay: Boolean(wasPlaying) });
+        else if (queue.length) await playCurrent({ autoplay: false });
+        else saveSession({ currentSongId: '', currentTime: 0, wasPlaying: false });
+        startRoomListeners();
     }
 
     async function endParty() {
@@ -369,10 +502,23 @@
             await roomRef.remove().catch(console.warn);
         }
         currentRoom = '';
+        currentPartyName = '';
         roomRef = null;
         queue = [];
+        processedRequestKeys = new Set();
         currentSongId = '';
+        clearSession();
         showSetup(elements.connect);
+    }
+
+    async function forgetSavedParty() {
+        const session = readSession();
+        if (session?.uid === currentUser?.uid) {
+            const savedRef = db.ref(`salas/${session.code}`);
+            const info = (await savedRef.child('info').once('value')).val();
+            if (info?.hostId === currentUser.uid) await savedRef.remove().catch(() => {});
+        }
+        clearSession();
     }
 
     document.getElementById('tvGoogle').addEventListener('click', async event => {
@@ -408,6 +554,20 @@
         finally { button.disabled = false; button.textContent = 'Abrir festa na TV'; }
     });
 
+    document.getElementById('tvResumeParty').addEventListener('click', async event => {
+        const button = event.currentTarget;
+        showError(elements.roomError);
+        button.disabled = true;
+        button.textContent = 'Retomando…';
+        try { await resumeParty(); }
+        catch (error) {
+            console.error(error);
+            showError(elements.roomError, error.message || 'Não foi possível retomar a festa.');
+        } finally { button.disabled = false; button.textContent = 'Retomar'; }
+    });
+
+    document.getElementById('tvForgetParty').addEventListener('click', () => forgetSavedParty().catch(console.warn));
+
     elements.logout.addEventListener('click', async () => { if (roomRef) await endParty(); await auth.signOut(); });
     document.getElementById('tvChangeRoom').addEventListener('click', async () => {
         if (window.confirm('Encerrar esta festa e remover a sala?')) await endParty();
@@ -433,6 +593,7 @@
         if (roomRef && currentSongId && Date.now() - lastTimePublish > 1000) {
             lastTimePublish = Date.now();
             roomRef.child('now_playing/time').set({ current, total }).catch(() => {});
+            saveSession({ currentTime: current });
         }
     });
     elements.video.addEventListener('error', () => {
@@ -458,6 +619,7 @@
         elements.identity.textContent = `Conectado como ${user.displayName || user.email || 'DJ'}`;
         try { elements.partyInput.value = localStorage.getItem('lastStandalonePartyName') || ''; } catch {}
         showSetup(elements.connect);
+        refreshResumeCard();
         loadCatalog().catch(error => console.warn('Catálogo ainda não disponível:', error));
     });
 })();
