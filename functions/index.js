@@ -15,7 +15,17 @@ admin.initializeApp();
 const pairingRef = (id) => admin.database().ref(`tv_pairings/${id}`);
 const pairingHash = (secret) => crypto.createHash('sha256').update(String(secret)).digest('hex');
 
+async function removeExpiredTvPairings(now = Date.now()) {
+    const snapshot = await admin.database().ref('tv_pairings').once('value');
+    const removals = {};
+    snapshot.forEach(child => {
+        if (Number(child.val()?.expiresAt) <= now) removals[child.key] = null;
+    });
+    if (Object.keys(removals).length) await admin.database().ref('tv_pairings').update(removals);
+}
+
 exports.createTvPairing = onCall(async () => {
+    await removeExpiredTvPairings();
     const pairId = crypto.randomBytes(5).toString('hex').toUpperCase();
     const tvSecret = crypto.randomBytes(24).toString('base64url');
     const approvalSecret = crypto.randomBytes(24).toString('base64url');
@@ -48,7 +58,13 @@ exports.approveTvPairing = onCall(async (request) => {
     if (banned) throw new HttpsError('permission-denied', 'Esta conta não pode abrir festas.');
     const tvUid = `tv_${pairId.toLowerCase()}`;
     const djName = request.auth.token.name || request.auth.token.email || 'DJ';
-    const customToken = await admin.auth().createCustomToken(tvUid, { djUid: request.auth.uid, djName, tvPairing: true });
+    let customToken;
+    try {
+        customToken = await admin.auth().createCustomToken(tvUid, { djUid: request.auth.uid, djName, tvPairing: true });
+    } catch (error) {
+        console.error('Não foi possível assinar o token da TV.', error);
+        throw new HttpsError('internal', 'Não foi possível autorizar a TV agora. Gere um novo QR Code e tente novamente.');
+    }
     await ref.update({
         status: 'approved',
         djUid: request.auth.uid,
@@ -90,7 +106,13 @@ exports.completeTvPairing = onCall(async (request) => {
     if (!pairing || pairing.tvSecretHash !== pairingHash(secret) || pairing.djUid !== request.auth.token.djUid) {
         throw new HttpsError('permission-denied', 'Pareamento inválido.');
     }
-    await ref.update({ status: 'ready', roomCode, customToken: null, readyAt: admin.database.ServerValue.TIMESTAMP });
+    await ref.update({
+        status: 'ready',
+        roomCode,
+        customToken: null,
+        readyAt: admin.database.ServerValue.TIMESTAMP,
+        expiresAt: Date.now() + 5 * 60 * 1000
+    });
     return { ready: true };
 });
 
