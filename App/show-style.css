@@ -1,0 +1,114 @@
+/* Apresentação compartilhada pela Cabine PC e pela segunda tela.
+   A Cabine TV é a referência visual destes componentes. */
+.coming-next-overlay,
+.score-suspense-overlay,
+.score-final-overlay {
+    --show-yellow: #ffd93d;
+    --show-blue: #5268ff;
+    position: absolute !important;
+    inset: 0;
+    z-index: 1600;
+    box-sizing: border-box;
+    width: 100% !important;
+    height: 100% !important;
+    display: grid !important;
+    place-content: center;
+    justify-items: center;
+    padding: 5vw !important;
+    overflow: hidden;
+    color: #fff;
+    text-align: center;
+    background: radial-gradient(circle at 50% 46%, rgba(54,75,196,.45), rgba(3,5,12,.98) 64%) !important;
+    animation: show-fade-in .45s ease both;
+}
+
+.coming-next-overlay.fade-out { opacity: 0 !important; transform: scale(1.025) !important; transition: opacity .45s ease, transform .45s ease; }
+.cn-stage-glow { position: absolute !important; inset: auto !important; width: min(72vw,1000px) !important; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle,rgba(82,104,255,.24),transparent 66%) !important; animation: show-glow-pulse 2.2s ease-in-out infinite !important; pointer-events: none; }
+
+.cn-badge,
+.sf-badge {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 clamp(18px,3vh,30px) !important;
+    padding: 10px 17px !important;
+    border: 1px solid rgba(255,217,61,.48) !important;
+    border-radius: 999px !important;
+    color: var(--show-yellow) !important;
+    background: rgba(255,217,61,.07) !important;
+    box-shadow: none !important;
+    font: 900 clamp(.65rem,1vw,1rem)/1 'Montserrat',sans-serif !important;
+    letter-spacing: .14em !important;
+    -webkit-text-fill-color: currentColor !important;
+    animation: show-badge-in .5s cubic-bezier(.2,.8,.2,1) both !important;
+}
+
+.cn-content { position: relative; z-index: 1; width: min(92vw,1100px); max-width: none; padding: 0; }
+.cn-phrase-container { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.cn-text-lead,
+.cn-text-trail {
+    z-index: 1;
+    max-width: 900px;
+    margin: 0;
+    color: #d8dbe5 !important;
+    font: 700 clamp(1.3rem,3.1vw,3.2rem)/1.15 'Montserrat',sans-serif !important;
+    text-shadow: none !important;
+    animation: show-text-in .55s ease both !important;
+}
+.cn-text-trail:empty { display: none; }
+.cn-singer-name {
+    z-index: 1;
+    display: block;
+    max-width: 92vw;
+    margin: 12px 0 0 !important;
+    padding: 0 !important;
+    color: #fff !important;
+    background: none !important;
+    filter: none !important;
+    font: 900 clamp(4rem,12vw,11rem)/.88 'Montserrat',sans-serif !important;
+    letter-spacing: -.06em !important;
+    text-transform: uppercase;
+    text-shadow: 0 0 55px rgba(82,104,255,.4);
+    -webkit-text-fill-color: currentColor !important;
+    animation: show-name-arrive .7s cubic-bezier(.2,.8,.2,1) both !important;
+}
+
+.cn-equalizer { position: relative; z-index: 1; height: 54px !important; margin-top: clamp(24px,5vh,52px) !important; display: flex; align-items: end; justify-content: center; gap: 8px !important; }
+.cn-bar { width: 8px !important; height: 22%; border-radius: 8px; background: var(--show-yellow) !important; box-shadow: none !important; animation: show-eq .8s ease-in-out infinite alternate !important; }
+.cn-bar:nth-child(2),.cn-bar:nth-child(6){animation-delay:-.2s!important}.cn-bar:nth-child(3),.cn-bar:nth-child(5){animation-delay:-.45s!important}.cn-bar:nth-child(4){animation-delay:-.65s!important}
+.cn-equalizer-fast .cn-bar { animation-duration: .38s !important; }
+
+.score-suspense-overlay,
+.score-final-overlay { display: flex !important; flex-direction: column; align-items: center; justify-content: center; }
+.sf-ticker-value,
+.sf-score-value {
+    position: relative;
+    z-index: 1;
+    margin: 10px 0 !important;
+    color: #fff !important;
+    background: none !important;
+    filter: none !important;
+    font: 900 clamp(8rem,26vw,25rem)/.8 'Montserrat',sans-serif !important;
+    text-shadow: 0 0 70px rgba(255,217,61,.3);
+    -webkit-text-fill-color: currentColor !important;
+}
+.sf-ticker-value { font-size: clamp(6rem,19vw,18rem) !important; animation: show-score-tick .18s ease-in-out infinite alternate !important; }
+.sf-score-value { animation: show-score-reveal .7s cubic-bezier(.2,.9,.2,1) both !important; }
+.sf-singer { position: relative; z-index: 1; margin: 20px 0 0 !important; color: #fff !important; font: 800 clamp(1.5rem,3vw,3rem)/1 'Montserrat',sans-serif !important; animation: show-text-in .55s ease both !important; }
+.sf-phrase { position: relative; z-index: 1; max-width: min(90vw,1050px); margin: 16px 0 0 !important; color: #d9dce6 !important; font: 700 clamp(1rem,2vw,2rem)/1.35 'Montserrat',sans-serif !important; font-style: normal !important; opacity: 1 !important; animation: show-text-in .55s ease both !important; }
+.score-final-overlay .cn-equalizer { margin-top: clamp(24px,5vh,52px) !important; }
+
+@keyframes show-fade-in { from { opacity: 0; } }
+@keyframes show-glow-pulse { 50% { transform: scale(1.1); opacity: .72; } }
+@keyframes show-badge-in { from { opacity: 0; transform: translateY(-18px) scale(.94); } }
+@keyframes show-text-in { from { opacity: 0; transform: translateY(18px); } }
+@keyframes show-name-arrive { from { opacity: 0; transform: translateY(45px) scale(.9); } }
+@keyframes show-eq { to { height: 100%; background: #7082ff; } }
+@keyframes show-score-tick { to { transform: scale(1.025); opacity: .8; } }
+@keyframes show-score-reveal { from { opacity: 0; transform: scale(1.65) rotate(-4deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .coming-next-overlay,.score-suspense-overlay,.score-final-overlay,.cn-stage-glow,.cn-badge,.sf-badge,.cn-text-lead,.cn-text-trail,.cn-singer-name,.sf-ticker-value,.sf-score-value,.sf-singer,.sf-phrase,.cn-bar { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}

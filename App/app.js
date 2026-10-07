@@ -2587,7 +2587,7 @@
         playerArea.innerHTML = `
             <div class="coming-next-overlay">
                 <div class="cn-stage-glow"></div>
-                <div class="cn-badge"><i class="fas fa-microphone-alt"></i> PRÓXIMO SHOW</div>
+                <div class="cn-badge">🎤 PRÓXIMO SHOW</div>
                 <div class="cn-content">
                     ${phraseHtml}
                 </div>
@@ -3051,7 +3051,7 @@
         targetPlayer.innerHTML = `
     <div class="score-suspense-overlay">
         <div class="cn-stage-glow"></div>
-        <div class="sf-badge sf-badge-suspense"><i class="fas fa-hourglass-half"></i> DANDO NOTA...</div>
+        <div class="sf-badge sf-badge-suspense">DANDO NOTA…</div>
         <div id="tickerScore" class="sf-ticker-value">--</div>
         <div class="sf-singer">Segura o coração, ${safeEscape(singer.toUpperCase())}! 🎤</div>
         <div class="cn-equalizer cn-equalizer-fast" aria-hidden="true">
@@ -3097,10 +3097,10 @@
                 targetPlayer.innerHTML = `
     <div class="score-final-overlay">
         <div class="cn-stage-glow"></div>
-        <div class="sf-badge"><i class="fas fa-star"></i> NOTA FINAL</div>
+        <div class="sf-badge">NOTA FINAL</div>
         <div class="sf-score-value">${finalScore}</div>
-        <div class="sf-phrase">"${phrase}"</div>
-        <div class="sf-singer">⭐ ARRASOU, ${safeEscape(singer.toUpperCase())}! 🎤</div>
+        <div class="sf-singer">${safeEscape(singer)}</div>
+        <div class="sf-phrase">${phrase}</div>
         <div class="cn-equalizer" aria-hidden="true">
             <span class="cn-bar bar-1"></span>
             <span class="cn-bar bar-2"></span>
