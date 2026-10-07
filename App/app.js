@@ -3664,7 +3664,7 @@
     }
     window.addEventListener('pagehide', () => stopMic());
 
-    // ─── Controlás ─────────────────────────────────────────────────────────────────
+    // ─── Controles ─────────────────────────────────────────────────────────────────
 
     function togglePlay() {
 
@@ -3725,7 +3725,7 @@
     function changeVolume(delta) {
         const newVolume = Math.max(0, Math.min(1, currentVolume + delta));
         setVideoVolume(newVolume);
-        resetControlásTimer();
+        resetControlsTimer();
     }
 
     function changeTone(delta) {
@@ -3773,11 +3773,11 @@
 
         publishHostState({ pitch: currentPitch });
 
-        resetControlásTimer();
+        resetControlsTimer();
 
     }
 
-    function resetControlásTimer() {
+    function resetControlsTimer() {
 
         const wrapper = document.querySelector('.compact-controls-wrapper');
 

@@ -156,7 +156,7 @@ exports.createCheckoutSession = onCall(
                     quantity: 1,
                 }],
                 mode: plan.mode,
-                success_url: 'https://karaoke.unodev.com.br/App/index.html?session_id={CHECKOUT_SESSION_ID}',
+                success_url: 'https://karaoke.unodev.com.br/App/cabine-pc.html?session_id={CHECKOUT_SESSION_ID}',
                 cancel_url: 'https://karaoke.unodev.com.br/index.html',
                 client_reference_id: uid, 
                 metadata: { 

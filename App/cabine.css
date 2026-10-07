@@ -48,7 +48,7 @@ body:not(.landing-page-root) {
     padding: 15px;
 }
 
-/* Barra de Atalhos de Teclado â€” sempre visÃ­vel, linha abaixo do player */
+/* Barra de atalhos de teclado — sempre visível abaixo do player. */
 .hotkey-bar {
     grid-column: 2 / 3;
     grid-row: 3 / 4;
@@ -1016,7 +1016,7 @@ body:not(.landing-page-root) {
     box-shadow: 0 0 20px rgba(217, 70, 239, 0.3);
 }
 
-/* SugestÃµes de Cantores (Chips) no Modal */
+/* Sugestões de cantores no modal. */
 .user-chips-container {
     display: flex;
     flex-wrap: wrap;
@@ -1128,7 +1128,7 @@ body:not(.landing-page-root) {
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   FORMULÃRIO DE E-MAIL (WEB HOST)
+   FORMULÁRIO DE E-MAIL DA CABINE
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .auth-separator {
     display: flex;
@@ -1723,7 +1723,7 @@ body:not(.landing-page-root) {
 
 
 
-/* Catalog: Dual Buttons (Ã¢â€“Â¶ and +) */
+/* Catálogo: botões de reprodução e inclusão na fila. */
 .song-item {
     display: flex;
     align-items: center;
@@ -2181,7 +2181,7 @@ body:not(.landing-page-root) {
     white-space: nowrap;
 }
 
-/* 10. ConfiguraÃ§Ãµes & BotÃµes de Ãcone */
+/* 10. Configurações e botões de ícone. */
 .btn-icon {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--glass-border);
@@ -2841,7 +2841,7 @@ body:not(.landing-page-root) {
     }
 }
 
-/* â”€â”€â”€ Compact Singer Form (Host) (SimplificaÃ§Ã£o Minimalista v7) â”€â”€â”€ */
+/* Formulário compacto do cantor na Cabine. */
 .compact-singer-form {
     position: absolute;
     bottom: 80px;
@@ -2853,7 +2853,7 @@ body:not(.landing-page-root) {
     background: rgba(15, 15, 15, 0.95);
     border: 1px solid rgba(217, 70, 239, 0.5);
     border-radius: 30px;
-    /* Formato de pÃ­lula */
+    /* Formato de pílula. */
     padding: 8px 12px;
     box-shadow: 0 5px 25px rgba(0, 0, 0, 0.8);
     display: flex;
@@ -3206,7 +3206,7 @@ body:not(.landing-page-root) {
 
 
 
-/* â”€â”€â”€ Vibe da Galera (VotaÃ§Ã£o Realtime) â”€â”€â”€ */
+/* Vibe da galera: votação em tempo real. */
 .public-score-display {
     position: absolute;
     top: 25px;
@@ -3222,7 +3222,7 @@ body:not(.landing-page-root) {
     flex-direction: column;
     gap: 8px;
     z-index: 2147483640;
-    /* AltÃ­ssimo, acima de quase tudo */
+    /* Acima dos demais elementos do palco. */
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     animation: fadeInDown 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -3287,7 +3287,7 @@ text-shadow: 0 0 15px rgba(217, 70, 239, 0.5);
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s;
 }
 
-/* â”€â”€â”€ ConfiguraÃ§Ãµes de PontuaÃ§Ã£o (Modal) â”€â”€â”€ */
+/* Configurações de pontuação. */
 .setting-section {
     margin-top: 25px;
     padding-top: 20px;
@@ -3435,7 +3435,7 @@ text-shadow: 0 0 15px rgba(217, 70, 239, 0.5);
     transition: width 0.05s ease-out;
 }
 
-/* Sobrescrita para correï¿½ï¿½o de rolagem no modal de configuraï¿½ï¿½es */
+/* Correção de rolagem no modal de configurações. */
 .settings-body {
     overflow-y: auto !important;
     max-height: 65vh !important;
