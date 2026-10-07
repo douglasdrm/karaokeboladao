@@ -57,7 +57,9 @@
     <script src="party-social.js?v=4"></script>
     <script src="challenge-core.js?v=1"></script>
     <script src="challenges.js?v=3"></script>
-<link rel="stylesheet" href="party-social.css?v=4">
+    <link rel="stylesheet" href="party-social.css?v=4">
+    <link rel="stylesheet" href="mobile-overlays.css?v=1">
+    <script src="mobile-ui.js?v=1" defer></script>
 </head>
 
 <body class="mobile-body">
@@ -82,14 +84,14 @@
     </div>
 
     <!-- Overlay de Banimento -->
-    <div id="bannedOverlay" class="mobile-modal-overlay"
-        style="display:none; z-index:12000; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.95);">
-        <i class="fas fa-user-slash" style="font-size:3.5rem; color:#ff4444; margin-bottom:20px;"></i>
-        <h2>CONTA SUSPENSA</h2>
-        <p style="text-align:center; padding:0 20px;">Esta conta foi desativada por violação dos nossos termos de uso e
-            segurança.</p>
-        <button class="btn-confirm" onclick="firebase.auth().signOut()" style="background:#444; margin-top:20px;">SAIR
-            DA CONTA</button>
+    <div id="bannedOverlay" class="mobile-modal-overlay mobile-state-overlay" style="display:none; z-index:12000;">
+        <div class="mobile-modal mobile-state-card mobile-state-card--danger">
+            <span class="mobile-state-icon"><i class="fas fa-user-slash"></i></span>
+            <span class="mobile-modal-eyebrow">ACESSO INTERROMPIDO</span>
+            <h2>Conta suspensa</h2>
+            <p>Esta conta foi desativada por violação dos termos de uso e segurança.</p>
+            <button class="btn-confirm" onclick="firebase.auth().signOut()">Sair da conta</button>
+        </div>
     </div>
 
 
@@ -161,7 +163,8 @@
     ══════════════════════════════════ -->
     <div id="photoEditModal" class="mobile-modal-overlay" style="display:none; z-index:10500;">
         <div class="mobile-modal photo-edit-modal">
-            <h3>✏️ SEU PERFIL</h3>
+            <span class="mobile-modal-eyebrow">CONTA DO CANTOR</span>
+            <h3>Seu perfil</h3>
 
             <!-- Foto -->
             <div class="photo-preview-wrap">
@@ -220,9 +223,9 @@
     <div id="scoreCardModal" class="mobile-modal-overlay" style="display:none; z-index:10600;">
         <div class="score-card-modal-inner">
             <div class="score-card-header">
-                <span>🎤 SUA PERFORMANCE!</span>
+                <span><small>RESULTADO DA APRESENTAÇÃO</small>Sua performance</span>
                 <button onclick="closeScoreCard()"
-                    style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:1.4rem;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;">×</button>
+                    class="mobile-icon-close" aria-label="Fechar resultado">×</button>
             </div>
             <canvas id="scoreCardCanvas" style="width:100%;border-radius:16px;display:block;"></canvas>
             <div class="score-card-actions">
@@ -245,8 +248,9 @@
     ══════════════════════════════════ -->
     <div id="bgPickerModal" class="mobile-modal-overlay" style="display:none; z-index:10700;">
         <div class="mobile-modal" style="max-width:380px;">
-            <h3 style="margin-bottom:6px;">🖼️ FOTO DE FUNDO</h3>
-            <p style="font-size:0.78rem;opacity:0.5;margin-bottom:18px;">Escolha o fundo do seu card:</p>
+            <span class="mobile-modal-eyebrow">PERSONALIZAR RESULTADO</span>
+            <h3 style="margin-bottom:6px;">Foto de fundo</h3>
+            <p>Escolha o fundo do seu card:</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
                 <button class="bg-option-btn" id="bgOptMale" onclick="selectBgOption('male')">
                     <span style="font-size:2rem;">🧍</span>
@@ -498,6 +502,7 @@
     ══════════════════════════════════ -->
     <div id="nameModalOverlay" class="mobile-modal-overlay">
         <div class="mobile-modal">
+            <span class="mobile-modal-eyebrow">ENVIAR PARA A FILA</span>
             <h3>Quem vai cantar? 🎤</h3>
             <p>Selecione uma ou mais pessoas. Desmarque seu nome se você não for cantar.</p>
             <div class="active-users-list" id="activeUsersChips"></div>
@@ -516,9 +521,8 @@
     <div id="surpriseModalOverlay" class="mobile-modal-overlay">
         <div class="mobile-modal"
             style="border-color: rgba(0, 242, 255, 0.4); box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(0, 242, 255, 0.15);">
-            <h3
-                style="background: linear-gradient(90deg, #fff, var(--blue, #00f2ff)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
-                Música Surpresa! 🎲</h3>
+            <span class="mobile-modal-eyebrow">ESCOLHA DO KARAOKE PARTY</span>
+            <h3>Música surpresa! 🎲</h3>
             <p>O sistema escolheu de surpresa para você:</p>
 
             <div id="surpriseSongBox"
