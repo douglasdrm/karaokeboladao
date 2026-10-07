@@ -131,7 +131,7 @@
    search.oninput=()=>{results.replaceChildren();const q=search.value.trim().toLocaleLowerCase();if(q.length<2)return;(api.catalog()||[]).filter(s=>`${s.id} ${s.title} ${s.artist}`.toLocaleLowerCase().includes(q)).slice(0,20).forEach(s=>results.append(btn(`${s.title} — ${s.artist}`,()=>{song=s;selectedLabel.textContent=`${s.title} — ${s.artist}`;results.replaceChildren();search.value='';})));};
    const label=el('label','Recado ou pista (até 140 caracteres)');const note=el('textarea');note.maxLength=140;note.rows=2;label.append(note);body.append(label);
    const surprise=el('input');surprise.type='checkbox';const l=el('label');l.append(surprise,document.createTextNode('Suspense: mostrar artista e pista; revelar a música antes do aceite.'));body.append(l);
-   body.append(el('p','Um desafio aberto por pessoa. Ninguém entra na fila sem aceitar.','challenge-muted'),btn('🔥 Desafiar a galera',async()=>{if(!song)throw Error('Selecione uma música.');await send('create',{songId:String(song.id),note:note.value,suspense:surprise.checked});showList();}));
+   body.append(el('p','Você pode lançar mais de um desafio. Cada música só entra na fila depois que alguém aceitar.','challenge-muted'),btn('🔥 Desafiar a galera',async()=>{if(!song)throw Error('Selecione uma música.');await send('create',{songId:String(song.id),note:note.value,suspense:surprise.checked});showList();}));
   }
   return {compose,showList,sync};
  }

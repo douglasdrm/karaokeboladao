@@ -149,6 +149,8 @@
         padding: 8px;
         border-radius: 16px;
         background: #05070c;
+        container-type: size;
+        container-name: pc-stage;
     }
     .cabin-pc-page .main-player .video-container {
         width: 100%;
@@ -232,7 +234,7 @@
 }
 
 @media (min-width: 1025px) and (max-width: 1400px) {
-    .cabin-pc-page .dashboard { grid-template-columns: minmax(245px, 20vw) minmax(0, 1fr) minmax(235px, 20vw); }
+    .cabin-pc-page .dashboard { grid-template-columns: minmax(225px, 18vw) minmax(0, 1fr) minmax(245px, 19vw); }
     .cabin-pc-page .header-action span { display: none; }
     .cabin-pc-page .header-action-primary span { display: inline; }
     .cabin-pc-page .controls.compact-panel { width: calc(100% - 8px); height: 58px; padding-inline: 9px; }
@@ -255,4 +257,37 @@
     .cabin-pc-page #qrcode-fs { width: 82px; height: 82px; }
     .cabin-pc-page #qrcode-fs img,
     .cabin-pc-page #qrcode-fs canvas { width: 72px !important; height: 72px !important; }
+    .cabin-pc-page .hotkey-bar { font-size: .62rem; color: #777e90; }
+    .cabin-pc-page .compact-controls-wrapper { z-index: 2300; }
+    .cabin-pc-page .controls.compact-panel { background: rgba(7,9,15,.96); }
+}
+
+@container pc-stage (max-width: 920px) {
+    .party-ranking-board {
+        grid-template-columns: minmax(205px,.72fr) minmax(0,1.28fr);
+        gap: 10px 14px;
+        padding: 20px 132px 20px 22px !important;
+    }
+    .party-ranking-board-heading h2 { font-size: clamp(23px,3.6cqw,34px); }
+    .party-ranking-podium li { min-height: 46px; padding-inline: 11px; border-radius: 12px; }
+    .party-ranking-podium strong { font-size: clamp(13px,2cqw,18px); }
+    .party-ranking-highlights { grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: repeat(4,minmax(62px,1fr)) !important; gap: 7px; }
+    .party-ranking-highlight { padding: 9px; border-radius: 11px; }
+    .party-ranking-highlight > span { font-size: 8px; }
+    .party-ranking-highlight > strong { font-size: 13px; }
+    .party-ranking-highlight > small { font-size: 9px; }
+    #playerContainer:has(.party-ranking-board) .qr-fullscreen-box { width: 104px; top: 10px !important; right: 10px !important; padding: 6px; transform: none !important; }
+    #playerContainer:has(.party-ranking-board) #qrcode-fs { width: 72px; height: 72px; }
+    #playerContainer:has(.party-ranking-board) #qrcode-fs img,
+    #playerContainer:has(.party-ranking-board) #qrcode-fs canvas { width: 62px !important; height: 62px !important; }
+}
+
+@container pc-stage (max-height: 540px) {
+    .party-ranking-board { padding-block: 14px !important; }
+    .party-ranking-board-heading span { margin-bottom: 4px; font-size: 9px; }
+    .party-ranking-board-heading h2 { font-size: 27px; }
+    .party-ranking-podium { gap: 5px; }
+    .party-ranking-podium li { min-height: 40px; }
+    .party-ranking-highlights { grid-template-rows: repeat(4,minmax(54px,1fr)) !important; }
+    .cabin-pc-page .qr-fullscreen-box { width: 100px; }
 }

@@ -14,7 +14,6 @@
   if(!Number.isFinite(command.timestamp)||env.now-command.timestamp>180000||command.timestamp>env.now+30000)return deny('Pedido expirado. Tente novamente.');
   let c=Object.hasOwn(state.items,command.challengeId)?state.items[command.challengeId]:null;
   if(action==='create'){
-   if(Object.values(state.items).some(v=>v.authorUid===uid&&open(v)))return deny('Você já tem um desafio aberto.');
    const song=Object.hasOwn(env.songs,String(command.songId))?env.songs[String(command.songId)]:null;if(!song)return deny('Música não encontrada no catálogo.');
    if(command.suspense&&!clean(command.note,140))return deny('Escreva uma pista para o desafio surpresa.');
    c={id:key,songId:String(song.id),title:clean(song.title,180),artist:clean(song.artist,120),authorUid:uid,authorName:clean(env.members[uid].name),note:clean(command.note,140),suspense:command.suspense===true,status:'open',createdAt:env.now,reactions:{}};
