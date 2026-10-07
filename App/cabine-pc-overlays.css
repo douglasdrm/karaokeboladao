@@ -18,13 +18,14 @@
 .cabin-pc-page .modal-content { box-sizing: border-box; width: min(520px, calc(100vw - 48px)); max-height: calc(100dvh - 48px); overflow: hidden; padding: 28px; border: 1px solid var(--pc-dialog-line); border-radius: 22px; color: var(--pc-dialog-text); background: linear-gradient(150deg, rgba(24,30,47,.99), rgba(10,13,22,.99)); box-shadow: 0 30px 90px rgba(0,0,0,.58), inset 0 1px rgba(255,255,255,.035); text-align: left; }
 .cabin-pc-page .modal-content h2 { margin: 0; color: var(--pc-dialog-text); font: 800 1.35rem/1.2 'Montserrat', sans-serif; letter-spacing: -.025em; }
 .cabin-pc-page .pc-modal-eyebrow { display: block; margin-bottom: 7px; color: var(--pc-dialog-yellow); font: 800 .62rem/1.2 'Montserrat', sans-serif; letter-spacing: .15em; }
-.cabin-pc-page .modal-footer { flex: 0 0 auto; justify-content: flex-end; gap: 9px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--pc-dialog-line); }
+.cabin-pc-page .modal-footer { position: relative; z-index: 2; flex: 0 0 auto; justify-content: flex-end; gap: 9px; margin-top: 12px; padding-top: 14px; border-top: 1px solid var(--pc-dialog-line); background: transparent; }
 .cabin-pc-page .btn-modal { min-height: 42px; padding: 0 18px; border: 1px solid var(--pc-dialog-line); border-radius: 10px; font: 800 .7rem/1 'Poppins', sans-serif; letter-spacing: .03em; }
 .cabin-pc-page .btn-modal.primary { border-color: var(--pc-dialog-yellow); color: #101116; background: var(--pc-dialog-yellow); box-shadow: none; }
 .cabin-pc-page .btn-modal.secondary { color: var(--pc-dialog-muted); background: rgba(255,255,255,.035); }
 .cabin-pc-page .btn-modal:hover { transform: none; filter: brightness(1.08); box-shadow: none; }
 
-.cabin-pc-page .settings-content { width: min(780px, calc(100vw - 48px)) !important; height: min(860px, calc(100dvh - 48px)); min-height: 0; padding-bottom: 20px; }
+.cabin-pc-page #settingsModal { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100dvh !important; margin: 0 !important; padding: 18px !important; align-items: center !important; justify-content: center !important; transform: none !important; zoom: 1 !important; }
+.cabin-pc-page .settings-content { position: relative !important; display: grid !important; grid-template-rows: auto auto auto minmax(0,1fr) auto; width: min(920px, calc(100vw - 36px)) !important; height: min(820px, calc(100dvh - 36px)) !important; max-width: calc(100vw - 36px) !important; max-height: calc(100dvh - 36px) !important; min-width: 0 !important; min-height: 0 !important; margin: auto !important; padding-bottom: 20px; transform: none !important; zoom: 1 !important; }
 .cabin-pc-page .settings-intro { margin: 7px 0 0; color: var(--pc-dialog-muted); font-size: .82rem; }
 .cabin-pc-page .settings-body { display: grid; flex: 1 1 auto; grid-template-columns: 1fr 1fr; align-items: start; gap: 13px; min-height: 0; max-height: none !important; margin-top: 20px; padding: 0 8px 4px 0 !important; overflow-x: hidden !important; overflow-y: auto !important; }
 .cabin-pc-page .settings-group { min-width: 0; padding: 16px; border: 1px solid var(--pc-dialog-line); border-radius: 16px; background: rgba(255,255,255,.022); }
@@ -81,7 +82,8 @@
 .cabin-pc-page .hotkey-legend strong { color: var(--pc-dialog-yellow); }
 
 @media (max-width: 1180px), (max-height: 760px) {
-    .cabin-pc-page .settings-content { height: calc(100dvh - 24px); }
+    .cabin-pc-page #settingsModal { padding: 12px !important; }
+    .cabin-pc-page .settings-content { width: min(920px, calc(100vw - 24px)) !important; height: calc(100dvh - 24px) !important; max-width: calc(100vw - 24px) !important; max-height: calc(100dvh - 24px) !important; }
     .cabin-pc-page .settings-body { grid-template-columns: 1fr; max-height: none !important; }
 }
 
