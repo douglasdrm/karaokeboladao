@@ -24,9 +24,9 @@
 .cabin-pc-page .btn-modal.secondary { color: var(--pc-dialog-muted); background: rgba(255,255,255,.035); }
 .cabin-pc-page .btn-modal:hover { transform: none; filter: brightness(1.08); box-shadow: none; }
 
-.cabin-pc-page .settings-content { width: min(780px, calc(100vw - 48px)) !important; padding-bottom: 20px; }
+.cabin-pc-page .settings-content { width: min(780px, calc(100vw - 48px)) !important; height: min(860px, calc(100dvh - 48px)); min-height: 0; padding-bottom: 20px; }
 .cabin-pc-page .settings-intro { margin: 7px 0 0; color: var(--pc-dialog-muted); font-size: .82rem; }
-.cabin-pc-page .settings-body { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 13px; max-height: calc(100dvh - 205px) !important; margin-top: 20px; padding: 0 8px 4px 0 !important; overflow-y: auto !important; }
+.cabin-pc-page .settings-body { display: grid; flex: 1 1 auto; grid-template-columns: 1fr 1fr; align-items: start; gap: 13px; min-height: 0; max-height: none !important; margin-top: 20px; padding: 0 8px 4px 0 !important; overflow-x: hidden !important; overflow-y: auto !important; }
 .cabin-pc-page .settings-group { min-width: 0; padding: 16px; border: 1px solid var(--pc-dialog-line); border-radius: 16px; background: rgba(255,255,255,.022); }
 .cabin-pc-page .settings-group > h3 { margin: 0 0 13px; color: var(--pc-dialog-text); font: 750 .85rem/1.2 'Montserrat', sans-serif; }
 .cabin-pc-page .setting-item { margin: 0 0 9px !important; padding: 12px !important; border: 1px solid var(--pc-dialog-line) !important; border-radius: 12px; color: var(--pc-dialog-text); background: rgba(255,255,255,.025) !important; }
@@ -81,7 +81,8 @@
 .cabin-pc-page .hotkey-legend strong { color: var(--pc-dialog-yellow); }
 
 @media (max-width: 1180px), (max-height: 760px) {
-    .cabin-pc-page .settings-body { grid-template-columns: 1fr; max-height: calc(100dvh - 205px) !important; }
+    .cabin-pc-page .settings-content { height: calc(100dvh - 24px); }
+    .cabin-pc-page .settings-body { grid-template-columns: 1fr; max-height: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
