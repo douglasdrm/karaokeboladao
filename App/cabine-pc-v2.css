@@ -406,3 +406,151 @@ body.cabin-pc-page :is(#playerContainer:fullscreen,#playerContainer.is-native-fu
     .party-ranking-highlights { grid-template-rows: repeat(4,minmax(54px,1fr)) !important; }
     .cabin-pc-page .qr-fullscreen-box { width: 100px; }
 }
+
+/* Identidade visual do novo palco aplicada a todos os tamanhos da Cabine DJ.
+   Esta camada altera somente tipografia e acabamento, sem mexer no layout. */
+body.cabin-pc-page #playerContainer {
+    --pc-stage-yellow: #ffd93d;
+    --pc-stage-blue: #7082ff;
+    --pc-stage-surface: rgba(8, 11, 20, .94);
+    --pc-stage-line: rgba(255, 255, 255, .14);
+}
+
+body.cabin-pc-page #playerContainer :is(
+    .floating-info-box,
+    .fs-queue-box,
+    .compact-controls-wrapper,
+    .qr-fullscreen-box,
+    .ranking-ticker,
+    .party-ranking-board
+) {
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+body.cabin-pc-page #playerContainer .floating-info-box {
+    border-color: rgba(112, 130, 255, .72) !important;
+    color: #fff !important;
+    background: var(--pc-stage-surface) !important;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, .34) !important;
+}
+body.cabin-pc-page #playerContainer .floating-info-box .info-label {
+    color: var(--pc-stage-yellow) !important;
+}
+body.cabin-pc-page #playerContainer .floating-info-box p {
+    color: #aeb9ff !important;
+}
+
+body.cabin-pc-page #playerContainer .fs-queue-box {
+    border-color: rgba(255, 217, 61, .34) !important;
+    color: #fff !important;
+    background: var(--pc-stage-surface) !important;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, .34) !important;
+}
+body.cabin-pc-page #playerContainer .fs-label-header,
+body.cabin-pc-page #playerContainer .fs-col-pc.current .fs-rank-pc {
+    color: var(--pc-stage-yellow) !important;
+}
+body.cabin-pc-page #playerContainer .fs-col-pc.current {
+    border-color: rgba(255, 217, 61, .28) !important;
+    background: rgba(255, 217, 61, .09) !important;
+}
+body.cabin-pc-page #playerContainer .fs-name-pc {
+    color: #f7f8fc !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+body.cabin-pc-page #playerContainer .fs-song-pc,
+body.cabin-pc-page #playerContainer .fs-rank-pc {
+    color: #9ba3b7 !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+body.cabin-pc-page #playerContainer .fs-divider-v-pc {
+    background: rgba(112, 130, 255, .28) !important;
+}
+
+body.cabin-pc-page #playerContainer .controls.compact-panel {
+    border-color: var(--pc-stage-line) !important;
+    color: #eef0f7 !important;
+    background: rgba(7, 10, 18, .94) !important;
+}
+body.cabin-pc-page #playerContainer :is(.tone-control,.volume-control) {
+    border-color: var(--pc-stage-line) !important;
+    background: rgba(255, 255, 255, .035) !important;
+}
+body.cabin-pc-page #playerContainer .control-label {
+    color: #c7ccd9 !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+body.cabin-pc-page #playerContainer .btn-main {
+    color: #0a0c12 !important;
+    background: var(--pc-stage-yellow) !important;
+}
+
+body.cabin-pc-page #playerContainer .qr-fullscreen-box {
+    border-color: rgba(255, 217, 61, .3) !important;
+    color: #f4f5f9 !important;
+    background: var(--pc-stage-surface) !important;
+}
+body.cabin-pc-page #playerContainer :is(.qr-party-name,.qr-mobile-link) {
+    color: var(--pc-stage-yellow) !important;
+}
+body.cabin-pc-page #playerContainer .qr-fs-room-code {
+    border-color: rgba(112, 130, 255, .42) !important;
+    background: rgba(112, 130, 255, .1) !important;
+}
+
+body.cabin-pc-page #playerContainer .ranking-ticker {
+    border-color: rgba(255, 217, 61, .26) !important;
+    background: rgba(6, 8, 15, .9) !important;
+    backdrop-filter: blur(12px);
+}
+body.cabin-pc-page #playerContainer .ranking-ticker-card {
+    border-color: rgba(255, 255, 255, .1) !important;
+    background: transparent !important;
+}
+body.cabin-pc-page #playerContainer :is(.ranking-ticker-card-title,.ranking-ticker-card-title i) {
+    color: var(--pc-stage-yellow) !important;
+    font-family: 'Montserrat', sans-serif !important;
+    font-weight: 900 !important;
+}
+body.cabin-pc-page #playerContainer .ranking-ticker-leader {
+    color: #f7f8fc !important;
+    font-family: 'Montserrat', sans-serif !important;
+    font-weight: 800 !important;
+}
+body.cabin-pc-page #playerContainer .ranking-ticker-value {
+    color: #aeb9ff !important;
+    font-family: 'Montserrat', sans-serif !important;
+    font-weight: 800 !important;
+}
+
+body.cabin-pc-page #playerContainer .party-ranking-board {
+    color: #fff !important;
+    background: radial-gradient(circle at 35% 38%, rgba(54, 75, 196, .48), rgba(3, 5, 12, .98) 68%) !important;
+}
+body.cabin-pc-page #playerContainer .party-ranking-board-heading span,
+body.cabin-pc-page #playerContainer .party-ranking-board > h3 {
+    color: var(--pc-stage-yellow) !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+body.cabin-pc-page #playerContainer .party-ranking-board-heading h2,
+body.cabin-pc-page #playerContainer .party-ranking-podium :is(b,strong,span),
+body.cabin-pc-page #playerContainer .party-ranking-highlight :is(span,strong,small) {
+    font-family: 'Montserrat', sans-serif !important;
+}
+body.cabin-pc-page #playerContainer .party-ranking-podium li,
+body.cabin-pc-page #playerContainer .party-ranking-highlight {
+    border-color: var(--pc-stage-line) !important;
+    background: rgba(18, 23, 38, .9) !important;
+}
+body.cabin-pc-page #playerContainer .party-ranking-podium li:first-child {
+    border-color: rgba(255, 217, 61, .55) !important;
+    background: linear-gradient(100deg, rgba(255, 217, 61, .14), rgba(18, 23, 38, .92)) !important;
+}
+body.cabin-pc-page #playerContainer .party-ranking-podium b,
+body.cabin-pc-page #playerContainer .party-ranking-highlight > i {
+    color: var(--pc-stage-yellow) !important;
+}
+body.cabin-pc-page #playerContainer .party-ranking-podium span,
+body.cabin-pc-page #playerContainer .party-ranking-highlight > small {
+    color: #aeb9ff !important;
+}
