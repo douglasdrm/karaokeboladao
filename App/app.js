@@ -334,10 +334,13 @@
         modal = document.getElementById('customModal');
 
         const fullscreenContainer = document.getElementById('playerContainer');
-        const syncFullscreenClass = () => fullscreenContainer?.classList.toggle(
-            'is-native-fullscreen',
-            document.fullscreenElement === fullscreenContainer || document.webkitFullscreenElement === fullscreenContainer
-        );
+        const syncFullscreenClass = () => {
+            fullscreenContainer?.classList.toggle(
+                'is-native-fullscreen',
+                document.fullscreenElement === fullscreenContainer || document.webkitFullscreenElement === fullscreenContainer
+            );
+            updateFullscreenQueue();
+        };
         document.addEventListener('fullscreenchange', syncFullscreenClass);
         document.addEventListener('webkitfullscreenchange', syncFullscreenClass);
 
@@ -4025,8 +4028,18 @@
     function updateFullscreenQueue() {
         const box = document.getElementById('fsQueueOverlay');
         const topInfo = document.getElementById('topInfoBox');
+        const containerEl = document.getElementById('playerContainer');
+        const isStageFullscreen = Boolean(
+            containerEl && (
+                document.fullscreenElement === containerEl ||
+                document.webkitFullscreenElement === containerEl ||
+                containerEl.classList.contains('is-native-fullscreen')
+            )
+        );
 
-        if (!box || queue.length <= 1) {
+        // No dashboard a fila lateral ja apresenta a ordem completa. A faixa
+        // sobre o video fica reservada para o palco em fullscreen.
+        if (!box || !isStageFullscreen || queue.length <= 1) {
             if (box) box.style.display = 'none';
             if (topInfo && isPlaying) topInfo.style.display = 'block';
             return;
@@ -4038,7 +4051,6 @@
         const current = queue[0];
 
         // Mede o container real (playerContainer), não a janela toda
-        const containerEl = document.getElementById('playerContainer');
         const refWidth = containerEl ? containerEl.clientWidth : window.innerWidth;
 
         let qtdProximos = 2;

@@ -112,3 +112,64 @@
 @media (prefers-reduced-motion: reduce) {
     .coming-next-overlay,.score-suspense-overlay,.score-final-overlay,.cn-stage-glow,.cn-badge,.sf-badge,.cn-text-lead,.cn-text-trail,.cn-singer-name,.sf-ticker-value,.sf-score-value,.sf-singer,.sf-phrase,.cn-bar { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* Cabine PC em modo janela: dimensiona a apresentacao pelo palco, nao pela
+   viewport inteira. Fullscreen, segunda tela e layouts mobile ficam intactos. */
+@media (min-width: 1025px) {
+    .cabin-pc-page #playerContainer:not(:fullscreen):not(.is-native-fullscreen) :is(.coming-next-overlay,.score-suspense-overlay,.score-final-overlay) {
+        padding: 24px 150px 104px 24px !important;
+    }
+
+    .cabin-pc-page #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .cn-content {
+        width: min(100%, 760px);
+    }
+
+    .cabin-pc-page #playerContainer:not(:fullscreen):not(.is-native-fullscreen) :is(.cn-badge,.sf-badge) {
+        margin-bottom: clamp(10px, 2.4cqh, 18px) !important;
+        padding: 8px 14px !important;
+        font-size: clamp(.58rem, 1.25cqw, .78rem) !important;
+    }
+
+    .cabin-pc-page #playerContainer:not(:fullscreen):not(.is-native-fullscreen) :is(.cn-text-lead,.cn-text-trail) {
+        max-width: 680px;
+        font-size: clamp(1.05rem, 3.7cqw, 2rem) !important;
+    }
+
+    .cabin-pc-page #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .cn-singer-name {
+        max-width: 100%;
+        margin-top: 8px !important;
+        font-size: clamp(2.6rem, 10cqw, 5.4rem) !important;
+        line-height: .9 !important;
+    }
+
+    .cabin-pc-page #playerContainer:not(:fullscreen):not(.is-native-fullscreen) :is(.sf-ticker-value,.sf-score-value) {
+        font-size: clamp(5rem, 18cqw, 9rem) !important;
+    }
+
+    .cabin-pc-page #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .sf-singer {
+        margin-top: 10px !important;
+        font-size: clamp(1.1rem, 3.2cqw, 1.8rem) !important;
+    }
+
+    .cabin-pc-page #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .sf-phrase {
+        max-width: 680px;
+        margin-top: 10px !important;
+        font-size: clamp(.9rem, 2.4cqw, 1.35rem) !important;
+    }
+
+    .cabin-pc-page #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .cn-equalizer,
+    .cabin-pc-page #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .score-final-overlay .cn-equalizer {
+        height: 38px !important;
+        margin-top: clamp(14px, 3cqh, 24px) !important;
+        gap: 6px !important;
+    }
+
+    .cabin-pc-page #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .cn-bar {
+        width: 6px !important;
+    }
+
+    .cabin-pc-page #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .ranking-ticker {
+        right: 150px;
+        bottom: 84px;
+    }
+}

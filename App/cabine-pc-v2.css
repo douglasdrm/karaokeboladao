@@ -203,6 +203,16 @@
     .cabin-pc-page .queue-count-badge { display: inline-grid; min-width: 22px; height: 22px; margin-left: 4px; place-items: center; border-radius: 999px; color: #111318; background: var(--pc-yellow); font-size: .65rem; vertical-align: middle; }
     .cabin-pc-page .queue-wait-time { margin-top: 6px; color: #8b91a1; font-size: .57rem; }
     .cabin-pc-page .queue-list { margin-top: 4px; padding-right: 2px; }
+    .cabin-pc-page .sidebar-queue .queue-list {
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+    }
+    .cabin-pc-page .sidebar-queue .queue-item {
+        flex: 0 0 auto;
+    }
     .cabin-pc-page .queue-empty-state { min-height: 180px; padding: 24px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666c7b; text-align: center; }
     .cabin-pc-page .queue-empty-state i { margin-bottom: 14px; color: #555c6c; font-size: 1.55rem; }
     .cabin-pc-page .queue-empty-state strong { color: #c8cbd4; font: 700 .82rem/1.2 'Montserrat', sans-serif; }
@@ -231,6 +241,107 @@
 
     .cabin-pc-page .hotkey-bar { grid-column: 2; grid-row: 3; min-width: 0; gap: 5px 12px; padding: 4px 10px; border: 0; border-radius: 8px; color: #626878; background: transparent; font-size: .55rem; }
     .cabin-pc-page .hotkey-bar kbd { padding: 1px 4px; border-color: var(--pc-line); color: #9da2b0; background: rgba(255,255,255,.035); font-size: .52rem; }
+
+    /* Palco embutido: estes limites valem somente na cabine PC fora do
+       fullscreen. As regras usam pixels/rem para nao depender de suporte a
+       unidades de container no navegador do DJ. */
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) :is(.coming-next-overlay,.score-suspense-overlay,.score-final-overlay) {
+        padding: 20px 126px 96px 20px !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .cn-content {
+        width: min(100%, 650px) !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) :is(.cn-badge,.sf-badge) {
+        margin-bottom: 10px !important;
+        padding: 7px 13px !important;
+        font-size: .68rem !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) :is(.cn-text-lead,.cn-text-trail) {
+        max-width: 620px !important;
+        font-size: clamp(1.05rem, 2.2vw, 1.8rem) !important;
+        line-height: 1.12 !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .cn-singer-name {
+        max-width: 100% !important;
+        margin-top: 7px !important;
+        font-size: clamp(2.5rem, 5.2vw, 4.5rem) !important;
+        line-height: .9 !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) :is(.sf-ticker-value,.sf-score-value) {
+        margin-block: 5px !important;
+        font-size: clamp(4.8rem, 9vw, 7.5rem) !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .sf-singer {
+        margin-top: 8px !important;
+        font-size: clamp(1.05rem, 2vw, 1.55rem) !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .sf-phrase {
+        max-width: 610px !important;
+        margin-top: 8px !important;
+        font-size: clamp(.9rem, 1.55vw, 1.2rem) !important;
+        line-height: 1.2 !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .cn-equalizer {
+        height: 30px !important;
+        margin-top: 14px !important;
+        gap: 5px !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .cn-bar {
+        width: 5px !important;
+    }
+
+    /* A fila sobre o video permanece em uma unica faixa compacta. */
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .fs-queue-box {
+        display: none !important;
+        top: 4px !important;
+        width: min(70%, 540px) !important;
+        min-width: 0 !important;
+        max-width: 540px !important;
+        padding: 3px 10px !important;
+        transform: translateX(-50%) !important;
+        overflow: hidden !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .fs-row-container {
+        min-width: 0;
+        gap: 7px !important;
+        overflow: hidden;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .fs-col-pc {
+        min-width: 0;
+        max-width: 155px;
+        gap: 5px !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .fs-col-pc.current {
+        max-width: 175px;
+        padding: 3px 7px !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .fs-name-pc,
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .fs-col-pc.current .fs-name-pc {
+        overflow: hidden;
+        font-size: .7rem !important;
+        text-overflow: ellipsis;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .fs-song-pc {
+        max-width: 135px !important;
+        font-size: .56rem !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .fs-divider-v-pc {
+        flex: 0 0 1px;
+        width: 1px;
+        height: 22px;
+    }
+
+    /* Reserva a faixa dos controles para que o ticker nao os cubra. */
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .ranking-ticker {
+        right: 138px !important;
+        bottom: 78px !important;
+    }
+}
+
+/* Em fullscreen o QR fica acima dos controles e do tempo da musica. */
+body.cabin-pc-page :is(#playerContainer:fullscreen,#playerContainer.is-native-fullscreen) .qr-fullscreen-box {
+    top: auto !important;
+    bottom: 112px !important;
 }
 
 @media (min-width: 1025px) and (max-width: 1400px) {
