@@ -331,10 +331,14 @@
         height: 22px;
     }
 
-    /* Reserva a faixa dos controles para que o ticker nao os cubra. */
+    /* O ticker continua no rodape original; somente os controles sobem para
+       liberar a faixa das notas, sem criar uma area preta sob o video. */
     body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .ranking-ticker {
-        right: 138px !important;
-        bottom: 78px !important;
+        right: 0 !important;
+        bottom: 0 !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .compact-controls-wrapper {
+        bottom: 48px !important;
     }
 }
 
