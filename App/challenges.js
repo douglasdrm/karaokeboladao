@@ -4,7 +4,7 @@
  const btn=(text,action)=>{const b=el('button',text,'challenge-btn');b.type='button';b.onclick=async()=>{b.disabled=true;try{await action();}catch(e){alert(e.message||'Não foi possível concluir.');}finally{b.disabled=false;}};return b;};
  const name=u=>u?.customName||u?.name||u?.displayName||'Participante';
  function ui(api){
-  let room=null,uid=null,ref=null,state={},info=null,seen=new Map(),dialog=null,listBody=null,mode=null;
+  let room=null,uid=null,ref=null,state={},info=null,seen=new Map(),dialog=null,listBody=null,mode=null,hostDetails=null,hostCount=null;
   const dock=el('div',undefined,api.host?'challenge-host-dock':'challenge-mobile-dock');
   const launch=btn('Desafios da festa',showList);launch.className='challenge-launch';
   const caption=el('small','Lance uma música ou aceite um desafio.');launch.append(caption);dock.append(launch);
@@ -15,7 +15,8 @@
    const copy=el('span',undefined,'host-action-copy');copy.append(el('span','Desafios da festa','interaction-chip-label'),caption);launch.replaceChildren(icon,copy);
    let panel=api.mount().querySelector('.host-interaction-panel');
    if(!panel){panel=el('section',undefined,'host-interaction-panel');panel.append(el('h4','INTERAÇÃO DA FESTA'),el('div',undefined,'host-interaction-actions'));api.mount().prepend(panel);}
-   dock.append(announcement);panel.querySelector('.host-interaction-actions').prepend(dock);
+   hostCount=el('span','0','interaction-count');hostCount.hidden=true;const chevron=el('i',undefined,'fas fa-chevron-down interaction-chevron');launch.append(hostCount,chevron);launch.setAttribute('aria-expanded','false');
+   hostDetails=el('div',undefined,'host-action-details');hostDetails.hidden=true;dock.append(hostDetails,announcement);panel.querySelector('.host-interaction-actions').prepend(dock);
   }else{
    let shell=api.mount().querySelector('.interaction-section');if(!shell){shell=el('section',undefined,'interaction-section');shell.setAttribute('aria-label','Interação');shell.append(el('h2','INTERAÇÃO'),el('div',undefined,'interaction-track'));api.mount().prepend(shell);}
    launch.classList.add('interaction-chip');launch.innerHTML='<span class="interaction-chip-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2c1 4-2 5-2 8 0 1.5 1 2.5 2.5 2.5 2 0 3.5-1.7 3.5-4.5 3 2.5 4 5.2 3 8a8 8 0 1 1-14-7c0 3 1.5 4.5 3 4.5C7 8 10 6 13 2Z"/></svg></span><span class="interaction-chip-label">Desafios</span>';
@@ -43,7 +44,7 @@
     if(room!==capturedRoom||uid!==capturedUid)return;
     state=snap.val()||{};
     const items=Object.values(state.items||{}),open=items.filter(ChallengeCore.open);
-    caption.textContent=state.available===false?'Cabine desconectada. Aguarde o DJ.':`${open.length} desafio(s) aberto(s) · toque para participar`;
+    caption.textContent=state.available===false?'Cabine desconectada. Aguarde o DJ.':`${open.length} desafio(s) aberto(s) · toque para participar`;if(hostCount){hostCount.textContent=String(open.length);hostCount.hidden=!open.length;}
     if(screenBar)screenBar.textContent='🔥 Desafios da festa · '+open.length+' aberto(s)';
     const changes=items.filter(c=>seen.get(c.id)!==c.status && (c.status==='open'||c.status==='forming'||c.status==='queued'));
     if(!initial&&changes.length){
@@ -83,9 +84,10 @@
   }
   function renderList(){
    if(!listBody)return;listBody.replaceChildren();
-   listBody.append(btn('＋ Lançar um desafio',()=>compose()));
-   if(state.available!==true)listBody.append(el('p','A cabine está desconectada. Os desafios ficam disponíveis quando o DJ retornar.','challenge-feedback'));
    const items=Object.values(state.items||{}).filter(c=>!['cancelled','expired'].includes(c.status)).sort((a,b)=>b.createdAt-a.createdAt);
+   const hasOwnOpen=items.some(c=>c.authorUid===uid&&ChallengeCore.open(c));
+   listBody.append(btn(hasOwnOpen?'＋ Lançar outro desafio':'＋ Lançar um desafio',()=>compose()));
+   if(state.available!==true)listBody.append(el('p','A cabine está desconectada. Os desafios ficam disponíveis quando o DJ retornar.','challenge-feedback'));
    if(!items.length)listBody.append(el('p','Ainda não há desafios. Escolha uma música e convide a galera!','challenge-muted'));
    for(const c of items){
     const card=el('article',undefined,'challenge-card');
@@ -107,7 +109,7 @@
     card.append(actions);listBody.append(card);
    }
   }
-  function showList(){sync();if(!uid)return alert('Faça login para participar.');listBody=dialogBox('🔥 Desafios da festa');mode='list';renderList();}
+  function showList(){sync();if(!uid)return alert('Faça login para participar.');if(api.host&&hostDetails){const opening=hostDetails.hidden;(dock.closest('.host-interaction-actions')||dock).querySelectorAll('.host-action-details').forEach(node=>{node.hidden=true;node.previousElementSibling?.setAttribute('aria-expanded','false');});hostDetails.hidden=!opening;launch.setAttribute('aria-expanded',String(opening));if(!opening){listBody=null;mode=null;return;}listBody=hostDetails;mode='list';renderList();return;}listBody=dialogBox('🔥 Desafios da festa');mode='list';renderList();}
   function songInfo(body,c){body.append(el('p',c.title,'challenge-hero'),el('p',c.artist),el('p','A música só entra na fila depois da confirmação de todos. A ordem normal será respeitada.','challenge-muted'));}
   function confirmInvite(c){const body=dialogBox('Seu convite para cantar');songInfo(body,c);body.append(btn('Confirmar minha participação',async()=>{await send('confirm',{challengeId:c.id,revealed:true});showList();}),btn('Voltar',showList));}
   function accept(c,group){

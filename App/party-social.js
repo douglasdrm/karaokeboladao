@@ -24,26 +24,43 @@
   d.append(button('Fechar',()=>d.close()),el('h2',title),body);
   d.addEventListener('close',()=>{onClose?.();d.remove();});(document.fullscreenElement||document.body).append(d);d.showModal();return {d,body};
  }
+ function hostCard(box,icon,title,render){
+  const shell=el('section',undefined,'host-action-expandable'),details=el('div',undefined,'host-action-details');details.hidden=true;
+  const toggle=el('button',undefined,'interaction-chip host-action-card');toggle.type='button';toggle.setAttribute('aria-expanded','false');
+  const label=decorate(toggle,icon,title),count=el('span','0','interaction-count'),chevron=el('i',undefined,'fas fa-chevron-down interaction-chevron');count.hidden=true;toggle.append(count,chevron);
+  toggle.onclick=async()=>{const opening=details.hidden;(box.closest('.host-interaction-actions')||box).querySelectorAll('.host-action-details').forEach(node=>{node.hidden=true;node.previousElementSibling?.setAttribute('aria-expanded','false');});details.hidden=!opening;toggle.setAttribute('aria-expanded',String(opening));if(opening)await render(details);};
+  shell.append(toggle,details);box.append(shell);return {toggle,label,count,details,refresh:()=>!details.hidden&&render(details)};
+ }
+ function rankingContent(body,rows){
+  let field='points';body.replaceChildren();const options=el('select');options.setAttribute('aria-label','Ranking');
+  for(const [value,title] of [['points','Pontuação geral'],['songs','Rei/Rainha do Karaokê'],['launched','Desafiador'],['challenges','Corajoso'],['groups','Parceiro de Palco'],['recruits','Recrutador'],['receivedVotes','Queridinho da Galera'],['streak','Incendiário'],['audios','Locutor']]){const o=el('option',title);o.value=value;options.append(o);}
+  const list=el('ol',undefined,'social-ranking');
+  const render=()=>{list.replaceChildren();const order=rows().filter(p=>p[field]>0).slice().sort((a,b)=>b[field]-a[field]||a.name.localeCompare(b.name,'pt-BR'));if(!order.length)list.append(el('p','Os pontos aparecem ao concluir as apresentações.','challenge-muted'));for(const p of order){const row=el('li');row.append(el('strong',p.name),el('span',p[field]+(field==='points'?' pontos':'')));list.append(row);}};
+  options.onchange=()=>{field=options.value;render();};body.append(options,list);render();
+ }
+ async function inviteContent(api,body){
+  const room=api.room(),uid=api.user()?.uid;if(!room||!uid)return;body.replaceChildren();
+  const select=el('select');select.setAttribute('aria-label','Pessoa para chamar');const members=(await api.db.ref(`salas/${room}/active_users`).once('value')).val()||{};
+  for(const [id,u] of Object.entries(members)){if(id===uid||u.uid!==id)continue;const o=el('option',name(u));o.value=id;select.append(o);}
+  const send=button('Enviar chamada',async()=>{if(!select.value)throw Error('Nenhuma outra pessoa com login está disponível.');await command(api,'invite',{targetUid:select.value});});if(!select.children.length){select.disabled=true;send.disabled=true;}
+  body.append(el('p','Convide alguém; a pessoa confirma no celular e escolhe a música.','challenge-muted'),select,send);
+  const values=(await api.db.ref(`salas/${room}/socialInvites`).once('value')).val()||{},list=el('div',undefined,'host-inline-list');
+  for(const [id,i] of Object.entries(values)){if(i.targetUid!==uid&&i.uid!==uid)continue;const card=el('div',undefined,'host-inline-item');card.append(el('strong',`${i.name} → ${i.targetName}`),el('small',i.status==='accepted'?'Convite aceito':i.status==='declined'?'Convite encerrado':'Aguardando confirmação'));if(i.targetUid===uid&&i.status==='pending')card.append(button('Aceitar',()=>command(api,'inviteReply',{inviteId:id,accept:true})),button('Recusar',()=>command(api,'inviteReply',{inviteId:id,accept:false})));list.append(card);}
+  if(!list.children.length)list.append(el('p','Nenhuma chamada nesta festa.','challenge-muted'));body.append(list);
+ }
  function dock(api){
-  const box=el('div',undefined,'social-dock');let selectedRoom,reference,rows=[];
-  const rankingButton=button('Participação na festa',()=>{
-   let field='points';const {d,body}=modal('🏆 Participação na festa');
-   const options=el('select');options.setAttribute('aria-label','Ranking');
-   for(const [value,title] of [['points','Pontuação geral'],['songs','🎤 Rei/Rainha do Karaokê'],['launched','⚔️ Desafiador'],['challenges','🥊 Corajoso'],['groups','👥 Parceiro de Palco'],['recruits','📣 Recrutador'],['receivedVotes','❤️ Queridinho da Galera'],['streak','🔥 Incendiário'],['audios','🎙️ Locutor']]){const o=el('option',title);o.value=value;options.append(o);}
-   const list=el('ol',undefined,'social-ranking');
-   const render=()=>{list.replaceChildren();const order=rows.filter(p=>p[field]>0).slice().sort((a,b)=>b[field]-a[field]||a.name.localeCompare(b.name,'pt-BR'));
-    if(!order.length)list.append(el('p','Os pontos aparecem ao concluir as apresentações.'));
-    for(const p of order){const row=el('li');row.append(el('strong',p.name),el('span',p[field]+(field==='points'?' pontos':'')));list.append(row);}
-   };
-   options.onchange=()=>{field=options.value;render();};body.append(options,list,el('p','Solo +10 · dupla +8 por pessoa · grupo +6 por pessoa. Desafio concluído +10 extra; desafio lançado +5. A partir da segunda participação consecutiva +3 extra. Convite confirmado +5. Cada voto recebido +2; cinco votantes diferentes na apresentação dão +5 extra. Recado aprovado pelo DJ +3.','challenge-muted'),el('p','Somente participantes com login. Não há pontos por apresentações puladas nem voto na própria formação. Convites pontuam uma vez por convidado na festa; desafios cancelados perdem seus pontos. Incendiário mostra a maior sequência de apresentações consecutivas. Empates têm a mesma pontuação.','challenge-muted'));
-   render();const t=setInterval(render,2000);d.addEventListener('close',()=>clearInterval(t));
-  });box.append(rankingButton);
-  const rankingLabel=decorate(rankingButton,'trophy',api.host?'Participação na festa':'Participação');if(api.host)rankingButton.classList.add('host-action-card');
-  const audioButton=button(api.host?'Recados de áudio':'Enviar recado de áudio',()=>api.host?host.showAudio():record(api));const audioLabel=decorate(audioButton,'audio',api.host?'Recados de áudio':'Recado de áudio');if(api.host)audioButton.classList.add('social-audio-host','host-action-card');box.append(audioButton);
-  const invites=button('Chamadas para cantar',()=>showInvites(api));const inviteLabel=decorate(invites,'megaphone',api.host?'Chamadas para cantar':'Chamadas');if(api.host)invites.classList.add('host-action-card');box.append(invites);
+  const box=el('div',undefined,'social-dock');let selectedRoom,reference,inviteRef,rows=[];let rankingCard,audioCard,inviteCard;
+  if(api.host){
+   rankingCard=hostCard(box,'trophy','Participação na festa',body=>rankingContent(body,()=>rows));
+   audioCard=hostCard(box,'audio','Recados de áudio',body=>host.showAudio(body));audioCard.toggle.classList.add('social-audio-host');host.audioView=audioCard;
+   inviteCard=hostCard(box,'megaphone','Chamadas para cantar',body=>inviteContent(api,body));
+  }else{
+   const rankingButton=button('Participação na festa',()=>{const {body}=modal('🏆 Participação na festa');rankingContent(body,()=>rows);body.append(el('p','Solo +10 · dupla +8 por pessoa · grupo +6 por pessoa. Desafio concluído +10 extra; desafio lançado +5. Convite confirmado +5. Cada voto recebido +2. Recado aprovado pelo DJ +3.','challenge-muted'),el('p','Somente participantes com login. Não há pontos por apresentações puladas nem voto na própria formação.','challenge-muted'));});decorate(rankingButton,'trophy','Participação');box.append(rankingButton);
+   const audioButton=button('Enviar recado de áudio',()=>record(api));decorate(audioButton,'audio','Recado de áudio');box.append(audioButton);
+   const invites=button('Chamadas para cantar',()=>showInvites(api));decorate(invites,'megaphone','Chamadas');box.append(invites);
+  }
   interactionMount(api).append(box);
-  let inviteRef;
-  function sync(){const room=api.room();box.hidden=!room||!api.user();if(room===selectedRoom)return;reference?.off();inviteRef?.off();selectedRoom=room;rows=[];if(!room)return;reference=api.db.ref(`salas/${room}/participation`);reference.on('value',s=>{rows=Object.values(s.val()?.people||{});});inviteRef=api.db.ref(`salas/${room}/socialInvites`);inviteRef.on('value',s=>{const count=Object.values(s.val()||{}).filter(i=>i.targetUid===api.user()?.uid&&i.status==='pending').length;if(inviteLabel)inviteLabel.textContent=count?`Chamadas (${count})`:'Chamadas';else invites.textContent=count?'Você tem '+count+' convite(s) para cantar':'Chamadas para cantar';});}
+  function sync(){const room=api.room();box.hidden=!room||!api.user();if(room===selectedRoom)return;reference?.off();inviteRef?.off();selectedRoom=room;rows=[];if(!room)return;reference=api.db.ref(`salas/${room}/participation`);reference.on('value',s=>{rows=Object.values(s.val()?.people||{});rankingCard?.refresh();});inviteRef=api.db.ref(`salas/${room}/socialInvites`);inviteRef.on('value',s=>{const count=Object.values(s.val()||{}).filter(i=>i.status==='pending').length;if(inviteCard){inviteCard.count.textContent=String(count);inviteCard.count.hidden=!count;inviteCard.refresh();}});}
   sync();const t=setInterval(sync,1000);root.addEventListener('pagehide',()=>{clearInterval(t);reference?.off();inviteRef?.off();});
  }
  async function command(api,action,extra){
@@ -110,10 +127,10 @@
   body.append(status,recorderUi,controls,preview,el('p','O microfone é usado apenas enquanto você grava. O áudio será liberado automaticamente ou pelo DJ, conforme a configuração da festa, e não altera a fila de cantores.','challenge-muted'));
   root.addEventListener('pagehide',()=>{closed=true;release();},{once:true});
  }
- let api,room=null,audioRef,challengeRef,clips={},chain=Promise.resolve(),active=null,renderAudio=null;
+ let api,room=null,audioRef,challengeRef,clips={},chain=Promise.resolve(),active=null,renderAudio=null,idleTimer=null;
  const host={
   init(options){api=options;dock({...api,host:true});},
-  begin(){const next=api.room();if(next===room)return;this.stopAudio();audioRef?.off();challengeRef?.off();room=next;clips={};if(!room)return;audioRef=api.db.ref(`salas/${room}/audioClips`);audioRef.on('value',s=>{clips=s.val()||{};audioLabel.textContent='Recados de áudio ('+Object.keys(clips).length+')';renderAudio?.();});challengeRef=api.db.ref(`salas/${room}/challengeState/items`);challengeRef.on('value',s=>root.PartyHost?.challenges(s.val()));},
+  begin(){const next=api.room();if(next===room)return;this.stopAudio();audioRef?.off();challengeRef?.off();room=next;clips={};if(!room)return;audioRef=api.db.ref(`salas/${room}/audioClips`);audioRef.on('value',s=>{clips=s.val()||{};const total=Object.keys(clips).length;if(this.audioView){this.audioView.count.textContent=String(total);this.audioView.count.hidden=!total;this.audioView.refresh();}renderAudio?.();this.scheduleIdle();});challengeRef=api.db.ref(`salas/${room}/challengeState/items`);challengeRef.on('value',s=>root.PartyHost?.challenges(s.val()));},
   handle(req,key){const captured=room;if(!captured)return;chain=chain.catch(()=>{}).then(async()=>{
    const base=api.db.ref(`salas/${captured}`),receipt=base.child('audioReceipts/'+key);
    if((await receipt.once('value')).exists()){await base.child('pedidos/'+key).remove();return;}
@@ -141,27 +158,30 @@
    else if(Object.values(list).some(c=>c.uid===req.singerUid)){ok=false;message='Você já tem um recado aguardando. Aguarde o DJ.';}
    else if(Object.keys(list).length>=20){ok=false;message='A fila de recados está cheia. Aguarde um intervalo.';}
    const changes={['pedidos/'+key]:null,['audioReceipts/'+key]:{ok,message,at:Date.now()}};
-   if(ok)changes['audioClips/'+key]={uid:req.singerUid,name:name(member),photo:member.photo||'',audio:req.audio,duration:req.duration,status:automatic?'approved':'pending',at:Date.now()};
+   if(ok)changes['audioClips/'+key]={uid:req.singerUid,name:name(member),photo:member.photo||'',audio:req.audio,duration:req.duration,status:automatic?'approved':'pending',at:req.timestamp};
    await base.update(changes);
    if(ok&&automatic)root.PartyHost?.activity('audio_'+key,{type:'audio',uid:req.singerUid,name:name(member)});
   }).catch(e=>console.warn('Recado pendente:',e));},
-  showAudio(){
-   const {d,body}=modal('🎙 Recados da festa');
-   const render=()=>{body.replaceChildren(el('p','A liberação dos novos recados pode ser automática ou manual, nas configurações de áudio. Você pode ouvir, aprovar pendentes ou descartar. Um recado liberado toca por intervalo, antes da chamada do próximo cantor. Até 15 segundos.','challenge-muted'));
-    body.append(button('Parar áudio atual',()=>this.stopAudio(true)));
+  showAudio(target){
+   const body=target||modal('🎙 Recados da festa').body;
+   const render=()=>{body.replaceChildren(el('p','Recados aprovados tocam em ordem nos intervalos e também quando não há música na fila.','challenge-muted'));
+    if(active)body.append(button('Parar áudio atual',()=>this.stopAudio(true)));
     const entries=Object.entries(clips).sort((a,b)=>a[1].at-b[1].at);
     if(!entries.length)body.append(el('p','Nenhum recado aguardando.'));
-    for(const [id,c] of entries){const card=el('div',undefined,'challenge-card');card.append(el('strong',c.name),el('p',c.status==='approved'?'Aprovado para o próximo intervalo':'Aguardando aprovação'));
-     card.append(button('Ouvir agora (somente no intervalo)',()=>{if(api.busy()||active)throw Error('Aguarde o intervalo entre músicas.');this.play(c,null,false);}));
+    for(const [id,c] of entries){const card=el('div',undefined,'host-inline-item');card.append(el('strong',c.name),el('small',c.status==='approved'?'Aprovado · aguardando reprodução':'Aguardando aprovação'));
+     card.append(button('Ouvir',()=>{if(api.busy()||active)throw Error('Aguarde o intervalo entre músicas.');this.play(c,null,false);}));
      if(c.status!=='approved')card.append(button('Aprovar',async()=>{await api.db.ref(`salas/${room}/audioClips/${id}/status`).set('approved');root.PartyHost?.activity('audio_'+id,{type:'audio',uid:c.uid,name:c.name});}));
-     else card.append(button('Reproduzir agora (no intervalo)',()=>{if(api.busy()||active)throw Error('Aguarde o intervalo.');this.play(c,id,false);}));
+     else card.append(button('Reproduzir',()=>{if(api.busy()||active)throw Error('Aguarde o intervalo.');this.play(c,id,false);}));
      card.append(button('Descartar',()=>api.db.ref(`salas/${room}/audioClips/${id}`).remove()));body.append(card);
     }
-   };renderAudio=render;render();d.addEventListener('close',()=>{if(renderAudio===render)renderAudio=null;});
+   };renderAudio=render;render();
   },
+  scheduleIdle(){clearTimeout(idleTimer);idleTimer=setTimeout(()=>this.playIdle(),120);},
+  playIdle(){if(!room||active||api.busy())return false;const entry=this.nextApproved();if(!entry){api.resumeAmbient();return false;}this.play(entry[1],entry[0],false);return true;},
+  nextApproved(){return Object.entries(clips).filter(([,c])=>c.status==='approved').sort((a,b)=>(a[1].at||0)-(b[1].at||0))[0];},
   beforeNext(proceed){
    if(active){active.proceed=proceed;return true;}
-   const entry=Object.entries(clips).filter(([,c])=>c.status==='approved').sort((a,b)=>a[1].at-b[1].at)[0];
+   const entry=this.nextApproved();
    if(!entry)return false;this.play(entry[1],entry[0],true,proceed);return true;
   },
   play(clip,id,transition,proceed){
@@ -179,7 +199,7 @@
   stopAudio(continuePlayback=false){
    const token=active;if(!token)return;active=null;clearTimeout(token.timer);token.audio.onended=null;token.audio.onerror=null;token.audio.pause();token.audio.removeAttribute('src');
    token.overlay?.remove();if(token.consume)token.clipRef.remove().catch(console.warn);
-   if(continuePlayback){if(token.proceed)token.proceed();else if(!api.busy())api.resumeAmbient();}
+   if(continuePlayback){if(token.proceed)token.proceed();else this.scheduleIdle();}
   },
   showPlayback(clip){
    document.querySelector('.voice-playback-overlay')?.remove();
@@ -189,7 +209,7 @@
    const bars=el('div',undefined,'voice-playback-bars');for(let i=0;i<18;i++)bars.append(el('i'));
    overlay.append(avatar,copy,bars);document.getElementById('playerContainer')?.append(overlay);return overlay;
   },
-  end(){this.stopAudio();audioRef?.off();challengeRef?.off();clips={};room=null;}
+  end(){clearTimeout(idleTimer);this.stopAudio();audioRef?.off();challengeRef?.off();clips={};room=null;}
  };
  root.SocialHost=host;root.SocialMobile={init:dock};
 })(window);
