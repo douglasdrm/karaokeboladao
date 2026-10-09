@@ -1,5 +1,6 @@
 (function(root){
  'use strict';
+ const AUDIO_MAX_SECONDS=8;
  const weights=Object.freeze({solo:10,duet:8,group:6,challenge:10,challenger:5,streak:3,recruit:5,receivedVote:2,popular:5,popularThreshold:5,audio:3});
  const clean=v=>String(v||'Participante').replace(/[<>]/g,'').trim().slice(0,80);
  function ranking(songs,activities={},challenges={}){
@@ -25,7 +26,7 @@
   return Object.values(people).sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name,'pt-BR'));
  }
  function validAudio(req){
-  return typeof req.audio==='string'&&req.audio.length<=220000&&/^data:audio\/(webm|ogg|mp4)(;codecs=[a-zA-Z0-9.,_-]+)?;base64,[A-Za-z0-9+/]+={0,2}$/.test(req.audio)&&Number.isFinite(req.duration)&&req.duration>0&&req.duration<=15;
+  return typeof req.audio==='string'&&req.audio.length<=220000&&/^data:audio\/(webm|ogg|mp4)(;codecs=[a-zA-Z0-9.,_-]+)?;base64,[A-Za-z0-9+/]+={0,2}$/.test(req.audio)&&Number.isFinite(req.duration)&&req.duration>0&&req.duration<=AUDIO_MAX_SECONDS;
  }
  const api={weights,ranking,clean,validAudio};root.SocialCore=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

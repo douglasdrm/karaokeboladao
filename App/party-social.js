@@ -1,5 +1,6 @@
 (function(root){
  'use strict';
+ const AUDIO_MAX_SECONDS=8;
  const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
  const button=(text,fn)=>{const b=el('button',text,'challenge-btn');b.type='button';b.onclick=async()=>{b.disabled=true;try{await fn();}catch(e){alert(e.message||'Não foi possível concluir.');}finally{b.disabled=false;}};return b;};
  const name=u=>SocialCore.clean(u?.customName||u?.name||u?.displayName);
@@ -84,16 +85,16 @@
  async function record(api){
   const user=api.user(),room=api.room();if(!user||!room)throw Error('Entre na sua conta e na sala.');
   if(!navigator.mediaDevices?.getUserMedia||!root.MediaRecorder)throw Error('Este navegador não oferece gravação de áudio. Use um navegador atualizado.');
-  let stream,recorder,timer,clock,blob,url,closed=false,started=0,duration=0;
+  let stream,recorder,timer,clock,blob,url,closed=false,started=0,duration=0,holding=false,locked=false,cancelled=false,sendOnStop=false,releaseRequested=false,startPoint=null;
   const release=()=>{clearTimeout(timer);clearInterval(clock);stream?.getTracks().forEach(t=>t.stop());stream=null;};
   const {d,body}=modal('🎙 Recado para a festa',()=>{closed=true;if(recorder?.state==='recording')recorder.stop();release();if(url)URL.revokeObjectURL(url);});
   body.classList.add('voice-recorder-body');
-  const status=el('p','Grave até 15 segundos. Você pode chamar alguém para cantar!','voice-recorder-status');
+  const status=el('p','Segure o microfone para gravar até 8 segundos.','voice-recorder-status');
   const recorderUi=el('div',undefined,'voice-recorder-ui'),time=el('span','0:00','voice-recorder-time'),wave=el('div',undefined,'voice-recorder-wave');
   for(let i=0;i<22;i++)wave.append(el('i'));
   recorderUi.append(time,wave);
   const preview=el('audio');preview.controls=true;preview.hidden=true;
-  const send=button('Enviar recado',async()=>{
+  const sendRecording=async()=>{
    if(!blob||closed)return;if(api.room()!==room||api.user()?.uid!==user.uid)throw Error('A sala mudou. Grave novamente.');
    const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('Falha ao ler a gravação.'));r.readAsDataURL(blob);});
    if(!SocialCore.validAudio({audio:data,duration}))throw Error('Gravação muito grande ou incompatível. Tente um recado mais curto.');
@@ -105,26 +106,37 @@
    ack.on('value',s=>{if(!s.exists())return;status.textContent=s.val().message;unsubscribe();});
    timeout=setTimeout(()=>{status.textContent='Sem confirmação da cabine. Consulte o DJ antes de reenviar.';unsubscribe();},20000);
    d.addEventListener('close',unsubscribe);
-  });send.disabled=true;
-  const stop=button('Parar',()=>{if(recorder?.state==='recording')recorder.stop();});stop.classList.add('voice-stop');stop.hidden=true;
-  const start=button('Gravar',async()=>{
+  };
+  const send=button('Enviar recado',sendRecording);send.disabled=true;send.hidden=true;
+  const cancel=button('Cancelar',()=>{cancelled=true;sendOnStop=false;if(recorder?.state==='recording')recorder.stop();else reset();});cancel.classList.add('voice-cancel');cancel.hidden=true;
+  const stop=button('Parar e revisar',()=>{sendOnStop=false;if(recorder?.state==='recording')recorder.stop();});stop.classList.add('voice-stop');stop.hidden=true;
+  const start=el('button','Segure para gravar','challenge-btn voice-record');start.type='button';start.setAttribute('aria-label','Segure para gravar um recado de até 8 segundos');
+  const reset=()=>{holding=false;locked=false;cancelled=false;sendOnStop=false;releaseRequested=false;startPoint=null;blob=null;duration=0;time.textContent='0:00';recorderUi.classList.remove('is-recording','is-locked');start.hidden=false;start.textContent='Segure para gravar';stop.hidden=true;cancel.hidden=true;send.hidden=true;send.disabled=true;preview.hidden=true;if(url){URL.revokeObjectURL(url);url=null;}status.textContent='Segure o microfone para gravar até 8 segundos.';};
+  const begin=async()=>{
+   if(recorder?.state==='recording'||holding)return;holding=true;locked=false;cancelled=false;sendOnStop=false;releaseRequested=false;
    if(blob){blob=null;send.disabled=true;preview.hidden=true;if(url)URL.revokeObjectURL(url);}
-   status.textContent='Autorize o microfone para gravar.';
+   status.textContent='Autorize o microfone e continue segurando.';
    stream=await navigator.mediaDevices.getUserMedia({audio:true});
    if(closed){release();return;}
    const type=['audio/webm;codecs=opus','audio/mp4','audio/ogg;codecs=opus'].find(t=>MediaRecorder.isTypeSupported(t));
    try{recorder=new MediaRecorder(stream,{...(type?{mimeType:type}:{}),audioBitsPerSecond:48000});}catch(e){release();throw e;}
    const chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
-   recorder.onerror=()=>{release();status.textContent='Não foi possível gravar. Tente novamente.';};
-   recorder.onstop=()=>{duration=Math.min(15,(Date.now()-started)/1000);release();recorderUi.classList.remove('is-recording');time.textContent=`0:${String(Math.max(1,Math.round(duration))).padStart(2,'0')}`;if(closed)return;blob=new Blob(chunks,{type:recorder.mimeType});url=URL.createObjectURL(blob);preview.src=url;preview.hidden=false;start.hidden=false;stop.hidden=true;send.disabled=!blob.size;status.textContent='Ouça antes de enviar. A liberação segue a configuração do DJ; a reprodução ocorre somente no intervalo.';};
+   recorder.onerror=()=>{release();reset();status.textContent='Não foi possível gravar. Tente novamente.';};
+   recorder.onstop=async()=>{duration=Math.min(AUDIO_MAX_SECONDS,(Date.now()-started)/1000);release();recorderUi.classList.remove('is-recording','is-locked');holding=false;locked=false;time.textContent=`0:${String(Math.max(1,Math.round(duration))).padStart(2,'0')}`;if(closed)return;if(cancelled||!chunks.length){reset();status.textContent='Gravação cancelada.';return;}blob=new Blob(chunks,{type:recorder.mimeType});url=URL.createObjectURL(blob);preview.src=url;if(sendOnStop){start.hidden=true;stop.hidden=true;cancel.hidden=true;send.hidden=true;status.textContent='Enviando recado…';try{await sendRecording();}catch(e){preview.hidden=false;start.hidden=false;cancel.hidden=false;send.hidden=false;send.disabled=false;status.textContent=e.message||'Não foi possível enviar.';}return;}preview.hidden=false;start.hidden=false;stop.hidden=true;cancel.hidden=false;send.hidden=false;send.disabled=!blob.size;status.textContent='Ouça, envie ou grave novamente.';};
    started=Date.now();try{recorder.start();}catch(e){release();throw e;}
-   start.hidden=true;stop.hidden=false;recorderUi.classList.add('is-recording');status.textContent='Gravando… toque em parar quando terminar.';
-   time.textContent='0:00';clock=setInterval(()=>{const elapsed=Math.min(15,(Date.now()-started)/1000);time.textContent=`0:${String(Math.floor(elapsed)).padStart(2,'0')}`;},200);
-   timer=setTimeout(()=>{if(recorder.state==='recording')recorder.stop();},15000);
-  });
-  start.classList.add('voice-record');send.classList.add('voice-send');
-  const controls=el('div',undefined,'voice-recorder-actions');controls.append(start,stop,send);
-  body.append(status,recorderUi,controls,preview,el('p','O microfone é usado apenas enquanto você grava. O áudio será liberado automaticamente ou pelo DJ, conforme a configuração da festa, e não altera a fila de cantores.','challenge-muted'));
+   start.hidden=false;start.textContent='Solte para enviar';cancel.hidden=false;recorderUi.classList.add('is-recording');status.textContent='Gravando… solte para enviar · arraste para a esquerda para cancelar · para cima para travar.';
+   time.textContent='0:00';clock=setInterval(()=>{const elapsed=Math.min(AUDIO_MAX_SECONDS,(Date.now()-started)/1000);time.textContent=`0:${String(Math.floor(elapsed)).padStart(2,'0')}`;},200);
+   timer=setTimeout(()=>{if(recorder.state==='recording'){sendOnStop=!locked;recorder.stop();}},AUDIO_MAX_SECONDS*1000);
+   if(releaseRequested&&!locked){sendOnStop=true;recorder.stop();}
+  };
+  start.addEventListener('pointerdown',e=>{e.preventDefault();startPoint={x:e.clientX,y:e.clientY};start.setPointerCapture?.(e.pointerId);begin().catch(err=>{release();reset();status.textContent=err.message||'Não foi possível iniciar a gravação.';});});
+  start.addEventListener('pointermove',e=>{if(!holding||!startPoint||locked)return;const dx=e.clientX-startPoint.x,dy=e.clientY-startPoint.y;if(dx<-70){cancelled=true;sendOnStop=false;if(recorder?.state==='recording')recorder.stop();}else if(dy<-70){locked=true;holding=false;start.hidden=true;recorderUi.classList.add('is-locked');stop.hidden=false;status.textContent='Gravação travada. Toque em parar para revisar.';}});
+  const releasePointer=()=>{if(!holding||locked)return;holding=false;sendOnStop=!cancelled;if(recorder?.state==='recording')recorder.stop();else releaseRequested=true;};
+  start.addEventListener('pointerup',releasePointer);start.addEventListener('pointercancel',()=>{cancelled=true;releasePointer();});
+  start.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&recorder?.state!=='recording'){e.preventDefault();begin().then(()=>{locked=true;holding=false;start.hidden=true;recorderUi.classList.add('is-locked');stop.hidden=false;status.textContent='Gravação travada. Toque em parar para revisar.';}).catch(err=>{reset();status.textContent=err.message;});}});
+  send.classList.add('voice-send');
+  const controls=el('div',undefined,'voice-recorder-actions');controls.append(cancel,start,stop,send);
+  body.append(status,recorderUi,controls,preview,el('p','Solte para enviar, arraste para a esquerda para cancelar ou para cima para travar e revisar.','challenge-muted'));
   root.addEventListener('pagehide',()=>{closed=true;release();},{once:true});
  }
  let api,room=null,audioRef,challengeRef,clips={},chain=Promise.resolve(),active=null,renderAudio=null,idleTimer=null;
@@ -155,7 +167,6 @@
    const automatic=api.autoApproveAudio?.()===true;
    let message=automatic?'Recado liberado! Ele tocará em um próximo intervalo.':'Recado recebido! Aguarde a aprovação do DJ.',ok=true;
    if(!member||!Number.isFinite(req.timestamp)||Math.abs(Date.now()-req.timestamp)>180000||!SocialCore.validAudio(req)){ok=false;message='Recado inválido ou expirado. Grave novamente.';}
-   else if(Object.values(list).some(c=>c.uid===req.singerUid)){ok=false;message='Você já tem um recado aguardando. Aguarde o DJ.';}
    else if(Object.keys(list).length>=20){ok=false;message='A fila de recados está cheia. Aguarde um intervalo.';}
    const changes={['pedidos/'+key]:null,['audioReceipts/'+key]:{ok,message,at:Date.now()}};
    if(ok)changes['audioClips/'+key]={uid:req.singerUid,name:name(member),photo:member.photo||'',audio:req.audio,duration:req.duration,status:automatic?'approved':'pending',at:req.timestamp};
@@ -192,7 +203,7 @@
    token.clipRef=clipRef;token.consume=!!id;
    const finish=()=>{if(active!==token)return;if(id){delete clips[id];clipRef.remove().catch(console.warn);}this.stopAudio(true);};
    const failed=()=>{if(active!==token)return;token.consume=false;if(id){clip.status='pending';clips[id]=clip;clipRef.child('status').set('pending').catch(console.warn);}this.stopAudio(true);};
-   audio.onended=finish;audio.onerror=failed;token.timer=setTimeout(finish,15000);
+   audio.onended=finish;audio.onerror=failed;token.timer=setTimeout(finish,(AUDIO_MAX_SECONDS+1)*1000);
    if(id)delete clips[id];
    audio.play().catch(failed);
   },
