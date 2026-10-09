@@ -85,58 +85,62 @@
  async function record(api){
   const user=api.user(),room=api.room();if(!user||!room)throw Error('Entre na sua conta e na sala.');
   if(!navigator.mediaDevices?.getUserMedia||!root.MediaRecorder)throw Error('Este navegador não oferece gravação de áudio. Use um navegador atualizado.');
-  let stream,recorder,timer,clock,blob,url,closed=false,started=0,duration=0,holding=false,locked=false,cancelled=false,sendOnStop=false,releaseRequested=false,startPoint=null;
-  const release=()=>{clearTimeout(timer);clearInterval(clock);stream?.getTracks().forEach(t=>t.stop());stream=null;};
-  const {d,body}=modal('🎙 Recado para a festa',()=>{closed=true;if(recorder?.state==='recording')recorder.stop();release();if(url)URL.revokeObjectURL(url);});
+  const states=Object.freeze({IDLE:'IDLE',RECORDING:'RECORDING',PAUSED:'PAUSED',PREVIEW:'PREVIEW'});
+  let state=states.IDLE,stream,recorder,clock,blob,url,closed=false,starting=false,duration=0,recordedMs=0,segmentStarted=0,chunks=[];
+  const release=()=>{clearInterval(clock);stream?.getTracks().forEach(t=>t.stop());stream=null;};
+  const {d,body}=modal('🎙 Recado para a festa',()=>{closed=true;if(['recording','paused'].includes(recorder?.state))recorder.stop();release();if(url)URL.revokeObjectURL(url);});
   body.classList.add('voice-recorder-body');
-  const status=el('p','Segure o microfone para gravar até 8 segundos.','voice-recorder-status');
+  const status=el('p','', 'voice-recorder-status');status.hidden=true;
   const recorderUi=el('div',undefined,'voice-recorder-ui'),time=el('span','0:00','voice-recorder-time'),wave=el('div',undefined,'voice-recorder-wave');
   for(let i=0;i<22;i++)wave.append(el('i'));
-  recorderUi.append(time,wave);
+  recorderUi.append(time,wave);recorderUi.hidden=true;
   const preview=el('audio');preview.controls=true;preview.hidden=true;
-  const sendRecording=async()=>{
-   if(!blob||closed)return;if(api.room()!==room||api.user()?.uid!==user.uid)throw Error('A sala mudou. Grave novamente.');
-   const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('Falha ao ler a gravação.'));r.readAsDataURL(blob);});
-   if(!SocialCore.validAudio({audio:data,duration}))throw Error('Gravação muito grande ou incompatível. Tente um recado mais curto.');
-   const pending=api.db.ref(`salas/${room}/pedidos`).push();
-   await pending.set({kind:'social',action:'audio',id:'audio',singer:name(user),singerUid:user.uid,processed:false,timestamp:firebase.database.ServerValue.TIMESTAMP,audio:data,duration});
-   status.textContent='Enviado. Aguardando confirmação da cabine…';send.hidden=true;
-   const ack=api.db.ref(`salas/${room}/audioReceipts/${pending.key}`);
-   let timeout;const unsubscribe=()=>{ack.off();clearTimeout(timeout);};
-   ack.on('value',s=>{if(!s.exists())return;status.textContent=s.val().message;unsubscribe();});
-   timeout=setTimeout(()=>{status.textContent='Sem confirmação da cabine. Consulte o DJ antes de reenviar.';unsubscribe();},20000);
-   d.addEventListener('close',unsubscribe);
-  };
-  const send=button('Enviar recado',sendRecording);send.disabled=true;send.hidden=true;
-  const cancel=button('Cancelar',()=>{cancelled=true;sendOnStop=false;if(recorder?.state==='recording')recorder.stop();else reset();});cancel.classList.add('voice-cancel');cancel.hidden=true;
-  const stop=button('Parar e revisar',()=>{sendOnStop=false;if(recorder?.state==='recording')recorder.stop();});stop.classList.add('voice-stop');stop.hidden=true;
-  const start=el('button','Segure para gravar','challenge-btn voice-record');start.type='button';start.setAttribute('aria-label','Segure para gravar um recado de até 8 segundos');
-  const reset=()=>{holding=false;locked=false;cancelled=false;sendOnStop=false;releaseRequested=false;startPoint=null;blob=null;duration=0;time.textContent='0:00';recorderUi.classList.remove('is-recording','is-locked');start.hidden=false;start.textContent='Segure para gravar';stop.hidden=true;cancel.hidden=true;send.hidden=true;send.disabled=true;preview.hidden=true;if(url){URL.revokeObjectURL(url);url=null;}status.textContent='Segure o microfone para gravar até 8 segundos.';};
-  const begin=async()=>{
-   if(recorder?.state==='recording'||holding)return;holding=true;locked=false;cancelled=false;sendOnStop=false;releaseRequested=false;
-   if(blob){blob=null;send.disabled=true;preview.hidden=true;if(url)URL.revokeObjectURL(url);}
-   status.textContent='Autorize o microfone e continue segurando.';
-   stream=await navigator.mediaDevices.getUserMedia({audio:true});
-   if(closed){release();return;}
-   const type=['audio/webm;codecs=opus','audio/mp4','audio/ogg;codecs=opus'].find(t=>MediaRecorder.isTypeSupported(t));
-   try{recorder=new MediaRecorder(stream,{...(type?{mimeType:type}:{}),audioBitsPerSecond:48000});}catch(e){release();throw e;}
-   const chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
-   recorder.onerror=()=>{release();reset();status.textContent='Não foi possível gravar. Tente novamente.';};
-   recorder.onstop=async()=>{duration=Math.min(AUDIO_MAX_SECONDS,(Date.now()-started)/1000);release();recorderUi.classList.remove('is-recording','is-locked');holding=false;locked=false;time.textContent=`0:${String(Math.max(1,Math.round(duration))).padStart(2,'0')}`;if(closed)return;if(cancelled||!chunks.length){reset();status.textContent='Gravação cancelada.';return;}blob=new Blob(chunks,{type:recorder.mimeType});url=URL.createObjectURL(blob);preview.src=url;if(sendOnStop){start.hidden=true;stop.hidden=true;cancel.hidden=true;send.hidden=true;status.textContent='Enviando recado…';try{await sendRecording();}catch(e){preview.hidden=false;start.hidden=false;cancel.hidden=false;send.hidden=false;send.disabled=false;status.textContent=e.message||'Não foi possível enviar.';}return;}preview.hidden=false;start.hidden=false;stop.hidden=true;cancel.hidden=false;send.hidden=false;send.disabled=!blob.size;status.textContent='Ouça, envie ou grave novamente.';};
-   started=Date.now();try{recorder.start();}catch(e){release();throw e;}
-   start.hidden=false;start.textContent='Solte para enviar';cancel.hidden=false;recorderUi.classList.add('is-recording');status.textContent='Gravando… solte para enviar · arraste para a esquerda para cancelar · para cima para travar.';
-   time.textContent='0:00';clock=setInterval(()=>{const elapsed=Math.min(AUDIO_MAX_SECONDS,(Date.now()-started)/1000);time.textContent=`0:${String(Math.floor(elapsed)).padStart(2,'0')}`;},200);
-   timer=setTimeout(()=>{if(recorder.state==='recording'){sendOnStop=!locked;recorder.stop();}},AUDIO_MAX_SECONDS*1000);
-   if(releaseRequested&&!locked){sendOnStop=true;recorder.stop();}
-  };
-  start.addEventListener('pointerdown',e=>{e.preventDefault();startPoint={x:e.clientX,y:e.clientY};start.setPointerCapture?.(e.pointerId);begin().catch(err=>{release();reset();status.textContent=err.message||'Não foi possível iniciar a gravação.';});});
-  start.addEventListener('pointermove',e=>{if(!holding||!startPoint||locked)return;const dx=e.clientX-startPoint.x,dy=e.clientY-startPoint.y;if(dx<-70){cancelled=true;sendOnStop=false;if(recorder?.state==='recording')recorder.stop();}else if(dy<-70){locked=true;holding=false;start.hidden=true;recorderUi.classList.add('is-locked');stop.hidden=false;status.textContent='Gravação travada. Toque em parar para revisar.';}});
-  const releasePointer=()=>{if(!holding||locked)return;holding=false;sendOnStop=!cancelled;if(recorder?.state==='recording')recorder.stop();else releaseRequested=true;};
-  start.addEventListener('pointerup',releasePointer);start.addEventListener('pointercancel',()=>{cancelled=true;releasePointer();});
-  start.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&recorder?.state!=='recording'){e.preventDefault();begin().then(()=>{locked=true;holding=false;start.hidden=true;recorderUi.classList.add('is-locked');stop.hidden=false;status.textContent='Gravação travada. Toque em parar para revisar.';}).catch(err=>{reset();status.textContent=err.message;});}});
-  send.classList.add('voice-send');
-  const controls=el('div',undefined,'voice-recorder-actions');controls.append(cancel,start,stop,send);
-  body.append(status,recorderUi,controls,preview,el('p','Solte para enviar, arraste para a esquerda para cancelar ou para cima para travar e revisar.','challenge-muted'));
+  const mic=button('Gravar',startRecording);mic.classList.add('voice-record');mic.setAttribute('aria-label','Iniciar gravação de áudio');
+  const pause=button('Pausar',pauseRecording);pause.classList.add('voice-pause');
+  const resume=button('Retomar',resumeRecording);resume.classList.add('voice-resume');
+  const stop=button('Finalizar',finishRecording);stop.classList.add('voice-stop');
+  const discard=button('Descartar',()=>setState(states.IDLE));discard.classList.add('voice-discard');discard.setAttribute('aria-label','Descartar gravação');
+  const send=button('Enviar',sendRecording);send.classList.add('voice-send');send.setAttribute('aria-label','Enviar gravação');
+  const controls=el('div',undefined,'voice-recorder-actions');controls.append(mic,pause,resume,stop,discard,send);
+  const currentMs=()=>Math.min(AUDIO_MAX_SECONDS*1000,recordedMs+(state===states.RECORDING?Date.now()-segmentStarted:0));
+  const updateTime=()=>{const seconds=Math.min(AUDIO_MAX_SECONDS,Math.floor(currentMs()/1000));time.textContent=`0:${String(seconds).padStart(2,'0')}`;if(currentMs()>=AUDIO_MAX_SECONDS*1000)finishRecording();};
+  function setState(next,message=''){
+   state=next;const idle=next===states.IDLE,recording=next===states.RECORDING,paused=next===states.PAUSED,review=next===states.PREVIEW;
+   mic.hidden=!idle;pause.hidden=!recording;resume.hidden=!paused;stop.hidden=!(recording||paused);discard.hidden=!review;send.hidden=!review;recorderUi.hidden=idle||review;preview.hidden=!review;status.hidden=!message;status.textContent=message;
+   recorderUi.classList.toggle('is-recording',recording);recorderUi.classList.toggle('is-paused',paused);
+   if(idle){clearInterval(clock);release();blob=null;duration=0;recordedMs=0;segmentStarted=0;chunks=[];time.textContent='0:00';preview.pause();preview.removeAttribute('src');preview.load();if(url){URL.revokeObjectURL(url);url=null;}}
+  }
+  async function startRecording(){
+   if(state!==states.IDLE||starting)return;starting=true;mic.disabled=true;
+   try{
+    stream=await navigator.mediaDevices.getUserMedia({audio:true});if(closed){release();return;}
+    const type=['audio/webm;codecs=opus','audio/mp4','audio/ogg;codecs=opus'].find(t=>MediaRecorder.isTypeSupported(t));recorder=new MediaRecorder(stream,{...(type?{mimeType:type}:{}),audioBitsPerSecond:48000});chunks=[];recordedMs=0;
+    recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+    recorder.onerror=()=>{release();setState(states.IDLE,'Não foi possível gravar. Tente novamente.');};
+    recorder.onstop=()=>{release();if(closed)return;duration=Math.min(AUDIO_MAX_SECONDS,recordedMs/1000);if(!chunks.length){setState(states.IDLE,'A gravação ficou vazia. Tente novamente.');return;}blob=new Blob(chunks,{type:recorder.mimeType});url=URL.createObjectURL(blob);preview.src=url;setState(states.PREVIEW);};
+    recorder.start();segmentStarted=Date.now();setState(states.RECORDING);clock=setInterval(updateTime,100);updateTime();
+   }catch(e){release();setState(states.IDLE,e.message||'Não foi possível acessar o microfone.');}
+   finally{starting=false;mic.disabled=false;}
+  }
+  async function pauseRecording(){
+   if(state!==states.RECORDING||recorder?.state!=='recording')return;recordedMs=currentMs();recorder.pause();clearInterval(clock);setState(states.PAUSED);
+  }
+  async function resumeRecording(){
+   if(state!==states.PAUSED||recorder?.state!=='paused')return;recorder.resume();segmentStarted=Date.now();setState(states.RECORDING);clock=setInterval(updateTime,100);
+  }
+  async function finishRecording(){
+   if(![states.RECORDING,states.PAUSED].includes(state)||!['recording','paused'].includes(recorder?.state))return;if(state===states.RECORDING)recordedMs=currentMs();clearInterval(clock);recorder.stop();
+  }
+  async function sendRecording(){
+   if(state!==states.PREVIEW||!blob||closed)return;if(api.room()!==room||api.user()?.uid!==user.uid)throw Error('A sala mudou. Grave novamente.');
+   const captured=blob,capturedDuration=duration;discard.disabled=true;send.disabled=true;
+   try{
+    const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('Falha ao ler a gravação.'));r.readAsDataURL(captured);});if(!SocialCore.validAudio({audio:data,duration:capturedDuration}))throw Error('Gravação muito grande ou incompatível. Tente novamente.');
+    const pending=api.db.ref(`salas/${room}/pedidos`).push();await pending.set({kind:'social',action:'audio',id:'audio',singer:name(user),singerUid:user.uid,processed:false,timestamp:firebase.database.ServerValue.TIMESTAMP,audio:data,duration:capturedDuration});setState(states.IDLE);
+    const ack=api.db.ref(`salas/${room}/audioReceipts/${pending.key}`),unsubscribe=()=>ack.off();ack.on('value',s=>{if(s.exists())unsubscribe();});d.addEventListener('close',unsubscribe,{once:true});
+   }finally{discard.disabled=false;send.disabled=false;}
+  }
+  body.append(status,recorderUi,preview,controls);setState(states.IDLE);
   root.addEventListener('pagehide',()=>{closed=true;release();},{once:true});
  }
  let api,room=null,audioRef,challengeRef,clips={},chain=Promise.resolve(),active=null,renderAudio=null,idleTimer=null;
