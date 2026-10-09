@@ -302,6 +302,29 @@ body.cabin-pc-page .vu-meter-bar {
     color: var(--kp-blue) !important;
 }
 
+/* A segunda tela replica a hierarquia cromatica efetiva do fullscreen da
+   cabine. Somente destaques equivalentes recebem o laranja prioritario. */
+#audienceStage .floating-info-box .info-label,
+#audienceStage :is(.fs-label-header,.fs-col-pc.current .fs-rank-pc),
+#audienceStage :is(.qr-party-name,.qr-mobile-link),
+#audienceStage :is(.ranking-ticker-card-title,.ranking-ticker-card-title i),
+#audienceStage :is(.party-ranking-board-heading span,.party-ranking-board > h3),
+#audienceStage :is(.party-ranking-podium b,.party-ranking-highlight > i) {
+    color: var(--kp-yellow) !important;
+}
+#audienceStage .fs-queue-box,
+#audienceStage .qr-fullscreen-box,
+#audienceStage .ranking-ticker {
+    border-color: var(--kp-yellow-line) !important;
+}
+#audienceStage .fs-col-pc.current {
+    border-color: var(--kp-yellow-line) !important;
+    background: var(--kp-yellow-soft) !important;
+}
+#audienceStage :is(.ranking-ticker-value,.party-ranking-podium span,.party-ranking-highlight > small) {
+    color: var(--kp-text-soft) !important;
+}
+
 /* TV / Android TV */
 .tv-setup {
     background: radial-gradient(circle at 18% 0, rgba(138, 63, 252, .15), transparent 32%), radial-gradient(circle at 90% 80%, rgba(255, 122, 0, .08), transparent 28%), var(--color-bg-canvas) !important;

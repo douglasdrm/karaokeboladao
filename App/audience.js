@@ -8,7 +8,10 @@
  const frame=document.createElement('main');frame.id='playerContainer';frame.className='is-native-fullscreen';stage.append(frame);
  function showToolbar(){document.body.classList.remove('toolbar-hidden');clearTimeout(hideTimer);hideTimer=setTimeout(()=>document.body.classList.add('toolbar-hidden'),2200);}
  document.addEventListener('pointermove',e=>{if(e.clientY<64)showToolbar();});document.addEventListener('keydown',e=>{if(e.key==='Tab')showToolbar();});showToolbar();
- document.getElementById('audienceFullscreen').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen();}catch{alert('Use a opção de tela cheia do navegador nesta janela.');}};
+ const fullscreenButton=document.getElementById('audienceFullscreen');
+ function syncFullscreenButton(){const active=Boolean(document.fullscreenElement),label=active?'Voltar':'Tela cheia';fullscreenButton.querySelector('span').textContent=label;fullscreenButton.querySelector('i').className=active?'fas fa-arrow-left':'fas fa-expand';fullscreenButton.title=active?'Voltar à janela da segunda tela':'Entrar em tela cheia';fullscreenButton.setAttribute('aria-label',fullscreenButton.title);}
+ fullscreenButton.onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen();}catch{alert('Use a opção de tela cheia do navegador nesta janela.');}};
+ document.addEventListener('fullscreenchange',syncFullscreenButton);syncFullscreenButton();
  function disconnected(message){stage.querySelectorAll('video').forEach(v=>v.pause());status.textContent=message;status.hidden=false;}
 
  function reconcile(parent,nodes){
