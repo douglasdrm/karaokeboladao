@@ -179,25 +179,86 @@ body.cabin-pc-page .vu-meter-bar {
     background: var(--kp-lilac-soft) !important;
 }
 
-/* Entrada, suspense e nota */
-.coming-next-overlay,
-.score-suspense-overlay,
-.score-final-overlay,
-.tv-show-overlay,
-.tv-score {
+/* Palco publico da cabine: fullscreen e segunda tela compartilham a mesma
+   temperatura de cor sem interferir no enquadramento do video. */
+:is(
+    body.cabin-pc-page #playerContainer:fullscreen,
+    body.cabin-pc-page #playerContainer.is-native-fullscreen,
+    #audienceStage,
+    #audienceStage #playerContainer
+) {
+    background:
+        radial-gradient(circle at 50% -12%, rgba(138, 63, 252, .14), transparent 38%),
+        radial-gradient(circle at 88% 88%, rgba(255, 79, 216, .055), transparent 30%),
+        var(--color-bg-deep, #09060D) !important;
+}
+:is(
+    body.cabin-pc-page #playerContainer:fullscreen,
+    body.cabin-pc-page #playerContainer.is-native-fullscreen,
+    #audienceStage
+) :is(#player,video) {
+    background-color: transparent !important;
+}
+
+/* Entrada, suspense e nota da cabine PC e da segunda tela. */
+:is(.cabin-pc-page,#audienceStage) :is(.coming-next-overlay,.score-suspense-overlay,.score-final-overlay) {
+    --show-yellow: var(--kp-yellow);
+    --show-blue: var(--kp-blue);
+    background:
+        radial-gradient(circle at 50% 38%, rgba(138, 63, 252, .2), transparent 43%),
+        radial-gradient(circle at 72% 68%, rgba(255, 79, 216, .08), transparent 34%),
+        var(--color-bg-deep, #09060D) !important;
+}
+:is(.cabin-pc-page,#audienceStage) :is(.cn-badge,.sf-badge) {
+    border-color: var(--color-action-primary-line) !important;
+    color: var(--color-action-primary) !important;
+    background: var(--color-action-primary-soft) !important;
+}
+:is(.cabin-pc-page,#audienceStage) .cn-stage-glow {
+    background:
+        radial-gradient(circle, rgba(138, 63, 252, .22), transparent 58%),
+        radial-gradient(circle at 58% 48%, rgba(255, 79, 216, .08), transparent 68%) !important;
+}
+:is(.cabin-pc-page,#audienceStage) .cn-singer-name {
+    text-shadow: 0 0 42px rgba(138, 63, 252, .3), 0 0 72px rgba(255, 79, 216, .12) !important;
+}
+:is(.cabin-pc-page,#audienceStage) .cn-bar {
+    --show-bar-peak: var(--color-navigation-hover);
+    background: var(--color-navigation) !important;
+}
+:is(.cabin-pc-page,#audienceStage) .cn-bar:nth-child(2),
+:is(.cabin-pc-page,#audienceStage) .cn-bar:nth-child(6) {
+    --show-bar-peak: var(--color-social-hover);
+    background: var(--color-social) !important;
+}
+:is(.cabin-pc-page,#audienceStage) .cn-bar:nth-child(4) {
+    --show-bar-peak: var(--color-action-primary-hover);
+    background: var(--color-action-primary) !important;
+}
+:is(.cabin-pc-page,#audienceStage) .sf-ticker-value {
+    color: var(--color-text-primary) !important;
+    text-shadow: 0 0 48px rgba(138, 63, 252, .34), 0 0 76px rgba(255, 79, 216, .12) !important;
+}
+:is(.cabin-pc-page,#audienceStage) .sf-score-value {
+    color: var(--color-text-primary) !important;
+    text-shadow: 0 0 42px rgba(255, 122, 0, .24), 0 0 80px rgba(138, 63, 252, .18) !important;
+}
+
+/* A TV conserva sua propria composicao, usando os mesmos papeis semanticos. */
+:is(.tv-show-overlay,.tv-score) {
     --show-yellow: var(--kp-yellow);
     --show-blue: var(--kp-blue);
     background: var(--kp-stage-gradient) !important;
 }
-:is(.cn-badge,.sf-badge,.tv-show-badge,.tv-score > span) {
+:is(.tv-show-badge,.tv-score > span) {
     border-color: var(--kp-lilac-line) !important;
     color: var(--kp-lilac) !important;
     background: var(--kp-lilac-soft) !important;
 }
-:is(.cn-stage-glow,.tv-show-glow) {
+.tv-show-glow {
     background: radial-gradient(circle, rgba(138, 63, 252, .2), transparent 66%) !important;
 }
-:is(.cn-bar,.tv-equalizer i) {
+.tv-equalizer i {
     background: var(--kp-blue) !important;
 }
 

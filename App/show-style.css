@@ -105,7 +105,7 @@
 @keyframes show-badge-in { from { opacity: 0; transform: translateY(-18px) scale(.94); } }
 @keyframes show-text-in { from { opacity: 0; transform: translateY(18px); } }
 @keyframes show-name-arrive { from { opacity: 0; transform: translateY(45px) scale(.9); } }
-@keyframes show-eq { to { height: 100%; background: #8A3FFC; } }
+@keyframes show-eq { to { height: 100%; background: var(--show-bar-peak, #8A3FFC); } }
 @keyframes show-score-tick { to { transform: scale(1.025); opacity: .8; } }
 @keyframes show-score-reveal { from { opacity: 0; transform: scale(1.65) rotate(-4deg); } }
 
