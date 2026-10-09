@@ -1,8 +1,95 @@
-/* Karaoke Party — fonte unica de identidade visual.
-   Layouts e comportamentos continuam pertencendo a cada interface. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;800&display=swap');
+
+/* Karaoke Party — fundacao compartilhada de identidade visual.
+   Layouts e comportamentos continuam pertencendo a cada interface.
+
+   Os tokens --brand-* e --color-* estao prontos para adocao progressiva.
+   Os tokens --kp-* e seus aliases permanecem congelados nesta etapa para
+   preservar visualmente as interfaces que ainda nao foram migradas. */
 :root {
     color-scheme: dark;
 
+    /* Marca oficial: valores primitivos nao devem expressar comportamento. */
+    --brand-purple: #8A3FFC;
+    --brand-orange: #FF7A00;
+    --brand-pink: #FF4FD8;
+    --brand-bg: #0E0A14;
+    --brand-white: #F5F4FA;
+
+    /* Tipografia oficial. A aplicacao aos componentes sera incremental. */
+    --font-family-display: 'Montserrat', system-ui, sans-serif;
+    --font-family-interface: 'Inter', system-ui, sans-serif;
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --font-weight-extrabold: 800;
+
+    /* Fundos e superficies semanticas da nova identidade. */
+    --color-bg-canvas: var(--brand-bg);
+    --color-bg-deep: #09060D;
+    --color-bg-surface: #17111F;
+    --color-bg-surface-raised: #21172B;
+    --color-bg-surface-strong: #2B1E38;
+    --color-bg-overlay: rgba(14, 10, 20, .94);
+    --color-bg-scrim: rgba(6, 3, 10, .78);
+
+    /* Texto e icones. */
+    --color-text-primary: var(--brand-white);
+    --color-text-secondary: #D8D2E2;
+    --color-text-muted: #A49BAD;
+    --color-text-subtle: #756D7D;
+    --color-text-disabled: #665E6E;
+    --color-text-inverse: #180B00;
+
+    /* Bordas e divisores. */
+    --color-border-default: rgba(245, 244, 250, .12);
+    --color-border-strong: rgba(245, 244, 250, .22);
+    --color-border-emphasis: rgba(138, 63, 252, .52);
+
+    /* Acoes prioritarias: cantar, play e CTA principal. */
+    --color-action-primary: var(--brand-orange);
+    --color-action-primary-hover: #FF922E;
+    --color-action-primary-pressed: #E86F00;
+    --color-action-primary-soft: rgba(255, 122, 0, .14);
+    --color-action-primary-line: rgba(255, 122, 0, .46);
+    --color-action-disabled: #4C414F;
+    --color-action-disabled-text: #8F8595;
+
+    /* Navegacao, selecao e foco de produto. */
+    --color-navigation: var(--brand-purple);
+    --color-navigation-hover: #9C5BFF;
+    --color-navigation-pressed: #7428EA;
+    --color-navigation-soft: rgba(138, 63, 252, .14);
+    --color-navigation-line: rgba(138, 63, 252, .46);
+    --color-focus: var(--brand-purple);
+    --effect-focus-ring: 0 0 0 3px rgba(138, 63, 252, .28);
+
+    /* Interacoes sociais e destaques festivos. */
+    --color-social: var(--brand-pink);
+    --color-social-hover: #FF72DE;
+    --color-social-pressed: #E936C1;
+    --color-social-soft: rgba(255, 79, 216, .14);
+    --color-social-line: rgba(255, 79, 216, .44);
+
+    /* Estados funcionais independentes da paleta decorativa da marca. */
+    --color-state-info: #62A8FF;
+    --color-state-success: #4DD899;
+    --color-state-warning: #FFBF47;
+    --color-state-danger: #FF6475;
+    --color-state-info-soft: rgba(98, 168, 255, .14);
+    --color-state-success-soft: rgba(77, 216, 153, .14);
+    --color-state-warning-soft: rgba(255, 191, 71, .14);
+    --color-state-danger-soft: rgba(255, 100, 117, .14);
+
+    /* Efeitos compartilhados, sem glow permanente em controles. */
+    --effect-shadow-sm: 0 6px 18px rgba(0, 0, 0, .24);
+    --effect-shadow-md: 0 18px 50px rgba(0, 0, 0, .32);
+    --effect-shadow-lg: 0 28px 90px rgba(0, 0, 0, .42);
+    --effect-brand-gradient: linear-gradient(135deg, var(--brand-purple), var(--brand-pink) 58%, var(--brand-orange));
+    --effect-navigation-gradient: linear-gradient(135deg, var(--brand-purple), var(--brand-pink));
+
+    /* Tema legado: nao redirecionar sem migrar e validar seus consumidores. */
     --kp-bg: #151820;
     --kp-bg-deep: #0f1219;
     --kp-surface: #1c202b;
@@ -88,4 +175,3 @@
 :where(button, a, input, select, textarea):focus-visible {
     outline-color: var(--kp-blue);
 }
-
