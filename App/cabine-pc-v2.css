@@ -46,8 +46,8 @@
         padding: 16px;
         border: 1px solid var(--pc-line);
         border-radius: 16px;
-        background: rgba(15, 19, 30, .94);
-        box-shadow: none;
+        background: rgba(23, 17, 31, .94);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, .16), inset 0 1px rgba(255, 255, 255, .025);
         backdrop-filter: blur(20px);
     }
 
@@ -125,7 +125,7 @@
     .cabin-pc-page .search-box { position: relative; }
     .cabin-pc-page .search-box > i { position: absolute; z-index: 1; top: 50%; left: 13px; color: #72798c; font-size: .75rem; transform: translateY(-50%); pointer-events: none; }
     .cabin-pc-page .search-box input { height: 44px; padding: 0 12px 0 36px; border-color: var(--pc-line); border-radius: 11px; color: #f7f7fa; background: #090c14; font-size: .78rem; }
-    .cabin-pc-page .search-box input:focus { border-color: rgba(255, 122, 0,.55); box-shadow: 0 0 0 3px rgba(255, 122, 0,.08); }
+    .cabin-pc-page .search-box input:focus { border-color: var(--color-navigation-line); box-shadow: var(--effect-focus-ring); }
     .cabin-pc-page .song-list { margin-top: 10px; padding-right: 3px; }
     .cabin-pc-page .song-item { min-height: 68px; margin-bottom: 6px; padding: 10px; gap: 8px; border: 1px solid transparent; border-radius: 11px; background: rgba(255,255,255,.018); }
     .cabin-pc-page .song-item:hover { border-color: var(--pc-line-strong); background: rgba(255,255,255,.055); transform: none; }
@@ -148,7 +148,11 @@
         min-width: 0;
         padding: 8px;
         border-radius: 16px;
-        background: #05070c;
+        border-color: rgba(138, 63, 252, .2);
+        background:
+            radial-gradient(circle at 50% 0, rgba(138, 63, 252, .1), transparent 38%),
+            var(--color-bg-deep, #09060D);
+        box-shadow: 0 16px 42px rgba(0, 0, 0, .28), inset 0 1px rgba(245, 244, 250, .035);
         container-type: size;
         container-name: pc-stage;
     }
@@ -170,7 +174,7 @@
         gap: 10px;
         border: 1px solid rgba(255,255,255,.15);
         border-radius: 18px;
-        background: rgba(7,9,15,.9);
+        background: rgba(14, 10, 20, .94);
         box-shadow: 0 16px 38px rgba(0,0,0,.38);
         transform: none;
     }
@@ -187,17 +191,39 @@
     .cabin-pc-page .btn-main:hover { transform: scale(1.04); box-shadow: none; }
     .cabin-pc-page .btn-control { width: 34px; height: 34px; font-size: .72rem; }
     .cabin-pc-page .btn-mini { width: 28px; height: 28px; font-size: .62rem; }
+    .cabin-pc-page :is(.btn-control,.btn-mini) {
+        border-color: var(--pc-line);
+        color: var(--color-text-secondary);
+        background: rgba(138, 63, 252, .07);
+    }
+    .cabin-pc-page :is(.btn-control,.btn-mini):hover:not(:disabled) {
+        border-color: var(--color-navigation-line);
+        color: var(--color-text-primary);
+        background: var(--color-navigation-soft);
+    }
+    .cabin-pc-page :is(.btn-control,.btn-mini,.btn-main):focus-visible {
+        outline: none;
+        box-shadow: var(--effect-focus-ring);
+    }
+    .cabin-pc-page :is(.btn-control,.btn-mini,.btn-main):disabled {
+        border-color: var(--pc-line);
+        color: var(--color-action-disabled-text);
+        background: var(--color-action-disabled);
+        box-shadow: none;
+        cursor: not-allowed;
+        opacity: .62;
+    }
 
-    .cabin-pc-page .qr-fullscreen-box { width: 136px; right: 14px; bottom: 88px; padding: 9px; gap: 5px; border-color: var(--pc-line-strong); border-radius: 12px; background: rgba(9,11,18,.92); box-shadow: 0 12px 30px rgba(0,0,0,.32); }
-    .cabin-pc-page .qr-party-name { max-height: 30px; font-size: .68rem; }
-    .cabin-pc-page #qrcode-fs { width: 100px; height: 100px; padding: 5px; }
+    .cabin-pc-page .qr-fullscreen-box { width: 154px; right: 14px; bottom: 88px; padding: 10px; gap: 6px; border-color: var(--pc-line-strong); border-radius: 14px; background: rgba(14, 10, 20, .95); box-shadow: 0 12px 30px rgba(0,0,0,.32); }
+    .cabin-pc-page .qr-party-name { max-height: 34px; font-size: .75rem; line-height: 1.25; }
+    .cabin-pc-page #qrcode-fs { width: 118px; height: 118px; padding: 5px; }
     .cabin-pc-page #qrcode-fs img,
-    .cabin-pc-page #qrcode-fs canvas { width: 90px !important; height: 90px !important; }
-    .cabin-pc-page .qr-fullscreen-box .qr-fs-label { font-size: .68rem; }
+    .cabin-pc-page #qrcode-fs canvas { width: 108px !important; height: 108px !important; }
+    .cabin-pc-page .qr-fullscreen-box .qr-fs-label { font-size: .72rem; }
     .cabin-pc-page .qr-fs-room-code { padding: 4px; }
     .cabin-pc-page .qr-fs-room-code span { font-size: .55rem; }
     .cabin-pc-page .qr-fs-room-code strong { font-size: .92rem; letter-spacing: .12em; }
-    .cabin-pc-page .qr-mobile-link { font-size: .58rem; }
+    .cabin-pc-page .qr-mobile-link { font-size: .65rem; }
 
     .cabin-pc-page .queue-heading-copy { min-width: 0; display: flex; flex-direction: column; }
     .cabin-pc-page .queue-count-badge { display: inline-grid; min-width: 22px; height: 22px; margin-left: 4px; place-items: center; border-radius: 999px; color: #111318; background: var(--pc-yellow); font-size: .65rem; vertical-align: middle; }
@@ -340,6 +366,59 @@
     body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .compact-controls-wrapper {
         bottom: 48px !important;
     }
+
+    /* O placar embutido recebe espaco real para nomes e categorias. O QR fica
+       numa zona reservada, sem cobrir os cards nem reduzir sua matriz. */
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen):has(.party-ranking-board) .party-ranking-board {
+        grid-template-columns: minmax(190px, .72fr) minmax(300px, 1.28fr);
+        gap: 12px 18px;
+        padding: 22px 174px 22px 24px !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .party-ranking-highlights {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(4, minmax(66px, 1fr)) !important;
+        gap: 8px;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .party-ranking-highlight {
+        min-height: 66px;
+        padding: 10px 12px;
+        gap: 4px 8px;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .party-ranking-highlight > span {
+        overflow: visible;
+        font-size: .61rem;
+        line-height: 1.25;
+        text-overflow: clip;
+        white-space: normal;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .party-ranking-highlight > strong {
+        display: -webkit-box;
+        overflow: hidden;
+        font-size: .86rem;
+        line-height: 1.2;
+        text-overflow: ellipsis;
+        white-space: normal;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen) .party-ranking-highlight > small {
+        font-size: .68rem;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen):has(.party-ranking-board) .qr-fullscreen-box {
+        top: 14px !important;
+        right: 14px !important;
+        bottom: auto !important;
+        width: 146px;
+        transform: none !important;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen):has(.party-ranking-board) #qrcode-fs {
+        width: 110px;
+        height: 110px;
+    }
+    body.cabin-pc-page #main_wrapper.dashboard #playerContainer:not(:fullscreen):not(.is-native-fullscreen):has(.party-ranking-board) #qrcode-fs :is(img,canvas) {
+        width: 100px !important;
+        height: 100px !important;
+    }
 }
 
 /* Em fullscreen o QR fica acima dos controles e do tempo da musica. */
@@ -379,22 +458,42 @@ body.cabin-pc-page :is(#playerContainer:fullscreen,#playerContainer.is-native-fu
 
 @container pc-stage (max-width: 920px) {
     .party-ranking-board {
-        grid-template-columns: minmax(205px,.72fr) minmax(0,1.28fr);
+        grid-template-columns: minmax(180px,.68fr) minmax(270px,1.32fr);
         gap: 10px 14px;
-        padding: 20px 132px 20px 22px !important;
+        padding: 18px 160px 18px 20px !important;
     }
     .party-ranking-board-heading h2 { font-size: clamp(23px,3.6cqw,34px); }
     .party-ranking-podium li { min-height: 46px; padding-inline: 11px; border-radius: 12px; }
     .party-ranking-podium strong { font-size: clamp(13px,2cqw,18px); }
-    .party-ranking-highlights { grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: repeat(4,minmax(62px,1fr)) !important; gap: 7px; }
-    .party-ranking-highlight { padding: 9px; border-radius: 11px; }
-    .party-ranking-highlight > span { font-size: 8px; }
-    .party-ranking-highlight > strong { font-size: 13px; }
-    .party-ranking-highlight > small { font-size: 9px; }
-    #playerContainer:has(.party-ranking-board) .qr-fullscreen-box { width: 104px; top: 10px !important; right: 10px !important; padding: 6px; transform: none !important; }
-    #playerContainer:has(.party-ranking-board) #qrcode-fs { width: 72px; height: 72px; }
+    .party-ranking-highlights { grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: repeat(4,minmax(64px,1fr)) !important; gap: 7px; }
+    .party-ranking-highlight { padding: 9px 10px; border-radius: 11px; }
+    .party-ranking-highlight > span { font-size: 9px; }
+    .party-ranking-highlight > strong { font-size: 14px; }
+    .party-ranking-highlight > small { font-size: 10px; }
+    #playerContainer:has(.party-ranking-board) .qr-fullscreen-box { width: 138px; top: 10px !important; right: 10px !important; padding: 8px; transform: none !important; }
+    #playerContainer:has(.party-ranking-board) #qrcode-fs { width: 104px; height: 104px; }
     #playerContainer:has(.party-ranking-board) #qrcode-fs img,
-    #playerContainer:has(.party-ranking-board) #qrcode-fs canvas { width: 62px !important; height: 62px !important; }
+    #playerContainer:has(.party-ranking-board) #qrcode-fs canvas { width: 94px !important; height: 94px !important; }
+}
+
+@container pc-stage (max-width: 720px) {
+    .party-ranking-board {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto auto minmax(0, 1fr);
+        grid-template-areas: 'heading' 'podium' 'subtitle' 'highlights';
+        gap: 8px;
+        padding: 16px 148px 16px 18px !important;
+    }
+    .party-ranking-board-heading { align-self: end; }
+    .party-ranking-board-heading h2 { font-size: clamp(22px, 5cqw, 30px); }
+    .party-ranking-podium { gap: 5px; }
+    .party-ranking-podium li { min-height: 38px; }
+    .party-ranking-highlights { grid-template-rows: repeat(4, minmax(54px, 1fr)) !important; }
+    .party-ranking-highlight { min-height: 54px; padding-block: 7px; }
+    #playerContainer:has(.party-ranking-board) .qr-fullscreen-box { width: 126px; }
+    #playerContainer:has(.party-ranking-board) #qrcode-fs { width: 92px; height: 92px; }
+    #playerContainer:has(.party-ranking-board) #qrcode-fs img,
+    #playerContainer:has(.party-ranking-board) #qrcode-fs canvas { width: 82px !important; height: 82px !important; }
 }
 
 @container pc-stage (max-height: 540px) {
@@ -403,8 +502,8 @@ body.cabin-pc-page :is(#playerContainer:fullscreen,#playerContainer.is-native-fu
     .party-ranking-board-heading h2 { font-size: 27px; }
     .party-ranking-podium { gap: 5px; }
     .party-ranking-podium li { min-height: 40px; }
-    .party-ranking-highlights { grid-template-rows: repeat(4,minmax(54px,1fr)) !important; }
-    .cabin-pc-page .qr-fullscreen-box { width: 100px; }
+    .party-ranking-highlights { grid-template-rows: repeat(4,minmax(58px,1fr)) !important; }
+    .cabin-pc-page .qr-fullscreen-box { width: 132px; }
 }
 
 /* Identidade visual do novo palco aplicada a todos os tamanhos da Cabine DJ.
@@ -419,7 +518,6 @@ body.cabin-pc-page #playerContainer {
 body.cabin-pc-page #playerContainer :is(
     .floating-info-box,
     .fs-queue-box,
-    .compact-controls-wrapper,
     .qr-fullscreen-box,
     .ranking-ticker,
     .party-ranking-board
@@ -427,8 +525,12 @@ body.cabin-pc-page #playerContainer :is(
     font-family: 'Montserrat', sans-serif !important;
 }
 
+body.cabin-pc-page #playerContainer :is(.controls.compact-panel,.tone-control,.volume-control,.control-label) {
+    font-family: var(--font-family-interface, 'Inter', sans-serif) !important;
+}
+
 body.cabin-pc-page #playerContainer .floating-info-box {
-    border-color: rgba(112, 130, 255, .72) !important;
+    border-color: var(--color-navigation-line) !important;
     color: #fff !important;
     background: var(--pc-stage-surface) !important;
     box-shadow: 0 12px 34px rgba(0, 0, 0, .34) !important;
@@ -464,13 +566,13 @@ body.cabin-pc-page #playerContainer .fs-rank-pc {
     font-family: 'Montserrat', sans-serif !important;
 }
 body.cabin-pc-page #playerContainer .fs-divider-v-pc {
-    background: rgba(112, 130, 255, .28) !important;
+    background: rgba(138, 63, 252, .28) !important;
 }
 
 body.cabin-pc-page #playerContainer .controls.compact-panel {
     border-color: var(--pc-stage-line) !important;
     color: #eef0f7 !important;
-    background: rgba(7, 10, 18, .94) !important;
+    background: rgba(14, 10, 20, .95) !important;
 }
 body.cabin-pc-page #playerContainer :is(.tone-control,.volume-control) {
     border-color: var(--pc-stage-line) !important;
@@ -478,7 +580,7 @@ body.cabin-pc-page #playerContainer :is(.tone-control,.volume-control) {
 }
 body.cabin-pc-page #playerContainer .control-label {
     color: #c7ccd9 !important;
-    font-family: 'Montserrat', sans-serif !important;
+    font-family: var(--font-family-interface, 'Inter', sans-serif) !important;
 }
 body.cabin-pc-page #playerContainer .btn-main {
     color: #0a0c12 !important;
@@ -494,8 +596,8 @@ body.cabin-pc-page #playerContainer :is(.qr-party-name,.qr-mobile-link) {
     color: var(--pc-stage-yellow) !important;
 }
 body.cabin-pc-page #playerContainer .qr-fs-room-code {
-    border-color: rgba(112, 130, 255, .42) !important;
-    background: rgba(112, 130, 255, .1) !important;
+    border-color: var(--color-navigation-line) !important;
+    background: var(--color-navigation-soft) !important;
 }
 
 body.cabin-pc-page #playerContainer .ranking-ticker {
@@ -525,7 +627,10 @@ body.cabin-pc-page #playerContainer .ranking-ticker-value {
 
 body.cabin-pc-page #playerContainer .party-ranking-board {
     color: #fff !important;
-    background: radial-gradient(circle at 35% 38%, rgba(54, 75, 196, .48), rgba(3, 5, 12, .98) 68%) !important;
+    background:
+        radial-gradient(circle at 34% 34%, rgba(138, 63, 252, .2), transparent 48%),
+        radial-gradient(circle at 74% 76%, rgba(255, 79, 216, .07), transparent 36%),
+        var(--color-bg-deep, #09060D) !important;
 }
 body.cabin-pc-page #playerContainer .party-ranking-board-heading span,
 body.cabin-pc-page #playerContainer .party-ranking-board > h3 {
@@ -540,11 +645,11 @@ body.cabin-pc-page #playerContainer .party-ranking-highlight :is(span,strong,sma
 body.cabin-pc-page #playerContainer .party-ranking-podium li,
 body.cabin-pc-page #playerContainer .party-ranking-highlight {
     border-color: var(--pc-stage-line) !important;
-    background: rgba(18, 23, 38, .9) !important;
+    background: rgba(23, 17, 31, .92) !important;
 }
 body.cabin-pc-page #playerContainer .party-ranking-podium li:first-child {
     border-color: rgba(255, 122, 0, .55) !important;
-    background: linear-gradient(100deg, rgba(255, 122, 0, .14), rgba(18, 23, 38, .92)) !important;
+    background: linear-gradient(100deg, rgba(255, 122, 0, .14), rgba(23, 17, 31, .94)) !important;
 }
 body.cabin-pc-page #playerContainer .party-ranking-podium b,
 body.cabin-pc-page #playerContainer .party-ranking-highlight > i {
