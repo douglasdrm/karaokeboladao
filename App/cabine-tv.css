@@ -61,7 +61,7 @@
 
 @keyframes tv-glow-pulse { 50% { transform: scale(1.1); opacity: .72; } }
 @keyframes tv-name-arrive { from { opacity: 0; transform: translateY(45px) scale(.9); } }
-@keyframes tv-eq { to { height: 100%; background: #7082ff; } }
+@keyframes tv-eq { to { height: 100%; background: #8A3FFC; } }
 @keyframes tv-score-tick { to { transform: scale(1.025); opacity: .8; } }
 @keyframes tv-score-reveal { from { opacity: 0; transform: scale(1.65) rotate(-4deg); } }
 @keyframes tv-rank-arrive { from { opacity: 0; transform: translateX(40px); } }

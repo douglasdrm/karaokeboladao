@@ -175,4 +175,4 @@ O símbolo é um **K expressivo com referência integrada ao microfone**, com tr
 5. Mantenha `AGENTS.md` na raiz, apontando para este documento.
 6. Peça ao agente para auditar antes de migrar; alterações amplas só após aprovação.
 
-**Status:** documentação visual e logos individuais disponíveis; aplicação no código ainda não iniciada.
+**Status:** identidade aplicada ao produto. Os ativos públicos derivados ficam em `Assets/brand/`; os originais deste diretório permanecem como fonte de verdade. Tokens e compatibilidade estão centralizados em `App/karaoke-theme.css`.

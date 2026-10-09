@@ -401,7 +401,7 @@
         <!-- Botão surpresa flutuante (Me Surpreende) (Novo!) -->
         <button class="btn-surprise-float" id="btnMobileSurprise" onclick="requestSurpriseSong()"
             title="Me Surpreende! 🎲"
-            style="position:fixed; bottom:140px; right:20px; width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg, #FF7A00, #8A3FFC); border:none; color:white; font-size:1.4rem; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 20px rgba(255, 122, 0,0.4); z-index:999; transition:0.3s;"
+            style="position:fixed; bottom:140px; right:20px; width:50px; height:50px; border-radius:50%; background:#FF7A00; border:none; color:#180B00; font-size:1.4rem; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 20px rgba(255, 122, 0,0.3); z-index:999; transition:0.3s;"
             onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'">
             🎲
         </button>
@@ -441,7 +441,7 @@
 
                 <div style="margin-top:20px; text-align:center;">
                     <button class="btn-feedback-submit"
-                        style="background: linear-gradient(135deg, #FF7A00, #8A3FFC); font-size: 0.9rem;"
+                        style="background:#8A3FFC; font-size:0.9rem;"
                         onclick="startMobileTour(true)">
                         <i class="fas fa-route"></i> REFAZER TUTORIAL APLICATIVO
                     </button>
@@ -535,7 +535,7 @@
                     style="font-size: 1.12rem; font-weight: 800; color: white; line-height: 1.35; font-family: 'Montserrat', sans-serif;">
                     "Music Title"</div>
                 <div id="surpriseSongArtist"
-                    style="font-size: 0.9rem; color: var(--blue, #FF7A00); font-weight: 700; margin-top: 6px; font-family: 'Inter', sans-serif;">
+                    style="font-size: 0.9rem; color: var(--blue, #8A3FFC); font-weight: 700; margin-top: 6px; font-family: 'Inter', sans-serif;">
                     Artist Name</div>
                 <div id="surpriseSongSource"
                     style="font-size: 0.72rem; color: rgba(255,255,255,0.4); font-style: italic; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
@@ -546,7 +546,7 @@
             <div class="modal-buttons">
                 <button class="btn-cancel" onclick="closeSurpriseModal()">Cancelar</button>
                 <button class="btn-confirm"
-                    style="background: linear-gradient(135deg, var(--blue, #FF7A00), var(--purple, #8A3FFC)); box-shadow: 0 5px 20px rgba(255, 122, 0, 0.25);"
+                    style="background:#FF7A00;color:#180B00;box-shadow:0 5px 20px rgba(255,122,0,.25);"
                     onclick="confirmSurpriseModal()">BORA! 🎤</button>
             </div>
         </div>
@@ -657,7 +657,7 @@
             finder.innerHTML = `
                 <img src="../Assets/brand/logo-vertical.png" style="width:90px;margin-bottom:18px;" alt="Karaoke Party">
                 <h2 style="font-family:'Montserrat',sans-serif;font-size:1.4rem;font-weight:900;letter-spacing:3px;
-                           background:linear-gradient(90deg,#FF4FD8,#FF7A00);-webkit-background-clip:text;
+                           background:linear-gradient(90deg,#8A3FFC,#FF4FD8);-webkit-background-clip:text;
                            background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;">ENTRAR NA SALA</h2>
                 <p style="color:rgba(255,255,255,0.4);font-size:0.8rem;margin-bottom:24px;line-height:1.5;">
                     Digite o código ou busque pelo<br>nome da festa
@@ -666,14 +666,14 @@
                     <input id="roomSearchInput" type="text" placeholder="Código ou nome da Festa..."
                         autocomplete="off"
                         style="width:100%;padding:14px 18px;border-radius:14px;
-                               background:rgba(255,255,255,0.06);border:2px solid rgba(255, 122, 0,0.25);
+                               background:rgba(255,255,255,0.06);border:2px solid rgba(138,63,252,.35);
                                color:white;font-size:1rem;font-family:'Inter',sans-serif;
                                outline:none;text-align:center;margin-bottom:12px;box-sizing:border-box;
                                transition:border-color 0.3s;">
                     <div id="roomSearchResults" style="margin-bottom:14px;max-height:220px;overflow-y:auto;"></div>
                     <button id="btnEnterRoom" onclick="enterRoomFromFinder()"
-                        style="width:100%;height:50px;background:linear-gradient(135deg,#FF4FD8,#8A3FFC);
-                               border:none;color:white;border-radius:14px;font-size:1rem;font-weight:800;
+                        style="width:100%;height:50px;background:#FF7A00;
+                               border:none;color:#180B00;border-radius:14px;font-size:1rem;font-weight:800;
                                cursor:pointer;letter-spacing:1px;font-family:'Inter',sans-serif;transition:0.2s;">
                         ENTRAR ▶
                     </button>
@@ -683,7 +683,7 @@
             const searchInput = document.getElementById('roomSearchInput');
             const results = document.getElementById('roomSearchResults');
 
-            searchInput.addEventListener('focus', () => searchInput.style.borderColor = '#FF4FD8');
+            searchInput.addEventListener('focus', () => searchInput.style.borderColor = '#8A3FFC');
             searchInput.addEventListener('blur', () => searchInput.style.borderColor = 'rgba(255, 122, 0,0.25)');
 
             searchInput.addEventListener('input', () => {

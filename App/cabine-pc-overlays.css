@@ -33,7 +33,7 @@
 .cabin-pc-page .setting-item { margin: 0 0 9px !important; padding: 12px !important; border: 1px solid var(--pc-dialog-line) !important; border-radius: 12px; color: var(--pc-dialog-text); background: rgba(255,255,255,.025) !important; }
 .cabin-pc-page .setting-item:last-child { margin-bottom: 0 !important; }
 .cabin-pc-page .setting-item-featured { border-color: rgba(255, 122, 0,.23) !important; background: rgba(255, 122, 0,.035) !important; }
-.cabin-pc-page .setting-item label { color: #dfe2ea; font-size: .75rem; }
+.cabin-pc-page .setting-item label { color: #D8D2E2; font-size: .75rem; }
 .cabin-pc-page .setting-item > label > i { width: 16px; color: var(--kp-lilac, #8A3FFC); text-align: center; }
 .cabin-pc-page .setting-stack { display: flex; flex-direction: column; gap: 9px; margin-top: 10px; }
 .cabin-pc-page .setting-help,
@@ -43,7 +43,7 @@
 .cabin-pc-page .setting-item input.full-width:focus,
 .cabin-pc-page .setting-item select.full-width:focus { border-color: var(--kp-blue, #9C5BFF); box-shadow: var(--kp-focus, 0 0 0 3px rgba(138, 63, 252,.2)); }
 .cabin-pc-page .photo-input-btn { justify-content: center; min-height: 39px; padding: 0 12px !important; border: 1px solid var(--pc-dialog-line); border-radius: 9px; color: #101116 !important; background: var(--pc-dialog-yellow) !important; font-size: .68rem !important; }
-.cabin-pc-page .setting-subtitle { margin-bottom: 9px; color: #dfe2ea; font-size: .72rem; font-weight: 700; }
+.cabin-pc-page .setting-subtitle { margin-bottom: 9px; color: #D8D2E2; font-size: .72rem; font-weight: 700; }
 .cabin-pc-page .difficulty-section { margin-top: 10px; padding: 12px; border-color: var(--pc-dialog-line); border-radius: 12px; background: rgba(0,0,0,.12); }
 .cabin-pc-page .difficulty-radios { gap: 5px; }
 .cabin-pc-page .diff-btn span { border-color: var(--pc-dialog-line); background: rgba(255,255,255,.035); font-size: .62rem; }
@@ -51,7 +51,7 @@
 .cabin-pc-page .calib-container { margin-top: 12px; padding: 12px; border-color: var(--pc-dialog-line); background: rgba(0,0,0,.13); }
 .cabin-pc-page #testMicButton { width: 100%; margin-bottom: 10px; }
 
-.cabin-pc-page .account-action { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; width: 100%; gap: 8px; color: #dfe2ea !important; text-align: left; text-decoration: none; cursor: pointer; font: 700 .72rem/1.2 'Inter', sans-serif; }
+.cabin-pc-page .account-action { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; width: 100%; gap: 8px; color: #D8D2E2 !important; text-align: left; text-decoration: none; cursor: pointer; font: 700 .72rem/1.2 'Inter', sans-serif; }
 .cabin-pc-page .account-action > i:first-child { color: var(--kp-lilac, #8A3FFC); }
 .cabin-pc-page .account-action > i:last-child { color: #697183; font-size: .62rem; }
 .cabin-pc-page .account-action-danger > i:first-child { color: #ff7b86; }
@@ -74,7 +74,7 @@
 .cabin-pc-page #trialTimerBanner > div { background: var(--pc-dialog-yellow) !important; }
 .cabin-pc-page #premiumTimerBanner > div { background: #72e6ad !important; }
 .cabin-pc-page #trialTimerBanner span,
-.cabin-pc-page #premiumTimerBanner span { color: #dfe2ea !important; font-size: .65rem !important; letter-spacing: .05em !important; }
+.cabin-pc-page #premiumTimerBanner span { color: #D8D2E2 !important; font-size: .65rem !important; letter-spacing: .05em !important; }
 .cabin-pc-page #premiumTimerBanner button { color: var(--pc-dialog-yellow) !important; }
 
 .cabin-pc-page .hotkey-legend { width: min(370px, calc(100vw - 40px)); padding: 20px; border: 1px solid var(--pc-dialog-line); border-radius: 16px; color: var(--pc-dialog-muted); background: rgba(12,16,27,.98); box-shadow: 0 20px 60px rgba(0,0,0,.48); }
