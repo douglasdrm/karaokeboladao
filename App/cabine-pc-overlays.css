@@ -1,23 +1,23 @@
 /* Acabamento dos painéis operacionais e modais exclusivos da Cabine PC. */
 .cabin-pc-page {
-    --pc-overlay: rgba(3, 5, 10, .84);
-    --pc-dialog: #111624;
-    --pc-dialog-raised: #171d2d;
-    --pc-dialog-line: rgba(255, 255, 255, .1);
-    --pc-dialog-text: #f5f6fa;
-    --pc-dialog-muted: #9299a9;
-    --pc-dialog-yellow: #ffd93d;
+    --pc-overlay: rgba(8, 10, 15, .84);
+    --pc-dialog: var(--kp-surface, #1c202b);
+    --pc-dialog-raised: var(--kp-surface-raised, #232836);
+    --pc-dialog-line: var(--kp-border, rgba(236, 238, 245, .11));
+    --pc-dialog-text: var(--kp-text, #eceef5);
+    --pc-dialog-muted: var(--kp-muted, #9298aa);
+    --pc-dialog-yellow: var(--kp-yellow, #ffc83d);
 }
 
 .cabin-pc-page #djStatsCard { display: flex; gap: 8px; margin-bottom: 12px; }
 .cabin-pc-page #djStatsCard .stat-bubble { display: flex; width: 100%; align-items: center; justify-content: center; gap: 7px; padding: 7px 11px; border: 1px solid var(--pc-dialog-line); border-radius: 10px; color: var(--pc-dialog-muted); background: rgba(255,255,255,.025); font-size: .7rem; }
 .cabin-pc-page #djStatsCard .stat-bubble > i,
-.cabin-pc-page #djStatGenre { color: var(--pc-dialog-yellow); }
+.cabin-pc-page #djStatGenre { color: var(--kp-lilac, #9370f5); }
 
 .cabin-pc-page .modal-overlay { box-sizing: border-box; padding: 24px; background: var(--pc-overlay); backdrop-filter: blur(18px) saturate(.8); -webkit-backdrop-filter: blur(18px) saturate(.8); }
 .cabin-pc-page .modal-content { box-sizing: border-box; width: min(520px, calc(100vw - 48px)); max-height: calc(100dvh - 48px); overflow: hidden; padding: 28px; border: 1px solid var(--pc-dialog-line); border-radius: 22px; color: var(--pc-dialog-text); background: linear-gradient(150deg, rgba(24,30,47,.99), rgba(10,13,22,.99)); box-shadow: 0 30px 90px rgba(0,0,0,.58), inset 0 1px rgba(255,255,255,.035); text-align: left; }
 .cabin-pc-page .modal-content h2 { margin: 0; color: var(--pc-dialog-text); font: 800 1.35rem/1.2 'Montserrat', sans-serif; letter-spacing: -.025em; }
-.cabin-pc-page .pc-modal-eyebrow { display: block; margin-bottom: 7px; color: var(--pc-dialog-yellow); font: 800 .62rem/1.2 'Montserrat', sans-serif; letter-spacing: .15em; }
+.cabin-pc-page .pc-modal-eyebrow { display: block; margin-bottom: 7px; color: var(--kp-lilac, #9370f5); font: 800 .62rem/1.2 'Montserrat', sans-serif; letter-spacing: .15em; }
 .cabin-pc-page .modal-footer { position: relative; z-index: 2; flex: 0 0 auto; justify-content: flex-end; gap: 9px; margin-top: 12px; padding-top: 14px; border-top: 1px solid var(--pc-dialog-line); background: transparent; }
 .cabin-pc-page .btn-modal { min-height: 42px; padding: 0 18px; border: 1px solid var(--pc-dialog-line); border-radius: 10px; font: 800 .7rem/1 'Poppins', sans-serif; letter-spacing: .03em; }
 .cabin-pc-page .btn-modal.primary { border-color: var(--pc-dialog-yellow); color: #101116; background: var(--pc-dialog-yellow); box-shadow: none; }
@@ -34,14 +34,14 @@
 .cabin-pc-page .setting-item:last-child { margin-bottom: 0 !important; }
 .cabin-pc-page .setting-item-featured { border-color: rgba(255,217,61,.23) !important; background: rgba(255,217,61,.035) !important; }
 .cabin-pc-page .setting-item label { color: #dfe2ea; font-size: .75rem; }
-.cabin-pc-page .setting-item > label > i { width: 16px; color: var(--pc-dialog-yellow); text-align: center; }
+.cabin-pc-page .setting-item > label > i { width: 16px; color: var(--kp-lilac, #9370f5); text-align: center; }
 .cabin-pc-page .setting-stack { display: flex; flex-direction: column; gap: 9px; margin-top: 10px; }
 .cabin-pc-page .setting-help,
 .cabin-pc-page .setting-item small { margin: 6px 0 0; color: var(--pc-dialog-muted); font-size: .65rem; line-height: 1.45; }
 .cabin-pc-page .setting-item input.full-width,
 .cabin-pc-page .setting-item select.full-width { box-sizing: border-box; width: 100%; min-height: 40px; margin-top: 9px; padding: 0 11px; border: 1px solid var(--pc-dialog-line); border-radius: 9px; color: var(--pc-dialog-text); background: #090c14; outline: none; }
 .cabin-pc-page .setting-item input.full-width:focus,
-.cabin-pc-page .setting-item select.full-width:focus { border-color: rgba(255,217,61,.55); box-shadow: 0 0 0 3px rgba(255,217,61,.07); }
+.cabin-pc-page .setting-item select.full-width:focus { border-color: var(--kp-blue, #5595f5); box-shadow: var(--kp-focus, 0 0 0 3px rgba(85,149,245,.2)); }
 .cabin-pc-page .photo-input-btn { justify-content: center; min-height: 39px; padding: 0 12px !important; border: 1px solid var(--pc-dialog-line); border-radius: 9px; color: #101116 !important; background: var(--pc-dialog-yellow) !important; font-size: .68rem !important; }
 .cabin-pc-page .setting-subtitle { margin-bottom: 9px; color: #dfe2ea; font-size: .72rem; font-weight: 700; }
 .cabin-pc-page .difficulty-section { margin-top: 10px; padding: 12px; border-color: var(--pc-dialog-line); border-radius: 12px; background: rgba(0,0,0,.12); }
@@ -52,7 +52,7 @@
 .cabin-pc-page #testMicButton { width: 100%; margin-bottom: 10px; }
 
 .cabin-pc-page .account-action { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; width: 100%; gap: 8px; color: #dfe2ea !important; text-align: left; text-decoration: none; cursor: pointer; font: 700 .72rem/1.2 'Poppins', sans-serif; }
-.cabin-pc-page .account-action > i:first-child { color: var(--pc-dialog-yellow); }
+.cabin-pc-page .account-action > i:first-child { color: var(--kp-lilac, #9370f5); }
 .cabin-pc-page .account-action > i:last-child { color: #697183; font-size: .62rem; }
 .cabin-pc-page .account-action-danger > i:first-child { color: #ff7b86; }
 .cabin-pc-page .account-action:hover { border-color: rgba(255,255,255,.18) !important; background: rgba(255,255,255,.055) !important; }
@@ -79,7 +79,7 @@
 
 .cabin-pc-page .hotkey-legend { width: min(370px, calc(100vw - 40px)); padding: 20px; border: 1px solid var(--pc-dialog-line); border-radius: 16px; color: var(--pc-dialog-muted); background: rgba(12,16,27,.98); box-shadow: 0 20px 60px rgba(0,0,0,.48); }
 .cabin-pc-page .hotkey-legend h3 { color: var(--pc-dialog-text); }
-.cabin-pc-page .hotkey-legend strong { color: var(--pc-dialog-yellow); }
+.cabin-pc-page .hotkey-legend strong { color: var(--kp-blue, #5595f5); }
 
 @media (max-width: 1180px), (max-height: 760px) {
     .cabin-pc-page #settingsModal { padding: 12px !important; }

@@ -1,13 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Poppins:wght@300;400;600&display=swap');
 
 :root {
-    --bg: #060612;
-    --accent: #d946ef;
-    --accent2: #a020f0;
-    --blue: #00f2ff;
-    --purple: #7000ff;
-    --glass: rgba(255,255,255,0.05);
-    --border: rgba(255,255,255,0.08);
+    --bg: var(--kp-bg, #151820);
+    --accent: var(--kp-lilac, #9370f5);
+    --accent2: var(--kp-blue, #5595f5);
+    --blue: var(--kp-blue, #5595f5);
+    --purple: var(--kp-lilac, #9370f5);
+    --glass: rgba(28,32,43,.8);
+    --border: var(--kp-border, rgba(236,238,245,.11));
 }
 
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }

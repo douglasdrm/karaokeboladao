@@ -6,14 +6,14 @@
     }
 
     body.cabin-pc-page {
-        --pc-bg: #070910;
-        --pc-panel: #0f131e;
-        --pc-panel-soft: #121724;
-        --pc-line: rgba(255, 255, 255, .09);
-        --pc-line-strong: rgba(255, 255, 255, .16);
-        --pc-muted: #8f95a6;
-        --pc-yellow: #ffd93d;
-        --pc-blue: #536dfe;
+        --pc-bg: var(--kp-bg, #151820);
+        --pc-panel: var(--kp-surface, #1c202b);
+        --pc-panel-soft: var(--kp-surface-raised, #232836);
+        --pc-line: var(--kp-border, rgba(236, 238, 245, .11));
+        --pc-line-strong: var(--kp-border-strong, rgba(236, 238, 245, .2));
+        --pc-muted: var(--kp-muted, #9298aa);
+        --pc-yellow: var(--kp-yellow, #ffc83d);
+        --pc-blue: var(--kp-blue, #5595f5);
         width: 100vw;
         height: 100dvh;
         overflow: hidden;
@@ -410,10 +410,10 @@ body.cabin-pc-page :is(#playerContainer:fullscreen,#playerContainer.is-native-fu
 /* Identidade visual do novo palco aplicada a todos os tamanhos da Cabine DJ.
    Esta camada altera somente tipografia e acabamento, sem mexer no layout. */
 body.cabin-pc-page #playerContainer {
-    --pc-stage-yellow: #ffd93d;
-    --pc-stage-blue: #7082ff;
-    --pc-stage-surface: rgba(8, 11, 20, .94);
-    --pc-stage-line: rgba(255, 255, 255, .14);
+    --pc-stage-yellow: var(--kp-yellow, #ffc83d);
+    --pc-stage-blue: var(--kp-blue, #5595f5);
+    --pc-stage-surface: var(--kp-surface-overlay, rgba(21, 24, 32, .94));
+    --pc-stage-line: var(--kp-border, rgba(236, 238, 245, .11));
 }
 
 body.cabin-pc-page #playerContainer :is(

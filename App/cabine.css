@@ -1,15 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&family=Poppins:wght@300;400;600&display=swap');
 
 :root {
-    --bg-dark: #000000;
-    --accent-primary: #d946ef;
-    --accent-secondary: #2d43d8;
-    --accent-neon: #a020f0;
-    --text-main: #ffffff;
-    --text-muted: #a1a1aa;
-    --glass-bg: rgba(255, 255, 255, 0.05);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --neon-shadow: 0 0 15px rgba(160, 32, 240, 0.5);
+    --bg-dark: var(--kp-bg, #151820);
+    --accent-primary: var(--kp-lilac, #9370f5);
+    --accent-secondary: var(--kp-blue, #5595f5);
+    --accent-neon: var(--kp-lilac, #9370f5);
+    --text-main: var(--kp-text, #eceef5);
+    --text-muted: var(--kp-muted, #9298aa);
+    --glass-bg: rgba(28, 32, 43, .88);
+    --glass-border: rgba(236, 238, 245, .11);
+    --neon-shadow: 0 0 18px rgba(147, 112, 245, .18);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -113,7 +113,7 @@ body:not(.landing-page-root) {
     font-weight: 900;
     letter-spacing: 8px;
     font-family: 'Montserrat', sans-serif;
-    background: linear-gradient(90deg, #2d43d8, #d946ef, #2d43d8);
+    background: linear-gradient(90deg, var(--kp-blue, #5595f5), var(--kp-lilac, #9370f5), var(--kp-blue, #5595f5));
     background-size: 200% auto;
     -webkit-background-clip: text;
     background-clip: text;

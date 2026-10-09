@@ -3,8 +3,8 @@
 .coming-next-overlay,
 .score-suspense-overlay,
 .score-final-overlay {
-    --show-yellow: #ffd93d;
-    --show-blue: #5268ff;
+    --show-yellow: var(--kp-yellow, #ffc83d);
+    --show-blue: var(--kp-blue, #5595f5);
     position: absolute !important;
     inset: 0;
     z-index: 1600;
@@ -18,7 +18,7 @@
     overflow: hidden;
     color: #fff;
     text-align: center;
-    background: radial-gradient(circle at 50% 46%, rgba(54,75,196,.45), rgba(3,5,12,.98) 64%) !important;
+    background: var(--kp-stage-gradient, radial-gradient(circle at 50% 46%, rgba(85,149,245,.28), rgba(15,18,25,.98) 64%)) !important;
     animation: show-fade-in .45s ease both;
 }
 
