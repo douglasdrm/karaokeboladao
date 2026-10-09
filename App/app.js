@@ -2750,7 +2750,7 @@
 
             playerArea.innerHTML = `
                 <div class="video-overlay-banner">
-                    <div class="banner-left"><img src="../Assets/logo.png" alt="Logo"></div>
+                    <div class="banner-left"><img src="../Assets/brand/logo-horizontal.png" alt="Karaoke Party"></div>
                     <div class="banner-right"><span>A MELHOR<br>EXPERIÊNCIA<br>DE KARAOKÊ</span></div>
                 </div>
                 <div id="micBadge" class="mic-active-badge">MIC ATIVO</div>

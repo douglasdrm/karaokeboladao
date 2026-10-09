@@ -19,8 +19,8 @@ self.addEventListener('message', (event) => {
     self.registration.showNotification(title, {
       body: body || 'Aviso do Karaokê!',
       // sw.js está na RAIZ (Web_Version/), então o caminho é relativo à raiz, sem '../'
-      icon: './Assets/icon-192.png',
-      badge: './Assets/icon-192.png',
+      icon: './Assets/brand/icon-192.png',
+      badge: './Assets/brand/icon-192.png',
       vibrate: [300, 100, 300, 100, 500], // Padrão de vibração
       tag: 'karaoke-alert-' + Date.now(), // Tag única força o celular a tratar como nova notificação
       requireInteraction: true // Mantém a notificação visível até o usuário interagir

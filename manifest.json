@@ -3,19 +3,19 @@
   "name": "KARAOKE PARTY",
   "icons": [
     {
-      "src": "Assets/icon-192.png",
+      "src": "Assets/brand/icon-192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "Assets/icon-512.png",
+      "src": "Assets/brand/icon-512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
   ],
   "start_url": "./App/mobile.html",
-  "background_color": "#060612",
-  "theme_color": "#d946ef",
+  "background_color": "#0E0A14",
+  "theme_color": "#8A3FFC",
   "display": "standalone",
   "orientation": "portrait"
 }
