@@ -29,7 +29,7 @@
         pointer-events: none;
     }
     .cabin-pc-page .bg-glow-1 { top: -300px; left: 18%; background: var(--pc-blue); }
-    .cabin-pc-page .bg-glow-2 { right: -320px; bottom: -300px; background: #d946ef; }
+    .cabin-pc-page .bg-glow-2 { right: -320px; bottom: -300px; background: var(--kp-lilac, #9370f5); }
 
     .cabin-pc-page .dashboard {
         width: 100vw !important;

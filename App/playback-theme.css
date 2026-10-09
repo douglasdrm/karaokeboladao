@@ -414,6 +414,9 @@ body.cabin-pc-page .vu-meter-bar {
 .voice-playback-bars i {
     background: linear-gradient(135deg, var(--kp-lilac), var(--kp-blue)) !important;
 }
+.voice-playback-label {
+    color: var(--kp-lilac) !important;
+}
 
 /* Selecao de modo e telas de acesso */
 .mode-entry-page,
