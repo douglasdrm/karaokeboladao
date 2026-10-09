@@ -3856,9 +3856,35 @@
 
     // ─── Hotkeys ──────────────────────────────────────────────────────────────────
 
+    function isEditableKeyboardTarget(e) {
+        const editableSelector = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
+        const eventPath = typeof e.composedPath === 'function' ? e.composedPath() : [e.target];
+
+        const pathHasEditableElement = eventPath.some(node =>
+            node instanceof Element && (node.matches(editableSelector) || node.closest(editableSelector))
+        );
+        if (pathHasEditableElement) return true;
+
+        const focusedElement = document.activeElement;
+        return focusedElement instanceof Element && (
+            focusedElement.matches(editableSelector) || Boolean(focusedElement.closest(editableSelector))
+        );
+    }
+
+    function hasActiveModal() {
+        const modalElements = document.querySelectorAll('dialog[open], [aria-modal="true"], .modal-overlay');
+        return [...modalElements].some(element => {
+            if (element.hidden || element.getAttribute('aria-hidden') === 'true') return false;
+            const style = window.getComputedStyle(element);
+            return style.display !== 'none' && style.visibility !== 'hidden' && element.getClientRects().length > 0;
+        });
+    }
+
     function handleHotkey(e) {
 
-        if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+        // Os listeners próprios de cada modal continuam recebendo o evento.
+        // Aqui apenas impedimos que ele também seja interpretado pela cabine.
+        if (isEditableKeyboardTarget(e) || hasActiveModal()) return;
 
         if (e.key >= '0' && e.key <= '9') {
 
