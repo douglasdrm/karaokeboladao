@@ -6,14 +6,14 @@
     }
 
     body.cabin-pc-page {
-        --pc-bg: var(--kp-bg, #151820);
-        --pc-panel: var(--kp-surface, #1c202b);
-        --pc-panel-soft: var(--kp-surface-raised, #232836);
+        --pc-bg: var(--kp-bg, #0E0A14);
+        --pc-panel: var(--kp-surface, #17111F);
+        --pc-panel-soft: var(--kp-surface-raised, #21172B);
         --pc-line: var(--kp-border, rgba(236, 238, 245, .11));
         --pc-line-strong: var(--kp-border-strong, rgba(236, 238, 245, .2));
-        --pc-muted: var(--kp-muted, #9298aa);
-        --pc-yellow: var(--kp-yellow, #ffc83d);
-        --pc-blue: var(--kp-blue, #5595f5);
+        --pc-muted: var(--kp-muted, #A49BAD);
+        --pc-yellow: var(--kp-yellow, #FF7A00);
+        --pc-blue: var(--kp-blue, #9C5BFF);
         width: 100vw;
         height: 100dvh;
         overflow: hidden;
@@ -29,7 +29,7 @@
         pointer-events: none;
     }
     .cabin-pc-page .bg-glow-1 { top: -300px; left: 18%; background: var(--pc-blue); }
-    .cabin-pc-page .bg-glow-2 { right: -320px; bottom: -300px; background: var(--kp-lilac, #9370f5); }
+    .cabin-pc-page .bg-glow-2 { right: -320px; bottom: -300px; background: var(--kp-lilac, #8A3FFC); }
 
     .cabin-pc-page .dashboard {
         width: 100vw !important;
@@ -102,12 +102,12 @@
         border-radius: 10px;
         color: #c9ccd6;
         background: rgba(255, 255, 255, .025);
-        font: 600 .7rem/1 'Poppins', sans-serif;
+        font: 600 .7rem/1 'Inter', sans-serif;
         text-decoration: none;
         box-shadow: none;
     }
     .cabin-pc-page .btn-icon.header-action:hover { color: #fff; border-color: var(--pc-line-strong); background: rgba(255,255,255,.07); transform: none; }
-    .cabin-pc-page .header-action-primary { color: #fff8d2 !important; border-color: rgba(255, 217, 61, .3) !important; background: rgba(255, 217, 61, .08) !important; }
+    .cabin-pc-page .header-action-primary { color: #fff8d2 !important; border-color: rgba(255, 122, 0, .3) !important; background: rgba(255, 122, 0, .08) !important; }
 
     .cabin-pc-page .sidebar-search,
     .cabin-pc-page .sidebar-queue { grid-row: 2 / 4; height: auto; overflow: hidden; }
@@ -125,7 +125,7 @@
     .cabin-pc-page .search-box { position: relative; }
     .cabin-pc-page .search-box > i { position: absolute; z-index: 1; top: 50%; left: 13px; color: #72798c; font-size: .75rem; transform: translateY(-50%); pointer-events: none; }
     .cabin-pc-page .search-box input { height: 44px; padding: 0 12px 0 36px; border-color: var(--pc-line); border-radius: 11px; color: #f7f7fa; background: #090c14; font-size: .78rem; }
-    .cabin-pc-page .search-box input:focus { border-color: rgba(255,217,61,.55); box-shadow: 0 0 0 3px rgba(255,217,61,.08); }
+    .cabin-pc-page .search-box input:focus { border-color: rgba(255, 122, 0,.55); box-shadow: 0 0 0 3px rgba(255, 122, 0,.08); }
     .cabin-pc-page .song-list { margin-top: 10px; padding-right: 3px; }
     .cabin-pc-page .song-item { min-height: 68px; margin-bottom: 6px; padding: 10px; gap: 8px; border: 1px solid transparent; border-radius: 11px; background: rgba(255,255,255,.018); }
     .cabin-pc-page .song-item:hover { border-color: var(--pc-line-strong); background: rgba(255,255,255,.055); transform: none; }
@@ -218,7 +218,7 @@
     .cabin-pc-page .queue-empty-state strong { color: #c8cbd4; font: 700 .82rem/1.2 'Montserrat', sans-serif; }
     .cabin-pc-page .queue-empty-state span { max-width: 210px; margin-top: 7px; font-size: .66rem; line-height: 1.5; }
     .cabin-pc-page .queue-item { min-height: 62px; margin-bottom: 6px; padding: 9px; gap: 9px; border: 1px solid transparent; border-radius: 11px; background: rgba(255,255,255,.022); }
-    .cabin-pc-page .queue-item.is-current { border-color: rgba(255,217,61,.26); background: rgba(255,217,61,.065); }
+    .cabin-pc-page .queue-item.is-current { border-color: rgba(255, 122, 0,.26); background: rgba(255, 122, 0,.065); }
     .cabin-pc-page .queue-item .rank { flex: 0 0 39px; width: 39px; height: 35px; display: grid; place-items: center; border-radius: 9px; color: #777d8d; background: rgba(255,255,255,.045); font: 800 .62rem/1 'Montserrat', sans-serif; }
     .cabin-pc-page .queue-item.is-current .rank { color: #151515; background: var(--pc-yellow); font-size: .48rem; }
     .cabin-pc-page .queue-item .info { min-width: 0; flex: 1; }
@@ -410,9 +410,9 @@ body.cabin-pc-page :is(#playerContainer:fullscreen,#playerContainer.is-native-fu
 /* Identidade visual do novo palco aplicada a todos os tamanhos da Cabine DJ.
    Esta camada altera somente tipografia e acabamento, sem mexer no layout. */
 body.cabin-pc-page #playerContainer {
-    --pc-stage-yellow: var(--kp-yellow, #ffc83d);
-    --pc-stage-blue: var(--kp-blue, #5595f5);
-    --pc-stage-surface: var(--kp-surface-overlay, rgba(21, 24, 32, .94));
+    --pc-stage-yellow: var(--kp-yellow, #FF7A00);
+    --pc-stage-blue: var(--kp-blue, #9C5BFF);
+    --pc-stage-surface: var(--kp-surface-overlay, rgba(14, 10, 20, .94));
     --pc-stage-line: var(--kp-border, rgba(236, 238, 245, .11));
 }
 
@@ -437,11 +437,11 @@ body.cabin-pc-page #playerContainer .floating-info-box .info-label {
     color: var(--pc-stage-yellow) !important;
 }
 body.cabin-pc-page #playerContainer .floating-info-box p {
-    color: #aeb9ff !important;
+    color: #D8D2E2 !important;
 }
 
 body.cabin-pc-page #playerContainer .fs-queue-box {
-    border-color: rgba(255, 217, 61, .34) !important;
+    border-color: rgba(255, 122, 0, .34) !important;
     color: #fff !important;
     background: var(--pc-stage-surface) !important;
     box-shadow: 0 12px 34px rgba(0, 0, 0, .34) !important;
@@ -451,8 +451,8 @@ body.cabin-pc-page #playerContainer .fs-col-pc.current .fs-rank-pc {
     color: var(--pc-stage-yellow) !important;
 }
 body.cabin-pc-page #playerContainer .fs-col-pc.current {
-    border-color: rgba(255, 217, 61, .28) !important;
-    background: rgba(255, 217, 61, .09) !important;
+    border-color: rgba(255, 122, 0, .28) !important;
+    background: rgba(255, 122, 0, .09) !important;
 }
 body.cabin-pc-page #playerContainer .fs-name-pc {
     color: #f7f8fc !important;
@@ -486,7 +486,7 @@ body.cabin-pc-page #playerContainer .btn-main {
 }
 
 body.cabin-pc-page #playerContainer .qr-fullscreen-box {
-    border-color: rgba(255, 217, 61, .3) !important;
+    border-color: rgba(255, 122, 0, .3) !important;
     color: #f4f5f9 !important;
     background: var(--pc-stage-surface) !important;
 }
@@ -499,7 +499,7 @@ body.cabin-pc-page #playerContainer .qr-fs-room-code {
 }
 
 body.cabin-pc-page #playerContainer .ranking-ticker {
-    border-color: rgba(255, 217, 61, .26) !important;
+    border-color: rgba(255, 122, 0, .26) !important;
     background: rgba(6, 8, 15, .9) !important;
     backdrop-filter: blur(12px);
 }
@@ -518,7 +518,7 @@ body.cabin-pc-page #playerContainer .ranking-ticker-leader {
     font-weight: 800 !important;
 }
 body.cabin-pc-page #playerContainer .ranking-ticker-value {
-    color: #aeb9ff !important;
+    color: #D8D2E2 !important;
     font-family: 'Montserrat', sans-serif !important;
     font-weight: 800 !important;
 }
@@ -543,8 +543,8 @@ body.cabin-pc-page #playerContainer .party-ranking-highlight {
     background: rgba(18, 23, 38, .9) !important;
 }
 body.cabin-pc-page #playerContainer .party-ranking-podium li:first-child {
-    border-color: rgba(255, 217, 61, .55) !important;
-    background: linear-gradient(100deg, rgba(255, 217, 61, .14), rgba(18, 23, 38, .92)) !important;
+    border-color: rgba(255, 122, 0, .55) !important;
+    background: linear-gradient(100deg, rgba(255, 122, 0, .14), rgba(18, 23, 38, .92)) !important;
 }
 body.cabin-pc-page #playerContainer .party-ranking-podium b,
 body.cabin-pc-page #playerContainer .party-ranking-highlight > i {
@@ -552,5 +552,5 @@ body.cabin-pc-page #playerContainer .party-ranking-highlight > i {
 }
 body.cabin-pc-page #playerContainer .party-ranking-podium span,
 body.cabin-pc-page #playerContainer .party-ranking-highlight > small {
-    color: #aeb9ff !important;
+    color: #D8D2E2 !important;
 }

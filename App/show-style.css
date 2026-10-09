@@ -3,8 +3,8 @@
 .coming-next-overlay,
 .score-suspense-overlay,
 .score-final-overlay {
-    --show-yellow: var(--kp-yellow, #ffc83d);
-    --show-blue: var(--kp-blue, #5595f5);
+    --show-yellow: var(--kp-yellow, #FF7A00);
+    --show-blue: var(--kp-blue, #9C5BFF);
     position: absolute !important;
     inset: 0;
     z-index: 1600;
@@ -18,12 +18,12 @@
     overflow: hidden;
     color: #fff;
     text-align: center;
-    background: var(--kp-stage-gradient, radial-gradient(circle at 50% 46%, rgba(85,149,245,.28), rgba(15,18,25,.98) 64%)) !important;
+    background: var(--kp-stage-gradient, radial-gradient(circle at 50% 46%, rgba(138, 63, 252,.28), rgba(15,18,25,.98) 64%)) !important;
     animation: show-fade-in .45s ease both;
 }
 
 .coming-next-overlay.fade-out { opacity: 0 !important; transform: scale(1.025) !important; transition: opacity .45s ease, transform .45s ease; }
-.cn-stage-glow { position: absolute !important; inset: auto !important; width: min(72vw,1000px) !important; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle,rgba(82,104,255,.24),transparent 66%) !important; animation: show-glow-pulse 2.2s ease-in-out infinite !important; pointer-events: none; }
+.cn-stage-glow { position: absolute !important; inset: auto !important; width: min(72vw,1000px) !important; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle,rgba(138, 63, 252,.24),transparent 66%) !important; animation: show-glow-pulse 2.2s ease-in-out infinite !important; pointer-events: none; }
 
 .cn-badge,
 .sf-badge {
@@ -34,10 +34,10 @@
     gap: 8px;
     margin: 0 0 clamp(18px,3vh,30px) !important;
     padding: 10px 17px !important;
-    border: 1px solid rgba(255,217,61,.48) !important;
+    border: 1px solid rgba(255, 122, 0,.48) !important;
     border-radius: 999px !important;
     color: var(--show-yellow) !important;
-    background: rgba(255,217,61,.07) !important;
+    background: rgba(255, 122, 0,.07) !important;
     box-shadow: none !important;
     font: 900 clamp(.65rem,1vw,1rem)/1 'Montserrat',sans-serif !important;
     letter-spacing: .14em !important;
@@ -70,7 +70,7 @@
     font: 900 clamp(4rem,12vw,11rem)/.88 'Montserrat',sans-serif !important;
     letter-spacing: -.06em !important;
     text-transform: uppercase;
-    text-shadow: 0 0 55px rgba(82,104,255,.4);
+    text-shadow: 0 0 55px rgba(138, 63, 252,.4);
     -webkit-text-fill-color: currentColor !important;
     animation: show-name-arrive .7s cubic-bezier(.2,.8,.2,1) both !important;
 }
@@ -91,7 +91,7 @@
     background: none !important;
     filter: none !important;
     font: 900 clamp(8rem,26vw,25rem)/.8 'Montserrat',sans-serif !important;
-    text-shadow: 0 0 70px rgba(255,217,61,.3);
+    text-shadow: 0 0 70px rgba(255, 122, 0,.3);
     -webkit-text-fill-color: currentColor !important;
 }
 .sf-ticker-value { font-size: clamp(6rem,19vw,18rem) !important; animation: show-score-tick .18s ease-in-out infinite alternate !important; }

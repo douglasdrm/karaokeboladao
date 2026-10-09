@@ -3,9 +3,8 @@
 /* Karaoke Party — fundacao compartilhada de identidade visual.
    Layouts e comportamentos continuam pertencendo a cada interface.
 
-   Os tokens --brand-* e --color-* estao prontos para adocao progressiva.
-   Os tokens --kp-* e seus aliases permanecem congelados nesta etapa para
-   preservar visualmente as interfaces que ainda nao foram migradas. */
+   Os tokens --brand-* e --color-* formam a API preferencial. Os aliases
+   --kp-* mantem compatibilidade com as camadas existentes durante a migracao. */
 :root {
     color-scheme: dark;
 
@@ -89,36 +88,36 @@
     --effect-brand-gradient: linear-gradient(135deg, var(--brand-purple), var(--brand-pink) 58%, var(--brand-orange));
     --effect-navigation-gradient: linear-gradient(135deg, var(--brand-purple), var(--brand-pink));
 
-    /* Tema legado: nao redirecionar sem migrar e validar seus consumidores. */
-    --kp-bg: #151820;
-    --kp-bg-deep: #0f1219;
-    --kp-surface: #1c202b;
-    --kp-surface-raised: #232836;
-    --kp-surface-overlay: rgba(21, 24, 32, .94);
-    --kp-border: rgba(236, 238, 245, .11);
-    --kp-border-strong: rgba(236, 238, 245, .2);
+    /* Compatibilidade: aliases antigos mapeados por funcao, nao pelo nome. */
+    --kp-bg: var(--color-bg-canvas);
+    --kp-bg-deep: var(--color-bg-deep);
+    --kp-surface: var(--color-bg-surface);
+    --kp-surface-raised: var(--color-bg-surface-raised);
+    --kp-surface-overlay: var(--color-bg-overlay);
+    --kp-border: var(--color-border-default);
+    --kp-border-strong: var(--color-border-strong);
 
-    --kp-blue: #5595f5;
-    --kp-blue-soft: rgba(85, 149, 245, .12);
-    --kp-blue-line: rgba(85, 149, 245, .38);
-    --kp-lilac: #9370f5;
-    --kp-lilac-soft: rgba(147, 112, 245, .12);
-    --kp-lilac-line: rgba(147, 112, 245, .38);
-    --kp-yellow: #ffc83d;
-    --kp-yellow-soft: rgba(255, 200, 61, .11);
-    --kp-yellow-line: rgba(255, 200, 61, .38);
+    --kp-blue: var(--color-navigation-hover);
+    --kp-blue-soft: var(--color-navigation-soft);
+    --kp-blue-line: var(--color-navigation-line);
+    --kp-lilac: var(--color-navigation);
+    --kp-lilac-soft: var(--color-navigation-soft);
+    --kp-lilac-line: var(--color-navigation-line);
+    --kp-yellow: var(--color-action-primary);
+    --kp-yellow-soft: var(--color-action-primary-soft);
+    --kp-yellow-line: var(--color-action-primary-line);
 
-    --kp-text: #eceef5;
-    --kp-text-soft: #c5c9d5;
-    --kp-muted: #9298aa;
-    --kp-subtle: #686f82;
-    --kp-success: #72e6ad;
-    --kp-danger: #ff8996;
+    --kp-text: var(--color-text-primary);
+    --kp-text-soft: var(--color-text-secondary);
+    --kp-muted: var(--color-text-muted);
+    --kp-subtle: var(--color-text-subtle);
+    --kp-success: var(--color-state-success);
+    --kp-danger: var(--color-state-danger);
 
-    --kp-gradient: linear-gradient(135deg, var(--kp-blue), var(--kp-lilac));
-    --kp-stage-gradient: radial-gradient(circle at 50% 42%, rgba(85, 149, 245, .2), transparent 42%), radial-gradient(circle at 75% 68%, rgba(147, 112, 245, .14), transparent 38%), var(--kp-bg-deep);
-    --kp-shadow: 0 18px 50px rgba(0, 0, 0, .28);
-    --kp-focus: 0 0 0 3px rgba(85, 149, 245, .2);
+    --kp-gradient: var(--effect-navigation-gradient);
+    --kp-stage-gradient: radial-gradient(circle at 50% 42%, rgba(138, 63, 252, .18), transparent 42%), radial-gradient(circle at 75% 68%, rgba(255, 79, 216, .1), transparent 38%), var(--color-bg-deep);
+    --kp-shadow: var(--effect-shadow-md);
+    --kp-focus: var(--effect-focus-ring);
 
     /* Compatibilidade com as camadas existentes. */
     --bg-dark: var(--kp-bg);
@@ -127,9 +126,9 @@
     --accent-neon: var(--kp-lilac);
     --text-main: var(--kp-text);
     --text-muted: var(--kp-muted);
-    --glass-bg: rgba(28, 32, 43, .88);
+    --glass-bg: rgba(23, 17, 31, .88);
     --glass-border: var(--kp-border);
-    --neon-shadow: 0 0 18px rgba(147, 112, 245, .18);
+    --neon-shadow: 0 0 18px rgba(138, 63, 252, .18);
 
     --pc-bg: var(--kp-bg);
     --pc-panel: var(--kp-surface);
@@ -147,7 +146,7 @@
     --tv-blue: var(--kp-blue);
 
     --entry-bg: var(--kp-bg);
-    --entry-panel: rgba(28, 32, 43, .9);
+    --entry-panel: rgba(23, 17, 31, .9);
     --entry-panel-strong: var(--kp-surface-raised);
     --entry-border: var(--kp-border);
     --entry-text: var(--kp-text);
@@ -161,17 +160,17 @@
     --accent2: var(--kp-blue);
     --blue: var(--kp-blue);
     --purple: var(--kp-lilac);
-    --glass: rgba(28, 32, 43, .78);
+    --glass: rgba(23, 17, 31, .78);
     --border: var(--kp-border);
     --yellow: var(--kp-yellow);
     --muted: var(--kp-muted);
 }
 
 ::selection {
-    color: var(--kp-text);
-    background: rgba(147, 112, 245, .42);
+    color: var(--color-text-primary);
+    background: rgba(138, 63, 252, .42);
 }
 
 :where(button, a, input, select, textarea):focus-visible {
-    outline-color: var(--kp-blue);
+    outline-color: var(--color-focus);
 }

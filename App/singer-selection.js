@@ -32,7 +32,7 @@
         const refresh=()=>{display.value=payload([...selected.values()]).singer;};
         function addChoice(key,person) {
             const label=document.createElement('label');label.className='user-chip';label.style.cursor='pointer';
-            const input=document.createElement('input');input.type='checkbox';input.checked=selected.has(key);input.style.cssText='width:auto;accent-color:#d946ef;margin-right:6px;';
+            const input=document.createElement('input');input.type='checkbox';input.checked=selected.has(key);input.style.cssText='width:auto;accent-color:#8A3FFC;margin-right:6px;';
             const text=document.createElement('span');text.textContent=person.name+(key===user.uid?' (você)':'')+(!person.uid?' (sem cartão no celular)':'');
             input.onchange=()=>{if(input.checked)selected.set(key,person);else selected.delete(key);refresh();};label.append(input,text);choices.append(label);
         }

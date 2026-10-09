@@ -13,23 +13,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KARAOKE PARTY | Painel Admin Master</title>
+    <link rel="icon" type="image/png" href="../Assets/brand/favicon-64.png">
+    <link rel="stylesheet" href="karaoke-theme.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Poppins:wght@300;400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;800;900&display=swap');
         
         :root {
-            --bg: #060612;
-            --accent: #d946ef;
-            --blue: #00f2ff;
-            --glass: rgba(255,255,255,0.05);
-            --border: rgba(255,255,255,0.1);
+            --bg: var(--color-bg-canvas, #0E0A14);
+            --accent: var(--color-navigation, #8A3FFC);
+            --blue: var(--color-action-primary, #FF7A00);
+            --glass: rgba(23,17,31,.78);
+            --border: var(--color-border-default, rgba(245,244,250,.12));
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: var(--bg);
-            color: white;
-            font-family: 'Poppins', sans-serif;
+            color: var(--color-text-primary, #F5F4FA);
+            font-family: 'Inter', sans-serif;
             min-height: 100vh;
             padding: 40px 20px;
         }
@@ -223,7 +225,7 @@
         .tab-btn.active {
             background: var(--accent);
             opacity: 1;
-            box-shadow: 0 5px 15px rgba(217,70,239,0.3);
+            box-shadow: 0 5px 15px rgba(255, 79, 216,0.3);
         }
 
         .tab-btn i { font-size: 0.9rem; }
@@ -320,14 +322,14 @@
             #djDashboard .hall-fame-table th, #djDashboard .hall-fame-table td { padding: 10px 4px; }
         }
     </style>
-    <link rel="stylesheet" href="party-features.css?v=3">
+    <link rel="stylesheet" href="party-features.css?v=6">
 </head>
 <body>
 
     <div id="loginOverlay">
         <img src="../Assets/brand/logo-vertical.png" alt="Karaoke Party" style="width: 112px; margin-bottom: 24px;">
         <button class="btn-login" onclick="login()">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="24" style="pointer-events:none;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="24" alt="Google" style="pointer-events:none;">
             ENTRAR NA MINHA CABINE
         </button>
         <div id="loader"><i class="fas fa-spinner fa-spin"></i> Validando acesso...</div>

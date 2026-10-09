@@ -123,7 +123,7 @@
     border: 1.5px solid var(--accent-primary);
     border-radius: 20px 20px 20px 5px;
     padding: 16px 24px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(217, 70, 239, 0.3);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 79, 216, 0.3);
     max-width: 460px;
     z-index: 10005;
     animation: messageFloat 6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
@@ -143,7 +143,7 @@
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--kp-lilac, #9370f5), var(--kp-blue, #5595f5));
+    background: linear-gradient(135deg, var(--kp-lilac, #8A3FFC), var(--kp-blue, #9C5BFF));
     color: white;
     font-weight: 800;
     font-size: 1.25rem;
@@ -208,11 +208,11 @@
     max-width: 580px;
     background: rgba(10, 10, 15, 0.95) !important;
     backdrop-filter: blur(25px) !important;
-    border: 2px solid rgba(217, 70, 239, 0.4) !important;
+    border: 2px solid rgba(255, 79, 216, 0.4) !important;
     border-radius: 24px !important;
     padding: 35px !important;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 50px rgba(217, 70, 239, 0.2) !important;
-    font-family: 'Poppins', sans-serif !important;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 50px rgba(255, 79, 216, 0.2) !important;
+    font-family: 'Inter', sans-serif !important;
     color: white !important;
     text-align: center !important;
     z-index: 1500 !important;
@@ -229,7 +229,7 @@
     font-weight: 900 !important;
     margin-bottom: 25px !important;
     letter-spacing: 2px !important;
-    background: linear-gradient(135deg, #ffd700, #ff0080) !important;
+    background: linear-gradient(135deg, #ffd700, #FF4FD8) !important;
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     text-transform: uppercase !important;
@@ -253,8 +253,8 @@
 }
 
 .ranking-item:hover {
-    background: rgba(217, 70, 239, 0.1) !important;
-    border-color: rgba(217, 70, 239, 0.4) !important;
+    background: rgba(255, 79, 216, 0.1) !important;
+    border-color: rgba(255, 79, 216, 0.4) !important;
     transform: scale(1.02) !important;
 }
 
@@ -294,7 +294,7 @@
     opacity: 0.75 !important;
     transform: translate(-50%, -40%) scale(0.85) !important;
     box-shadow: 0 15px 40px rgba(0,0,0,0.6) !important;
-    border-color: rgba(217, 70, 239, 0.2) !important;
+    border-color: rgba(255, 79, 216, 0.2) !important;
     background: rgba(10, 10, 15, 0.85) !important;
     pointer-events: none !important;
 }

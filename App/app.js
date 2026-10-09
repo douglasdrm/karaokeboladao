@@ -933,7 +933,7 @@
                 <div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:10px;">
                     <div style="font-size:0.8rem; opacity:0.6;">Expira em:</div>
                     <div style="font-weight:600;">${expDate}</div>
-                    <div style="font-size:0.85rem; color:#00f2ff; margin-top:5px;">${timeLabel}</div>
+                    <div style="font-size:0.85rem; color:#62A8FF; margin-top:5px;">${timeLabel}</div>
                 </div>
             `;
         }
@@ -3238,11 +3238,11 @@
 
         // Cores dinâmicas (v11)
 
-        if (avg < 2.5) bar.style.background = '#00f2ff';
+        if (avg < 2.5) bar.style.background = '#62A8FF';
 
         else if (avg < 4.0) bar.style.background = 'linear-gradient(90deg, #facc15, #fb923c)';
 
-        else bar.style.background = 'linear-gradient(90deg, #d946ef, #ff0080)';
+        else bar.style.background = 'linear-gradient(90deg, #FF4FD8, #8A3FFC)';
 
         el.style.display = 'flex';
 
@@ -3468,7 +3468,7 @@
 
             playerArea.innerHTML = `
 
-            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; background: radial-gradient(circle at center, rgba(45,67,216,0.3) 0%, var(--bg-dark) 70%); color:white;">
+            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; background: radial-gradient(circle at center, rgba(138, 63, 252,0.3) 0%, var(--bg-dark) 70%); color:white;">
 
                 <h2 style="font-weight:900; letter-spacing:15px; margin-bottom:15px; font-size:3rem; text-shadow: 0 0 30px var(--accent-primary);">KARAOKE PARTY</h2>
 
@@ -4229,7 +4229,7 @@
 
         const toast = document.createElement('div');
 
-        toast.style.cssText = `position:fixed;bottom:30px;right:30px;background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));color:white;padding:15px 25px;border-radius:12px;font-weight:700;font-size:0.95rem;box-shadow:0 10px 30px rgba(217,70,239,0.5);z-index:99999;transition:all 0.5s;opacity:0;transform:translateX(100px);`;
+        toast.style.cssText = `position:fixed;bottom:30px;right:30px;background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));color:white;padding:15px 25px;border-radius:12px;font-weight:700;font-size:0.95rem;box-shadow:0 10px 30px rgba(255, 79, 216,0.5);z-index:99999;transition:all 0.5s;opacity:0;transform:translateX(100px);`;
 
         toast.innerHTML = `<i class="fas fa-mobile-alt" style="margin-right:10px;"></i> ${msg}`;
 

@@ -1,19 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&family=Poppins:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&family=Inter:wght@300;400;600&display=swap');
 
 :root {
-    --bg-dark: #000000;
-    --accent-primary: #d946ef;
-    --accent-secondary: #2d43d8;
-    --accent-neon: #a020f0;
-    --text-main: #ffffff;
-    --text-muted: #a1a1aa;
-    --glass-bg: rgba(255, 255, 255, 0.05);
+    --bg-dark: var(--color-bg-canvas, #0E0A14);
+    --accent-primary: var(--color-navigation, #8A3FFC);
+    --accent-secondary: var(--color-social, #FF4FD8);
+    --accent-neon: var(--color-social, #FF4FD8);
+    --action-primary: var(--color-action-primary, #FF7A00);
+    --text-main: var(--color-text-primary, #F5F4FA);
+    --text-muted: var(--color-text-muted, #A49BAD);
+    --glass-bg: rgba(23, 17, 31, .72);
     --bg-main: var(--bg-dark);
     --glass: var(--glass-bg);
     --blue: var(--accent-secondary);
     --pink: var(--accent-primary);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --neon-shadow: 0 0 15px rgba(160, 32, 240, 0.5);
+    --glass-border: var(--color-border-default, rgba(245, 244, 250, .12));
+    --neon-shadow: 0 0 15px rgba(138, 63, 252, .24);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -26,7 +27,7 @@
 body {
     background: var(--bg-dark);
     color: var(--text-main);
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 /* BG Glow Effects */
@@ -41,7 +42,7 @@ body {
 .bg-glow-1 {
     width: 600px;
     height: 600px;
-    background: rgba(45, 67, 216, 0.1);
+    background: rgba(138, 63, 252, 0.1);
     top: -200px;
     left: -200px;
 }
@@ -49,7 +50,7 @@ body {
 .bg-glow-2 {
     width: 400px;
     height: 400px;
-    background: rgba(217, 70, 239, 0.08);
+    background: rgba(255, 79, 216, 0.08);
     bottom: -100px;
     right: -100px;
 }
@@ -74,13 +75,13 @@ body {
     justify-content: center;
     text-align: center;
     padding: 60px 20px;
-    background: radial-gradient(circle at center, rgba(217, 70, 239, 0.1), transparent 70%);
+    background: radial-gradient(circle at center, rgba(255, 79, 216, 0.1), transparent 70%);
 }
 
 .hero-logo {
-    width: 140px;
+    width: min(320px, 72vw);
     margin-bottom: 30px;
-    filter: drop-shadow(0 0 20px rgba(217, 70, 239, 0.5));
+    filter: none;
 }
 
 .hero-title {
@@ -110,15 +111,15 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    color: white;
+    background: var(--action-primary);
+    color: var(--color-text-inverse, #180B00);
     border: none;
     padding: 18px 36px;
     border-radius: 50px;
     font-weight: 900;
     font-size: 1rem;
     cursor: pointer;
-    box-shadow: 0 10px 30px rgba(217, 70, 239, 0.4);
+    box-shadow: 0 10px 30px rgba(255, 122, 0, .24);
     transition: 0.3s;
     display: flex;
     align-items: center;
@@ -132,7 +133,7 @@ body {
 
 .btn-primary:hover {
     transform: translateY(-3px);
-    box-shadow: 0 15px 40px rgba(217, 70, 239, 0.6);
+    box-shadow: 0 15px 40px rgba(255, 122, 0, .32);
 }
 
 .btn-secondary {
@@ -154,7 +155,7 @@ body {
 }
 
 .highlight {
-    background: linear-gradient(90deg, var(--accent-primary), #00f2ff);
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--action-primary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -263,7 +264,7 @@ body {
 }
 
 .feature-list li i {
-    color: #00f2ff;
+    color: #FF7A00;
 }
 
 .mobile-mockup {
@@ -283,7 +284,7 @@ body {
 .mockup-screen {
     width: 100%;
     height: 100%;
-    background: #060612;
+    background: #0E0A14;
     border-radius: 20px;
     display: flex;
     flex-direction: column;
@@ -319,7 +320,7 @@ body {
 .cta-banner {
     text-align: center;
     padding: 100px 20px;
-    background: linear-gradient(0deg, rgba(217, 70, 239, 0.05), transparent);
+    background: linear-gradient(0deg, rgba(255, 79, 216, 0.05), transparent);
 }
 
 .cta-banner h2 {
@@ -410,15 +411,16 @@ body {
 }
 
 .hero-btns .btn-primary {
-    background: linear-gradient(135deg, #d946ef, #a020f0) !important;
-    color: white !important;
-    box-shadow: 0 10px 25px rgba(217, 70, 239, 0.3) !important;
+    background: var(--action-primary) !important;
+    color: var(--color-text-inverse, #180B00) !important;
+    box-shadow: 0 10px 25px rgba(255, 122, 0, .24) !important;
 }
 
 .hero-btns .btn-secondary {
-    background: linear-gradient(135deg, #00f2ff, #2d43d8) !important;
-    color: white !important;
-    box-shadow: 0 10px 25px rgba(0, 242, 255, 0.3) !important;
+    background: var(--color-navigation-soft, rgba(138, 63, 252, .14)) !important;
+    border: 1px solid var(--color-navigation-line, rgba(138, 63, 252, .46)) !important;
+    color: var(--text-main) !important;
+    box-shadow: none !important;
 }
 
 .hero-btns .btn-primary:hover,
@@ -460,13 +462,15 @@ body {
 }
 
 .hero .hero-btns .btn-primary {
-    background: linear-gradient(135deg, #d946ef, #a020f0) !important;
-    box-shadow: 0 10px 30px rgba(217, 70, 239, 0.4) !important;
+    background: var(--action-primary) !important;
+    color: var(--color-text-inverse, #180B00) !important;
+    box-shadow: 0 10px 30px rgba(255, 122, 0, .24) !important;
 }
 
 .hero .hero-btns .btn-secondary {
-    background: linear-gradient(135deg, #00f2ff, #2d43d8) !important;
-    box-shadow: 0 10px 30px rgba(0, 242, 255, 0.4) !important;
+    background: var(--color-navigation-soft, rgba(138, 63, 252, .14)) !important;
+    border: 1px solid var(--color-navigation-line, rgba(138, 63, 252, .46)) !important;
+    box-shadow: none !important;
 }
 
 .hero .hero-btns .btn-primary:hover,
@@ -510,7 +514,7 @@ body {
 /* --- SEï¿½ï¿½O DE PLANOS (SaaS) --- */
 .pricing-section {
     padding: 100px 20px;
-    background: radial-gradient(circle at top, rgba(160, 32, 240, 0.05), transparent);
+    background: radial-gradient(circle at top, rgba(138, 63, 252, 0.05), transparent);
     text-align: center;
 }
 
@@ -540,12 +544,12 @@ body {
 .plan-card:hover {
     transform: translateY(-10px);
     border-color: var(--blue);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(45, 67, 216, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(138, 63, 252, 0.2);
 }
 
 .plan-card.recommended {
     border: 2px solid var(--accent-primary);
-    box-shadow: 0 0 30px rgba(160, 32, 240, 0.15);
+    box-shadow: 0 0 30px rgba(138, 63, 252, 0.15);
     transform: scale(1.05);
 }
 
@@ -564,7 +568,7 @@ body {
     font-weight: 800;
     transform: rotate(45deg);
     text-transform: uppercase;
-    box-shadow: 0 0 10px rgba(160, 32, 240, 0.5);
+    box-shadow: 0 0 10px rgba(138, 63, 252, 0.5);
 }
 
 .plan-card h3 {
@@ -632,9 +636,10 @@ body {
 }
 
 .plan-card.recommended .btn-plan {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    background: var(--action-primary);
+    color: var(--color-text-inverse, #180B00);
     border: none;
-    box-shadow: 0 10px 20px rgba(160, 32, 240, 0.3);
+    box-shadow: 0 10px 20px rgba(138, 63, 252, 0.3);
 }
 
 .btn-plan:hover {

@@ -1,12 +1,12 @@
 /* Camada visual dos fluxos sobrepostos do Mobile dos cantores. */
 :root {
-    --mobile-sheet: var(--kp-surface, #1c202b);
-    --mobile-sheet-raised: var(--kp-surface-raised, #232836);
+    --mobile-sheet: var(--kp-surface, #17111F);
+    --mobile-sheet-raised: var(--kp-surface-raised, #21172B);
     --mobile-line: var(--kp-border, rgba(236,238,245,.11));
-    --mobile-copy: var(--kp-text, #eceef5);
-    --mobile-muted: var(--kp-muted, #9298aa);
-    --mobile-yellow: var(--kp-yellow, #ffc83d);
-    --mobile-blue: var(--kp-blue, #5595f5);
+    --mobile-copy: var(--kp-text, #F5F4FA);
+    --mobile-muted: var(--kp-muted, #A49BAD);
+    --mobile-yellow: var(--kp-yellow, #FF7A00);
+    --mobile-blue: var(--kp-blue, #9C5BFF);
 }
 
 .mobile-modal-overlay {
@@ -34,8 +34,8 @@ body.mobile-body .challenge-dialog {
 .score-card-header small {
     display: block;
     margin-bottom: 7px;
-    color: var(--kp-lilac, #9370f5);
-    font: 800 .65rem/1.2 'Poppins', sans-serif;
+    color: var(--kp-lilac, #8A3FFC);
+    font: 800 .65rem/1.2 'Inter', sans-serif;
     letter-spacing: .14em;
 }
 .mobile-modal h2,
@@ -59,7 +59,7 @@ body.mobile-body .challenge-dialog select {
 .mobile-modal textarea:focus,
 body.mobile-body .challenge-dialog input:focus,
 body.mobile-body .challenge-dialog textarea:focus,
-body.mobile-body .challenge-dialog select:focus { border-color: var(--mobile-yellow) !important; box-shadow: 0 0 0 3px rgba(255, 217, 61, .09); }
+body.mobile-body .challenge-dialog select:focus { border-color: var(--mobile-yellow) !important; box-shadow: 0 0 0 3px rgba(255, 122, 0, .09); }
 
 .modal-buttons { align-items: stretch; flex-wrap: wrap; }
 .modal-buttons > button { min-width: 120px; }
@@ -78,7 +78,7 @@ body.mobile-body .challenge-dialog .challenge-close { border: 1px solid var(--mo
 .bg-option-btn { border-color: var(--mobile-line) !important; color: var(--mobile-copy) !important; background: rgba(255, 255, 255, .045) !important; }
 .photo-option-btn i { color: var(--mobile-yellow); }
 .photo-option-btn:active,
-.bg-option-btn:active { border-color: var(--mobile-yellow) !important; background: rgba(255, 217, 61, .08) !important; transform: scale(.98); }
+.bg-option-btn:active { border-color: var(--mobile-yellow) !important; background: rgba(255, 122, 0, .08) !important; transform: scale(.98); }
 
 #scoreCardModal { padding: max(10px, env(safe-area-inset-top)) 0 0; }
 .score-card-modal-inner { border-width: 1px 1px 0 !important; border-radius: 24px 24px 0 0; }
@@ -109,8 +109,8 @@ body.mobile-body .challenge-dialog h3 { color: var(--mobile-copy); }
 body.mobile-body .challenge-dialog p { color: var(--mobile-muted); }
 body.mobile-body .challenge-card { border-color: var(--mobile-line); background: rgba(255,255,255,.035); }
 body.mobile-body .challenge-hero { color: var(--mobile-copy) !important; }
-body.mobile-body .challenge-note { border-left-color: var(--kp-lilac, #9370f5); }
-body.mobile-body .challenge-feedback { color: var(--kp-lilac, #9370f5); }
+body.mobile-body .challenge-note { border-left-color: var(--kp-lilac, #8A3FFC); }
+body.mobile-body .challenge-feedback { color: var(--kp-lilac, #8A3FFC); }
 body.mobile-body .challenge-dialog .challenge-close { position: absolute; top: 16px; right: 16px; min-height: 38px; padding: 8px 12px; }
 
 .kp-notice-layer { position: fixed; inset: 0; z-index: 3000000; display: grid; place-items: center; padding: 18px; background: rgba(3,5,10,.78); backdrop-filter: blur(14px); }
@@ -118,8 +118,8 @@ body.mobile-body .challenge-dialog .challenge-close { position: absolute; top: 1
 .kp-notice { box-sizing: border-box; width: min(100%, 390px); padding: 24px; border: 1px solid var(--mobile-line); border-radius: 22px; color: var(--mobile-copy); background: linear-gradient(150deg, var(--mobile-sheet-raised), #0a0d16); box-shadow: 0 28px 80px rgba(0,0,0,.56); }
 .kp-notice-icon { display: grid; place-items: center; width: 46px; height: 46px; margin-bottom: 16px; border-radius: 14px; color: #090b12; background: var(--mobile-yellow); font-size: 1.15rem; }
 .kp-notice h2 { margin: 0 0 8px; font: 800 1.25rem/1.2 'Montserrat', sans-serif; }
-.kp-notice p { margin: 0; color: var(--mobile-muted); font: 400 .9rem/1.55 'Poppins', sans-serif; white-space: pre-line; overflow-wrap: anywhere; }
-.kp-notice button { width: 100%; min-height: 50px; margin-top: 22px; border: 0; border-radius: 14px; color: #090b12; background: var(--mobile-yellow); font: 800 .85rem/1 'Poppins', sans-serif; cursor: pointer; }
+.kp-notice p { margin: 0; color: var(--mobile-muted); font: 400 .9rem/1.55 'Inter', sans-serif; white-space: pre-line; overflow-wrap: anywhere; }
+.kp-notice button { width: 100%; min-height: 50px; margin-top: 22px; border: 0; border-radius: 14px; color: #090b12; background: var(--mobile-yellow); font: 800 .85rem/1 'Inter', sans-serif; cursor: pointer; }
 
 @media (max-width: 520px) {
     .mobile-modal-overlay { align-items: flex-end; padding-inline: 0; padding-bottom: 0; }

@@ -42,7 +42,7 @@ body.cabin-pc-page .panel,
     box-shadow: var(--kp-shadow);
 }
 
-/* Titulos pequenos e estados ativos usam lilas; amarelo fica prioritario. */
+/* Titulos pequenos e estados ativos usam roxo; laranja fica prioritario. */
 body.cabin-pc-page :is(.dashboard-eyebrow,.panel-eyebrow),
 .mobile-control-page .eyebrow,
 .mobile-body :is(.mobile-modal-eyebrow,.section-eyebrow),
@@ -57,8 +57,8 @@ body.cabin-pc-page :is(.header-action-primary,.queue-count-badge),
     border-color: var(--kp-lilac-line) !important;
 }
 body.cabin-pc-page .header-action-primary {
-    color: #ded4ff !important;
-    background: var(--kp-lilac-soft) !important;
+    color: var(--color-text-primary) !important;
+    background: var(--color-navigation-soft) !important;
 }
 body.cabin-pc-page .queue-count-badge {
     color: var(--kp-text) !important;
@@ -82,17 +82,17 @@ body.cabin-pc-page :is(.btn-main,.btn-song-play),
 .tv-start-playback,
 .pair-primary {
     border-color: transparent !important;
-    color: #151820 !important;
+    color: #0E0A14 !important;
     background: var(--kp-yellow) !important;
     box-shadow: none !important;
 }
 
 /* Cabine PC */
 body.cabin-pc-page {
-    background: radial-gradient(circle at 24% -16%, rgba(85, 149, 245, .13), transparent 34%), radial-gradient(circle at 100% 100%, rgba(147, 112, 245, .1), transparent 30%), var(--kp-bg) !important;
+    background: radial-gradient(circle at 24% -16%, rgba(138, 63, 252, .13), transparent 34%), radial-gradient(circle at 100% 100%, rgba(255, 79, 216, .08), transparent 30%), var(--color-bg-canvas) !important;
 }
 body.cabin-pc-page .panel {
-    background: rgba(28, 32, 43, .94) !important;
+    background: rgba(23, 17, 31, .94) !important;
 }
 body.cabin-pc-page :is(.song-item,.queue-item,.host-action-card) {
     border-color: transparent !important;
@@ -123,7 +123,7 @@ body.cabin-pc-page :is(.btn-control,.btn-mini):hover {
 }
 body.cabin-pc-page .controls.compact-panel {
     border-color: var(--kp-border-strong) !important;
-    background: rgba(21, 24, 32, .95) !important;
+    background: rgba(14, 10, 20, .95) !important;
     box-shadow: var(--kp-shadow) !important;
 }
 body.cabin-pc-page :is(.tone-control,.volume-control) {
@@ -164,7 +164,7 @@ body.cabin-pc-page .vu-meter-bar {
     background: var(--kp-lilac-soft) !important;
 }
 :is(.cabin-pc-page,#audienceStage) .fs-divider-v-pc {
-    background: rgba(85, 149, 245, .28) !important;
+    background: rgba(138, 63, 252, .28) !important;
 }
 :is(.cabin-pc-page,#audienceStage) .qr-fullscreen-box {
     border-color: var(--kp-blue-line) !important;
@@ -195,7 +195,7 @@ body.cabin-pc-page .vu-meter-bar {
     background: var(--kp-lilac-soft) !important;
 }
 :is(.cn-stage-glow,.tv-show-glow) {
-    background: radial-gradient(circle, rgba(85, 149, 245, .2), transparent 66%) !important;
+    background: radial-gradient(circle, rgba(138, 63, 252, .2), transparent 66%) !important;
 }
 :is(.cn-bar,.tv-equalizer i) {
     background: var(--kp-blue) !important;
@@ -205,7 +205,7 @@ body.cabin-pc-page .vu-meter-bar {
 :is(.cabin-pc-page,#audienceStage) .ranking-ticker,
 .tv-ranking-ticker {
     border-color: var(--kp-lilac-line) !important;
-    background: rgba(21, 24, 32, .92) !important;
+    background: rgba(14, 10, 20, .92) !important;
 }
 :is(.cabin-pc-page,#audienceStage) :is(.ranking-ticker-card-title,.ranking-ticker-card-title i),
 .tv-ranking-ticker span {
@@ -225,12 +225,12 @@ body.cabin-pc-page .vu-meter-bar {
 :is(.cabin-pc-page,#audienceStage) :is(.party-ranking-podium li,.party-ranking-highlight),
 .tv-ranking li {
     border-color: var(--kp-border) !important;
-    background: rgba(28, 32, 43, .92) !important;
+    background: rgba(23, 17, 31, .92) !important;
 }
 :is(.cabin-pc-page,#audienceStage) .party-ranking-podium li:first-child,
 .tv-ranking li:first-child {
     border-color: var(--kp-yellow-line) !important;
-    background: linear-gradient(100deg, var(--kp-yellow-soft), rgba(28, 32, 43, .94)) !important;
+    background: linear-gradient(100deg, var(--kp-yellow-soft), rgba(23, 17, 31, .94)) !important;
 }
 :is(.cabin-pc-page,#audienceStage) :is(.party-ranking-podium b,.party-ranking-highlight > i),
 .tv-ranking li b {
@@ -243,10 +243,10 @@ body.cabin-pc-page .vu-meter-bar {
 
 /* TV / Android TV */
 .tv-setup {
-    background: radial-gradient(circle at 18% 0, rgba(85, 149, 245, .15), transparent 32%), radial-gradient(circle at 90% 80%, rgba(147, 112, 245, .1), transparent 28%), var(--kp-bg) !important;
+    background: radial-gradient(circle at 18% 0, rgba(138, 63, 252, .15), transparent 32%), radial-gradient(circle at 90% 80%, rgba(255, 122, 0, .08), transparent 28%), var(--color-bg-canvas) !important;
 }
 .tv-setup-card {
-    background: linear-gradient(150deg, rgba(35, 40, 54, .97), rgba(21, 24, 32, .98)) !important;
+    background: linear-gradient(150deg, rgba(33, 23, 43, .97), rgba(14, 10, 20, .98)) !important;
 }
 .tv-stage {
     color: var(--kp-text);
@@ -264,8 +264,14 @@ body.cabin-pc-page .vu-meter-bar {
 .tv-queue-panel li:first-child span {
     color: var(--kp-lilac) !important;
 }
-.tv-stage :is(.tv-connection,.tv-pairing-box span,.tv-floating-message strong) {
-    color: var(--kp-lilac) !important;
+.tv-stage .tv-connection {
+    color: var(--color-state-success) !important;
+}
+.tv-stage .tv-connection.is-offline {
+    color: var(--color-state-danger) !important;
+}
+.tv-stage :is(.tv-pairing-box span,.tv-floating-message strong) {
+    color: var(--color-navigation) !important;
 }
 .tv-progress span {
     background: linear-gradient(90deg, var(--kp-blue), var(--kp-lilac)) !important;
@@ -278,17 +284,17 @@ body.cabin-pc-page .vu-meter-bar {
 
 /* Controle movel do DJ */
 .mobile-control-page {
-    background: radial-gradient(circle at 20% -10%, rgba(85, 149, 245, .15), transparent 34%), radial-gradient(circle at 100% 40%, rgba(147, 112, 245, .1), transparent 32%), var(--kp-bg) !important;
+    background: radial-gradient(circle at 20% -10%, rgba(138, 63, 252, .15), transparent 34%), radial-gradient(circle at 100% 40%, rgba(255, 79, 216, .07), transparent 32%), var(--color-bg-canvas) !important;
 }
 .mobile-control-header,
 .mobile-dj-dock {
     border-color: var(--kp-border) !important;
-    background: rgba(21, 24, 32, .94) !important;
+    background: rgba(14, 10, 20, .94) !important;
 }
 .now-playing-card,
 .mobile-catalog-card,
 .mobile-queue-card {
-    background: rgba(28, 32, 43, .94) !important;
+    background: rgba(23, 17, 31, .94) !important;
 }
 .now-playing-label,
 .mobile-section-heading > span,
@@ -328,37 +334,47 @@ body.cabin-pc-page .vu-meter-bar {
 }
 .mobile-role-switch a,
 .mobile-dj-dock a {
-    color: #ded4ff !important;
+    color: #E6D9FF !important;
 }
 
-/* Area do cantor: preserva estrutura, remove o magenta/ciano legado. */
+/* Area do cantor: preserva estrutura e adota a hierarquia oficial. */
 .mobile-body {
     --bg: var(--kp-bg);
     --accent: var(--kp-lilac);
     --accent2: var(--kp-blue);
     --blue: var(--kp-blue);
     --purple: var(--kp-lilac);
-    --glass: rgba(28, 32, 43, .8);
+    --glass: rgba(23, 17, 31, .8);
     --border: var(--kp-border);
     color: var(--kp-text) !important;
     background-color: var(--kp-bg) !important;
 }
 .mobile-body :is(.btn-confirm,.btn-primary,.mobile-primary-action) {
-    color: #151820 !important;
+    color: #0E0A14 !important;
     background: var(--kp-yellow) !important;
 }
 .mobile-body :is(.tab-btn.active,.active-tab,.selected,.is-active) {
     border-color: var(--kp-lilac-line) !important;
 }
+.mobile-body :is(.reactions-row,.dedometro-row,.interaction-section) :is(button,.interaction-chip) {
+    border-color: var(--color-social-line) !important;
+}
+.mobile-body :is(.reaction-btn,.like-btn,.interaction-chip-icon) {
+    color: var(--color-social) !important;
+}
+.mobile-body #btnSendMobileMsg {
+    color: var(--color-text-inverse) !important;
+    background: var(--color-social) !important;
+}
 
 /* Interacoes, desafios e dialogos compartilhados */
 :is(.challenge-launch,.challenge-btn,.party-button) {
-    border-color: var(--kp-lilac-line) !important;
+    border-color: var(--color-social-line) !important;
     color: var(--kp-text) !important;
-    background: var(--kp-lilac-soft) !important;
+    background: var(--color-social-soft) !important;
 }
 .challenge-launch {
-    background: linear-gradient(110deg, rgba(147, 112, 245, .16), rgba(85, 149, 245, .08)) !important;
+    background: linear-gradient(110deg, rgba(255, 79, 216, .16), rgba(138, 63, 252, .08)) !important;
 }
 :is(.challenge-dialog,.party-dialog) {
     border-color: var(--kp-lilac-line) !important;
@@ -382,40 +398,40 @@ body.cabin-pc-page .vu-meter-bar {
     color: var(--kp-muted) !important;
 }
 :is(.challenge-feedback,.challenge-counter,.challenge-hero,.challenge-announcement) {
-    color: var(--kp-lilac) !important;
+    color: var(--color-social) !important;
 }
 .challenge-announcement,
 .challenge-note {
-    border-color: var(--kp-lilac-line) !important;
-    background: var(--kp-lilac-soft) !important;
+    border-color: var(--color-social-line) !important;
+    background: var(--color-social-soft) !important;
 }
 .challenge-screen-bar {
     border-color: var(--kp-lilac-line) !important;
     color: var(--kp-text) !important;
-    background: rgba(21, 24, 32, .95) !important;
+    background: rgba(14, 10, 20, .95) !important;
 }
 .interaction-chip,
 .host-action-card {
-    border-color: var(--kp-lilac-line) !important;
+    border-color: var(--color-social-line) !important;
     color: var(--kp-text) !important;
-    background: linear-gradient(135deg, rgba(147, 112, 245, .13), rgba(85, 149, 245, .08)) !important;
+    background: linear-gradient(135deg, rgba(255, 79, 216, .13), rgba(138, 63, 252, .08)) !important;
     box-shadow: none !important;
 }
 .interaction-chip-icon,
 .host-action-card .interaction-chip-icon {
-    color: var(--kp-lilac) !important;
+    color: var(--color-social) !important;
     filter: none !important;
 }
 .voice-playback-overlay {
-    border-color: var(--kp-lilac-line) !important;
+    border-color: var(--color-social-line) !important;
     background: linear-gradient(145deg, var(--kp-surface-overlay), rgba(15, 18, 25, .96)) !important;
 }
 .voice-playback-avatar,
 .voice-playback-bars i {
-    background: linear-gradient(135deg, var(--kp-lilac), var(--kp-blue)) !important;
+    background: linear-gradient(135deg, var(--color-social), var(--color-navigation)) !important;
 }
 .voice-playback-label {
-    color: var(--kp-lilac) !important;
+    color: var(--color-social) !important;
 }
 
 /* Selecao de modo e telas de acesso */
@@ -426,7 +442,7 @@ body.cabin-pc-page .vu-meter-bar {
 }
 .mode-card {
     border-color: var(--kp-border) !important;
-    background: linear-gradient(145deg, rgba(35, 40, 54, .94), rgba(21, 24, 32, .94)) !important;
+    background: linear-gradient(145deg, rgba(33, 23, 43, .94), rgba(14, 10, 20, .94)) !important;
 }
 .mode-card-primary {
     border-color: var(--kp-lilac-line) !important;
@@ -469,10 +485,10 @@ body.cabin-pc-page .vu-meter-bar {
 /* Pareamento */
 body:has(.pair-shell) {
     color: var(--kp-text) !important;
-    background: radial-gradient(circle at 15% 0, rgba(85, 149, 245, .15), transparent 34%), radial-gradient(circle at 90% 90%, rgba(147, 112, 245, .1), transparent 30%), var(--kp-bg) !important;
+    background: radial-gradient(circle at 15% 0, rgba(138, 63, 252, .15), transparent 34%), radial-gradient(circle at 90% 90%, rgba(255, 122, 0, .08), transparent 30%), var(--kp-bg) !important;
 }
 body:has(.pair-shell) .pair-card {
-    background: linear-gradient(150deg, rgba(35, 40, 54, .97), rgba(21, 24, 32, .98)) !important;
+    background: linear-gradient(150deg, rgba(33, 23, 43, .97), rgba(14, 10, 20, .98)) !important;
 }
 .pair-form input:focus,
 .mobile-auth-form input:focus,
