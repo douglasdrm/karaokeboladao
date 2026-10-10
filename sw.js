@@ -1,5 +1,5 @@
 self.addEventListener('install', (e) => {
-  self.skipWaiting();
+  e.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', (e) => {
@@ -7,6 +7,7 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return;
   event.respondWith(fetch(event.request));
 });
 
@@ -33,7 +34,7 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       if (clientList.length > 0) return clientList[0].focus();
-      return clients.openWindow('/');
+      return clients.openWindow('./App/mobile.html');
     })
   );
 });

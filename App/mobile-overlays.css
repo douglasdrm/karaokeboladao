@@ -120,6 +120,36 @@ body.mobile-body .challenge-dialog .challenge-close { position: absolute; top: 1
 .kp-notice p { margin: 0; color: var(--mobile-muted); font: 400 .9rem/1.55 'Inter', sans-serif; white-space: pre-line; overflow-wrap: anywhere; }
 .kp-notice button { width: 100%; min-height: 50px; margin-top: 22px; border: 0; border-radius: 14px; color: #090b12; background: var(--mobile-yellow); font: 800 .85rem/1 'Inter', sans-serif; cursor: pointer; }
 
+.kp-install-card {
+    position: fixed;
+    right: max(14px, env(safe-area-inset-right));
+    bottom: max(14px, env(safe-area-inset-bottom));
+    left: max(14px, env(safe-area-inset-left));
+    z-index: 2500000;
+    box-sizing: border-box;
+    max-width: 520px;
+    margin-left: auto;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 1px solid var(--color-navigation-line, rgba(138, 63, 252, .46));
+    border-radius: 18px;
+    color: var(--mobile-copy);
+    background: var(--color-bg-overlay, rgba(14, 10, 20, .94));
+    box-shadow: var(--effect-shadow-lg, 0 28px 90px rgba(0, 0, 0, .42));
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+.kp-install-copy { min-width: 0; flex: 1; }
+.kp-install-copy strong { display: block; font: 800 .9rem/1.2 var(--font-family-display, 'Montserrat', sans-serif); }
+.kp-install-copy p { margin: 6px 0 0; color: var(--mobile-muted); font: 400 .76rem/1.45 var(--font-family-interface, 'Inter', sans-serif); }
+.kp-install-actions { flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; }
+.kp-install-actions button { min-height: 38px; padding: 0 13px; border-radius: 10px; font: 700 .72rem/1 var(--font-family-interface, 'Inter', sans-serif); cursor: pointer; }
+.kp-install-confirm { border: 0; color: var(--color-text-inverse, #180B00); background: var(--color-action-primary, #FF7A00); }
+.kp-install-confirm:disabled { cursor: wait; opacity: .6; }
+.kp-install-dismiss { border: 1px solid var(--mobile-line); color: var(--mobile-muted); background: transparent; }
+
 @media (max-width: 520px) {
     .mobile-modal-overlay { align-items: flex-end; padding-inline: 0; padding-bottom: 0; }
     .mobile-modal-overlay > .mobile-modal { width: 100%; max-width: none; max-height: 91dvh; padding: 25px 20px calc(22px + env(safe-area-inset-bottom)); border-width: 1px 0 0 !important; border-radius: 24px 24px 0 0; }
@@ -129,6 +159,9 @@ body.mobile-body .challenge-dialog .challenge-close { position: absolute; top: 1
     .photo-option-btn { min-width: 0; padding: 12px 6px; }
     .kp-notice-layer { align-items: end; padding: 0; }
     .kp-notice { width: 100%; padding: 25px 20px calc(22px + env(safe-area-inset-bottom)); border-width: 1px 0 0; border-radius: 24px 24px 0 0; }
+    .kp-install-card { align-items: stretch; flex-direction: column; }
+    .kp-install-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kp-install-actions button:only-child { grid-column: 1 / -1; }
 }
 
 @media (prefers-reduced-motion: reduce) {

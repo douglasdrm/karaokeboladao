@@ -20,7 +20,10 @@
     <link rel="icon" type="image/png" href="../Assets/brand/favicon-64.png">
     <link rel="apple-touch-icon" href="../Assets/brand/icon-192.png">
     <meta name="theme-color" content="#0E0A14">
+    <meta name="application-name" content="Karaoke Party">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Karaoke Party">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <!-- Favicon -->
 
@@ -57,10 +60,10 @@
     <script src="challenge-core.js?v=2"></script>
     <script src="challenges.js?v=5"></script>
     <link rel="stylesheet" href="party-social.css?v=14">
-    <link rel="stylesheet" href="mobile-overlays.css?v=4">
+    <link rel="stylesheet" href="mobile-overlays.css?v=5">
     <link rel="stylesheet" href="karaoke-theme.css?v=4">
     <link rel="stylesheet" href="playback-theme.css?v=4">
-    <script src="mobile-ui.js?v=1" defer></script>
+    <script src="mobile-ui.js?v=2" defer></script>
 </head>
 
 <body class="mobile-body">
@@ -2865,19 +2868,13 @@
     <script src="tour-mobile.js" defer></script>
 
     <script>
-        // 1. Registro do Service Worker + Pedido de Permissão
+        // Registro do Service Worker sem abrir pedidos de permissão durante o
+        // carregamento, evitando que notificações disputem o fluxo do PWA.
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('../sw.js')
+            navigator.serviceWorker.register('../sw.js', { scope: '../', updateViaCache: 'none' })
                 .then((reg) => {
                     console.log('PWA Service Worker ativo!');
-
-                    if ('Notification' in window && Notification.permission === 'default') {
-                        Notification.requestPermission().then(permission => {
-                            if (permission === 'granted') {
-                                console.log('Permissão de notificação concedida!');
-                            }
-                        });
-                    }
+                    reg.update().catch(() => {});
                 })
                 .catch(err => console.error('Erro no PWA:', err));
         }
