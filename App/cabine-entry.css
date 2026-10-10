@@ -163,7 +163,8 @@ a { color: inherit; }
 .status-building { color: #fff3bc; background: rgba(255, 122, 0, .12); border: 1px solid rgba(255, 122, 0, .28); }
 .mode-icon,
 .detail-icon { font-family: sans-serif; font-weight: 400; color: var(--entry-pink); line-height: 1; }
-.mode-icon { margin: 28px 0 20px; font-size: 3.2rem; }
+.mode-icon { width: 58px; height: 58px; margin: 28px 0 20px; display: grid; place-items: center; }
+.mode-icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 14px rgba(138, 63, 252, .18)); }
 .mode-copy { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 9px; }
 .mode-copy strong { font: 800 clamp(1.25rem, 2.2vw, 1.75rem)/1.2 'Montserrat', sans-serif; }
 .mode-copy small { max-width: 480px; color: var(--entry-muted); font-size: .93rem; line-height: 1.55; }
@@ -183,6 +184,8 @@ a { color: inherit; }
 }
 
 .singer-callout strong { display: block; margin: 8px 0 5px; font: 700 1.05rem/1.4 'Montserrat', sans-serif; }
+.singer-label { display: inline-flex; align-items: center; gap: 8px; }
+.singer-label svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .singer-callout p { margin: 0; color: var(--entry-muted); font-size: .88rem; line-height: 1.55; }
 .singer-callout a,
 .primary-action,
