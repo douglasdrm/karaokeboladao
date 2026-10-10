@@ -23,7 +23,7 @@
         :root {
             --bg: var(--color-bg-canvas, #0E0A14);
             --accent: var(--color-navigation, #8A3FFC);
-            --blue: var(--color-action-primary, #FF7A00);
+            --action: var(--color-action-primary, #FF7A00);
             --glass: rgba(23,17,31,.78);
             --border: var(--color-border-default, rgba(245,244,250,.12));
         }
@@ -57,7 +57,7 @@
             font-family: 'Montserrat', sans-serif;
             letter-spacing: 2px;
             font-size: 1.5rem;
-            background: linear-gradient(90deg, var(--accent), var(--blue));
+            background: var(--effect-brand-gradient, linear-gradient(135deg, #8A3FFC, #FF4FD8 58%, #FF7A00));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -79,7 +79,7 @@
         }
 
         .stat-card:hover { transform: translateY(-5px); border-color: var(--accent); }
-        .stat-card .value { font-size: 2.5rem; font-weight: 900; color: var(--blue); }
+        .stat-card .value { font-size: 2.5rem; font-weight: 900; color: var(--action); }
         .stat-card .label { font-size: 0.8rem; opacity: 0.5; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
 
         .section-title {
@@ -147,12 +147,12 @@
             display: inline-block;
         }
 
-        .status-vip { background: rgba(0,255,0,0.1); color: #00ff00; border: 1px solid #00ff00; }
-        .status-trial { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid #ffa500; }
-        .status-expired { background: rgba(255,0,0,0.1); color: #ff4444; border: 1px solid #ff4444; }
-        .status-banned { background: #ff0000; color: white; border: 1px solid #ff0000; }
+        .status-vip { background: var(--color-state-success-soft); color: var(--color-state-success); border: 1px solid var(--color-state-success); }
+        .status-trial { background: var(--color-state-warning-soft); color: var(--color-state-warning); border: 1px solid var(--color-state-warning); }
+        .status-expired { background: var(--color-state-danger-soft); color: var(--color-state-danger); border: 1px solid var(--color-state-danger); }
+        .status-banned { background: var(--color-state-danger); color: var(--color-text-primary); border: 1px solid var(--color-state-danger); }
 
-        .row-banned { opacity: 0.5; filter: grayscale(0.8); background: rgba(255,0,0,0.05) !important; }
+        .row-banned { opacity: 0.5; filter: grayscale(0.8); background: var(--color-state-danger-soft) !important; }
 
         .action-group {
             display: flex;
@@ -190,10 +190,10 @@
             gap: 4px;
         }
 
-        .btn-activate { border-color: #00ff00; color: #00ff00; }
-        .btn-activate:hover { background: rgba(0,255,0,0.1); }
-        .btn-cancel { border-color: #ff4444; color: #ff4444; }
-        .btn-cancel:hover { background: rgba(255,0,0,0.1); }
+        .btn-activate { border-color: var(--color-state-success); color: var(--color-state-success); }
+        .btn-activate:hover { background: var(--color-state-success-soft); }
+        .btn-cancel { border-color: var(--color-state-danger); color: var(--color-state-danger); }
+        .btn-cancel:hover { background: var(--color-state-danger-soft); }
 
         /* Abas Estilizadas */
         .admin-tabs {
@@ -226,7 +226,7 @@
         .tab-btn.active {
             background: var(--accent);
             opacity: 1;
-            box-shadow: 0 5px 15px rgba(255, 79, 216,0.3);
+            box-shadow: 0 5px 15px rgba(138, 63, 252, .24);
         }
 
         .tab-btn i { font-size: 0.9rem; }
@@ -272,7 +272,7 @@
         #loader {
             display: none;
             margin-top: 20px;
-            color: var(--blue);
+            color: var(--action);
         }
 
         /* Dashboard do DJ (v16) */
@@ -290,7 +290,7 @@
 
         .stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.85rem; }
         .progress-container-mini { flex: 1; height: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 0 15px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--blue); transition: 0.5s; }
+        .progress-fill { height: 100%; background: var(--action); transition: 0.5s; }
         
         .peak-bar-container { display: flex; align-items: flex-end; gap: 3px; height: 100px; margin-top: 20px; border-bottom: 1px solid var(--border); }
         .peak-bar { flex: 1; background: var(--accent); border-radius: 3px 3px 0 0; transition: 0.5s; position: relative; min-height: 2px; }
@@ -308,13 +308,13 @@
         #djDashboard .hall-fame-table th, #djDashboard .hall-fame-table td { white-space: normal; overflow-wrap: anywhere; padding: 12px 10px; }
         #djDashboard .hall-fame-table th:first-child { width: 32%; }
         #djDashboard .hall-fame-table th:last-child { width: 64px; }
-        #djDashboard .hall-fame-table td:last-child { color: var(--blue); font-weight: 900; text-align: right; }
+        #djDashboard .hall-fame-table td:last-child { color: var(--action); font-weight: 900; text-align: right; }
         #djDashboard .hall-fame-table th:last-child { text-align: right; }
         .dj-caption { color: #a6a4b6; font-size: .75rem; line-height: 1.6; margin: -8px 0 18px; }
         .dj-genre-row { margin: 16px 0; }
         .dj-genre-label { display: flex; gap: 12px; justify-content: space-between; font-size: .83rem; margin-bottom: 8px; }
         .dj-genre-label span:first-child { overflow-wrap: anywhere; }
-        .dj-genre-label span:last-child { white-space: nowrap; color: var(--blue); }
+        .dj-genre-label span:last-child { white-space: nowrap; color: var(--action); }
         .dj-genre-row .progress-container-mini { margin: 0; height: 7px; }
         .dj-empty { color: #a6a4b6; padding: 20px 0; font-size: .85rem; }
         @media (max-width: 640px) {
@@ -343,7 +343,7 @@
                 <p style="font-size: 0.7rem; opacity: 0.5;">Gestão de DJs e Monetização</p>
             </div>
             <div style="display:flex; gap:12px;">
-                <button class="btn-action" style="border-color:var(--blue); color:var(--blue); padding: 10px 20px;" onclick="exportLeadsCSV()">
+                <button class="btn-action" style="border-color:var(--action); color:var(--action); padding: 10px 20px;" onclick="exportLeadsCSV()">
                     <i class="fas fa-file-csv"></i> EXPORTAR LEADS
                 </button>
                 <button class="btn-action" style="padding: 10px 20px;" onclick="logout()"><i class="fas fa-sign-out-alt"></i> SAIR</button>
@@ -410,8 +410,8 @@
                     </div>
                     <div style="display: flex; gap: 8px;">
                         <button class="btn-action btn-activate" onclick="showAddSongModal()"><i class="fas fa-plus"></i> NOVA MÚSICA</button>
-                        <button class="btn-action" style="border-color:#ffaa00; color:#ffaa00;" onclick="showImportModal()"><i class="fas fa-file-import"></i> IMPORTAR FHD</button>
-                        <button class="btn-action" id="btnPublishCatalog" style="border-color:var(--blue); color:var(--blue);" onclick="publishCatalog()">
+                        <button class="btn-action" style="border-color:var(--color-state-warning); color:var(--color-state-warning);" onclick="showImportModal()"><i class="fas fa-file-import"></i> IMPORTAR FHD</button>
+                        <button class="btn-action" id="btnPublishCatalog" style="border-color:var(--action); color:var(--action);" onclick="publishCatalog()">
                             <i class="fas fa-cloud-upload-alt"></i> PUBLICAR NO SITE
                         </button>
                         <button class="btn-action" onclick="exportCatalogCSV()"><i class="fas fa-download"></i> EXPORTAR CSV</button>
@@ -654,7 +654,7 @@
                     } else {
                         tr.innerHTML = `
                             <td style="font-weight:600;">${item.song || '—'}</td>
-                            <td style="color:#ff4444; font-weight:700;">${(item.type || 'ERRO').toUpperCase()}</td>
+                            <td style="color:var(--color-state-danger); font-weight:700;">${(item.type || 'ERRO').toUpperCase()}</td>
                             <td style="max-width:300px; white-space:normal;">${item.details || '—'}</td>
                             <td><div style="font-weight:600;">${item.user_name || '—'}</div></td>
                             <td><button class="btn-action btn-cancel" onclick="deleteFeedback('${key}')"><i class="fas fa-trash"></i> RESOLVIDO</button></td>
@@ -757,7 +757,7 @@
                                     </select>
                                     <button class="btn-action btn-activate" onclick="applyPlan('${uid}')">OK</button>
                                     <button class="btn-action btn-cancel" onclick="cancelSub('${uid}')" title="Reset Trial"><i class="fas fa-undo"></i></button>
-                                    <button class="btn-action" onclick="toggleBan('${uid}', ${!!user.isBanned})" style="color:${user.isBanned ? '#00ff00' : '#ff0000'}; border-color:${user.isBanned ? '#00ff00' : '#ff0000'};" title="${user.isBanned ? 'Desbanir' : 'Banir'}">
+                                    <button class="btn-action" onclick="toggleBan('${uid}', ${!!user.isBanned})" style="color:${user.isBanned ? 'var(--color-state-success)' : 'var(--color-state-danger)'}; border-color:${user.isBanned ? 'var(--color-state-success)' : 'var(--color-state-danger)'};" title="${user.isBanned ? 'Desbanir' : 'Banir'}">
                                         <i class="fas ${user.isBanned ? 'fa-user-check' : 'fa-user-slash'}"></i>
                                     </button>
                                     <button class="btn-action btn-cancel" onclick="deleteUser('${uid}')" title="DELETAR USUÁRIO">
@@ -795,7 +795,7 @@
                                         <i class="fab fa-whatsapp"></i> CONTATO
                                     </button>
                                     ` : ''}
-                                    <button class="btn-action" onclick="toggleBan('${uid}', ${!!user.isBanned})" style="color:${user.isBanned ? '#00ff00' : '#ff0000'}; border-color:${user.isBanned ? '#00ff00' : '#ff0000'};" title="${user.isBanned ? 'Desbanir' : 'Banir'}">
+                                    <button class="btn-action" onclick="toggleBan('${uid}', ${!!user.isBanned})" style="color:${user.isBanned ? 'var(--color-state-success)' : 'var(--color-state-danger)'}; border-color:${user.isBanned ? 'var(--color-state-success)' : 'var(--color-state-danger)'};" title="${user.isBanned ? 'Desbanir' : 'Banir'}">
                                         <i class="fas ${user.isBanned ? 'fa-user-check' : 'fa-user-slash'}"></i>
                                     </button>
                                     <button class="btn-action btn-cancel" onclick="deleteUser('${uid}')" title="DELETAR USUÁRIO">
