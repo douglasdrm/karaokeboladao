@@ -1,0 +1,46 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isCatalogAdmin() {
+      return isSignedIn()
+        && request.auth.token.email == 'douglasdrm@gmail.com';
+    }
+
+    function isValidAvatar() {
+      return request.resource != null
+        && request.resource.size <= 2 * 1024 * 1024
+        && request.resource.contentType == 'image/jpeg';
+    }
+
+    // O catálogo é consumido antes e depois do login em diferentes interfaces.
+    // Somente a conta administrativa já usada pelo painel pode publicá-lo.
+    match /songs.json {
+      allow read: if true;
+      allow create, update, delete: if isCatalogAdmin();
+    }
+
+    // Caminho adotado pelos novos uploads: um diretório isolado por UID.
+    match /avatars/{userId}/avatar.jpg {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn()
+        && request.auth.uid == userId
+        && isValidAvatar();
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Compatibilidade com versões já publicadas que usam avatars/{uid}.jpg.
+    match /avatars/{fileName} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn()
+        && fileName == request.auth.uid + '.jpg'
+        && isValidAvatar();
+      allow delete: if isSignedIn()
+        && fileName == request.auth.uid + '.jpg';
+    }
+  }
+}

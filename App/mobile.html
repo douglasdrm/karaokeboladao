@@ -2112,11 +2112,40 @@
         window.shareScoreCard = shareScoreCard;
         window.downloadScoreCard = downloadScoreCard;
 
-        function handlePhotoFile(input) {
-            const file = input.files[0];
-            if (!file || !currentUser) return;
+        const AVATAR_SOURCE_MAX_BYTES = 10 * 1024 * 1024;
+        const AVATAR_UPLOAD_MAX_BYTES = 2 * 1024 * 1024;
+
+        function setPhotoUploadStatus(message, state = '') {
             const status = document.getElementById('photoUploadStatus');
-            status.textContent = '⏳ Redimensionando...';
+            if (!status) return;
+            status.textContent = message;
+            status.style.color = state === 'error'
+                ? 'var(--color-state-danger)'
+                : state === 'success'
+                    ? 'var(--color-state-success)'
+                    : '';
+        }
+
+        function handlePhotoFile(input) {
+            const file = input.files?.[0];
+            const authUser = firebase.auth().currentUser;
+            input.value = '';
+
+            if (!file) return;
+            if (!authUser || !currentUser || authUser.uid !== currentUser.uid) {
+                setPhotoUploadStatus('❌ Sua sessão expirou. Entre novamente para alterar a foto.', 'error');
+                return;
+            }
+            if (!file.type.startsWith('image/')) {
+                setPhotoUploadStatus('❌ Selecione um arquivo de imagem.', 'error');
+                return;
+            }
+            if (file.size > AVATAR_SOURCE_MAX_BYTES) {
+                setPhotoUploadStatus('❌ A imagem original deve ter no máximo 10 MB.', 'error');
+                return;
+            }
+
+            setPhotoUploadStatus('⏳ Redimensionando...');
 
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -2131,48 +2160,84 @@
                     const oy = (img.height - side) / 2;
                     ctx.drawImage(img, ox, oy, side, side, 0, 0, size, size);
 
-                    // Cacheia o data URL no localStorage para uso no canvas do score card (sem CORS)
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                    localStorage.setItem(`kp_avatar_data_${currentUser.uid}`, dataUrl);
-
-                    canvas.toBlob(blob => uploadAvatarToStorage(blob, dataUrl), 'image/jpeg', 0.85);
+                    canvas.toBlob(blob => {
+                        if (!blob) {
+                            setPhotoUploadStatus('❌ Não foi possível processar esta imagem.', 'error');
+                            return;
+                        }
+                        uploadAvatarToStorage(blob, dataUrl);
+                    }, 'image/jpeg', 0.85);
                 };
+                img.onerror = () => setPhotoUploadStatus('❌ A imagem selecionada é inválida ou incompatível.', 'error');
                 img.src = e.target.result;
             };
+            reader.onerror = () => setPhotoUploadStatus('❌ Não foi possível ler esta imagem.', 'error');
             reader.readAsDataURL(file);
-            input.value = '';
         }
 
         async function uploadAvatarToStorage(blob, cachedDataUrl) {
-            if (!currentUser) return;
-            const status = document.getElementById('photoUploadStatus');
-            status.textContent = '⬆️ Enviando foto...';
+            const authUser = firebase.auth().currentUser;
+            if (!authUser || !currentUser || authUser.uid !== currentUser.uid) {
+                setPhotoUploadStatus('❌ Sua sessão expirou. Entre novamente para alterar a foto.', 'error');
+                return;
+            }
+            if (!blob || blob.type !== 'image/jpeg' || blob.size > AVATAR_UPLOAD_MAX_BYTES) {
+                setPhotoUploadStatus('❌ A foto processada não atende ao formato ou limite de 2 MB.', 'error');
+                return;
+            }
+
+            setPhotoUploadStatus('⬆️ Enviando foto...');
+            let uploadStage = 'autenticação';
 
             try {
+                // Garante que o token autenticado esteja disponível antes do Storage avaliar as regras.
+                await authUser.getIdToken();
+
+                uploadStage = 'envio ao Storage';
                 const storage = firebase.storage();
-                const ref = storage.ref(`avatars/${currentUser.uid}.jpg`);
-                await ref.put(blob, { contentType: 'image/jpeg' });
+                const ref = storage.ref(`avatars/${authUser.uid}/avatar.jpg`);
+                await ref.put(blob, {
+                    contentType: 'image/jpeg',
+                    customMetadata: { ownerUid: authUser.uid }
+                });
+
+                uploadStage = 'obtenção da URL';
                 const url = await ref.getDownloadURL();
 
                 // Salva URL no Realtime DB
-                await db.ref(`users/${currentUser.uid}/customPhoto`).set(url);
+                uploadStage = 'atualização do perfil';
+                await db.ref(`users/${authUser.uid}/customPhoto`).set(url);
+
+                // Cache local somente depois da confirmação do upload e do perfil.
+                if (cachedDataUrl) {
+                    try {
+                        localStorage.setItem(`kp_avatar_data_${authUser.uid}`, cachedDataUrl);
+                    } catch (cacheError) {
+                        console.warn('Avatar enviado, mas não foi possível atualizar o cache local:', cacheError);
+                    }
+                }
 
                 // Atualiza avatar na barra
                 const pic = document.getElementById('headerUserPic');
                 // Usa o data URL cacheado para a barra (sem CORS)
-                if (cachedDataUrl) pic.src = cachedDataUrl;
-                else pic.src = url;
+                if (pic) pic.src = cachedDataUrl || url;
 
                 const preview = document.getElementById('photoPreviewCurrent');
                 if (preview) { preview.src = cachedDataUrl || url; preview.style.display = 'block'; }
                 const initialsEl = document.getElementById('photoPreviewInitials');
                 if (initialsEl) initialsEl.style.display = 'none';
 
-                status.textContent = '✅ Foto atualizada!';
+                setPhotoUploadStatus('✅ Foto atualizada!', 'success');
                 setTimeout(closePhotoEditModal, 1200);
             } catch (err) {
-                console.error('Erro ao fazer upload:', err);
-                status.textContent = '❌ Erro: ' + err.message;
+                console.error(`Erro no avatar durante ${uploadStage}:`, err);
+                const permissionDenied = err?.code === 'storage/unauthorized'
+                    || err?.code === 'PERMISSION_DENIED';
+                const message = permissionDenied
+                    ? 'Sem permissão para atualizar o avatar. Confirme as regras do Storage.'
+                    : 'Não foi possível atualizar a foto. Tente novamente.';
+                setPhotoUploadStatus(`❌ ${message}`, 'error');
             }
         }
 
