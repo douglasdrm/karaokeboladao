@@ -2879,6 +2879,13 @@
                 .catch(err => console.error('Erro no PWA:', err));
         }
 
+        const runningAsInstalledApp = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        if (runningAsInstalledApp && 'Notification' in window && Notification.permission === 'default') {
+            window.addEventListener('pointerup', function requestInstalledAppNotifications() {
+                Notification.requestPermission().catch(() => {});
+            }, { once: true });
+        }
+
         // 2. Função de Notificação Nativa
         function triggerSystemNotification(title, body) {
             // Vibração direta na tela
