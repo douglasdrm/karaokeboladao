@@ -104,6 +104,7 @@
   const drift=Math.abs(time-estimated);
   const stateChanged=ambientMirror.state!==state;
   const retry=now<ambientMirror.retryUntil&&now-ambientMirror.lastCommand>500;
+  if(fresh||shouldLoadVideo||stateChanged)youtubeCommand(iframe,'setOption',['captions','track',{}]);
   if((ambientMirror.ready||!videoChanged)&&(fresh||shouldLoadVideo||retry||stateChanged||drift>.65)){
    youtubeCommand(iframe,'mute');youtubeCommand(iframe,'setVolume',[0]);youtubeCommand(iframe,'setPlaybackRate',[rate]);youtubeCommand(iframe,'seekTo',[time,true]);
    if(state===1)youtubeCommand(iframe,'playVideo');

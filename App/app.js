@@ -3421,6 +3421,12 @@
         ambientStateTimer = setInterval(publishAmbientState, 200);
     }
 
+    function disableAmbientCaptions(player) {
+        try {
+            player.setOption('captions', 'track', {});
+        } catch (e) { }
+    }
+
     function renderAmbientRankingPanel() {
         const panel = document.getElementById('ambientRankingPanel');
         if (!panel) return;
@@ -3561,9 +3567,11 @@
 
                         'onReady': (event) => {
 
+                            disableAmbientCaptions(event.target);
+
                             event.target.playVideo();
 
-                            event.target.setVolume(35);
+                            event.target.setVolume(Math.round(currentVolume * 100));
 
                             isAmbientPlaying = true;
 
@@ -3573,7 +3581,12 @@
 
                         },
 
-                        'onStateChange': publishAmbientState
+                        'onStateChange': (event) => {
+                            disableAmbientCaptions(event.target);
+                            publishAmbientState();
+                        },
+
+                        'onApiChange': (event) => disableAmbientCaptions(event.target)
 
                     }
 
@@ -3744,6 +3757,10 @@
 
         const v = document.getElementById('mainVideo');
         if (v) v.volume = currentVolume;
+
+        if (ytAmbientPlayer?.setVolume) {
+            try { ytAmbientPlayer.setVolume(Math.round(currentVolume * 100)); } catch (e) { }
+        }
 
         const r = document.getElementById('volRange');
         if (r) r.value = currentVolume;
