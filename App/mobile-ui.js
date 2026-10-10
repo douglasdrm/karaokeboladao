@@ -55,6 +55,7 @@
 
     const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isAndroid = /Android/i.test(navigator.userAgent);
     const isIosSafari = isIos && /Safari/i.test(navigator.userAgent) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(navigator.userAgent);
     let deferredInstallPrompt = null;
     let installCard = null;
@@ -62,40 +63,65 @@
     function dismissInstallCard() {
         installCard?.remove();
         installCard = null;
-        try { sessionStorage.setItem('kpInstallDismissed', '1'); } catch (error) { /* armazenamento opcional */ }
     }
 
-    function installWasDismissed() {
-        try { return sessionStorage.getItem('kpInstallDismissed') === '1'; } catch (error) { return false; }
+    function androidInstallInstructions() {
+        if (/SamsungBrowser/i.test(navigator.userAgent)) {
+            return 'No Samsung Internet, abra o menu e procure “Adicionar página a” → “Tela inicial”. Se aparecer “Instalar aplicativo”, prefira essa opção para abrir em modo app.';
+        }
+        if (/Firefox/i.test(navigator.userAgent)) {
+            return 'No Firefox, abra o menu ⋮ e procure “Instalar”. Se houver apenas “Adicionar à tela inicial”, será criado um atalho que continua abrindo no navegador.';
+        }
+        return 'Abra o menu ⋮ do navegador. “Instalar app” cria o aplicativo em modo independente; “Adicionar à tela inicial” cria apenas um atalho quando a instalação não estiver disponível.';
     }
 
-    function showInstallCard(mode) {
-        if (isStandalone() || installCard || installWasDismissed()) return;
+    function renderInstallCard(mode) {
+        if (isStandalone()) {
+            installCard?.remove();
+            installCard = null;
+            return;
+        }
 
-        installCard = document.createElement('aside');
-        installCard.className = 'kp-install-card';
-        installCard.setAttribute('role', 'region');
-        installCard.setAttribute('aria-label', 'Instalar Karaoke Party');
+        if (!installCard) {
+            installCard = document.createElement('aside');
+            installCard.className = 'kp-install-card';
+            installCard.setAttribute('role', 'region');
+            installCard.setAttribute('aria-label', 'Instalar Karaoke Party');
+            document.body.appendChild(installCard);
+        }
+        installCard.replaceChildren();
 
         const copy = document.createElement('div');
         copy.className = 'kp-install-copy';
         const title = document.createElement('strong');
-        title.textContent = mode === 'android' ? 'Instale o Karaoke Party' : 'Adicione à Tela de Início';
+        title.textContent = mode === 'native' ? 'Instale o Karaoke Party' : mode === 'android-help' ? 'Adicione o Karaoke Party ao celular' : 'Adicione à Tela de Início';
         const instructions = document.createElement('p');
-        instructions.textContent = mode === 'android'
+        instructions.textContent = mode === 'native'
             ? 'Abra o app mais rápido e em tela cheia no seu celular.'
+            : mode === 'android-help'
+                ? 'A instalação nativa não está disponível agora, mas você ainda pode instalar pelo menu ou criar um atalho.'
             : isIosSafari
                 ? 'No Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.'
                 : 'Abra esta página no Safari. Depois toque em Compartilhar e em “Adicionar à Tela de Início”.';
         copy.append(title, instructions);
 
+        const details = document.createElement('p');
+        details.className = 'kp-install-steps';
+        details.hidden = true;
+        details.textContent = mode === 'android-help'
+            ? androidInstallInstructions()
+            : isIosSafari
+                ? 'O ícone será criado na Tela de Início e abrirá o Karaoke Party sem a barra normal do Safari.'
+                : 'Navegadores alternativos do iPhone não oferecem o mesmo fluxo. Copie ou reabra o endereço no Safari para continuar.';
+        if (mode !== 'native') copy.append(details);
+
         const actions = document.createElement('div');
         actions.className = 'kp-install-actions';
-        if (mode === 'android') {
+        if (mode === 'native') {
             const install = document.createElement('button');
             install.type = 'button';
             install.className = 'kp-install-confirm';
-            install.textContent = 'Instalar';
+            install.textContent = 'Instalar aplicativo';
             install.addEventListener('click', async () => {
                 if (!deferredInstallPrompt) return;
                 install.disabled = true;
@@ -103,25 +129,35 @@
                 const choice = await deferredInstallPrompt.userChoice;
                 deferredInstallPrompt = null;
                 if (choice.outcome === 'accepted') dismissInstallCard();
-                else install.disabled = false;
+                else renderInstallCard('android-help');
             });
             actions.append(install);
+        } else {
+            const help = document.createElement('button');
+            help.type = 'button';
+            help.className = 'kp-install-help';
+            help.textContent = mode === 'android-help' ? 'Como instalar' : 'Ver instruções';
+            help.setAttribute('aria-expanded', 'false');
+            help.addEventListener('click', () => {
+                details.hidden = !details.hidden;
+                help.setAttribute('aria-expanded', String(!details.hidden));
+            });
+            actions.append(help);
         }
         const dismiss = document.createElement('button');
         dismiss.type = 'button';
         dismiss.className = 'kp-install-dismiss';
-        dismiss.textContent = mode === 'android' ? 'Agora não' : 'Entendi';
+        dismiss.textContent = mode === 'native' || mode === 'android-help' ? 'Agora não' : 'Entendi';
         dismiss.addEventListener('click', dismissInstallCard);
         actions.append(dismiss);
 
         installCard.append(copy, actions);
-        document.body.appendChild(installCard);
     }
 
     window.addEventListener('beforeinstallprompt', function (event) {
         event.preventDefault();
         deferredInstallPrompt = event;
-        showInstallCard('android');
+        renderInstallCard('native');
     });
 
     window.addEventListener('appinstalled', function () {
@@ -129,7 +165,10 @@
         dismissInstallCard();
     });
 
-    if (isIos && !isStandalone()) {
-        window.addEventListener('DOMContentLoaded', function () { showInstallCard('ios'); }, { once: true });
+    if ((isAndroid || isIos) && !isStandalone()) {
+        window.addEventListener('DOMContentLoaded', function () {
+            if (deferredInstallPrompt) renderInstallCard('native');
+            else renderInstallCard(isAndroid ? 'android-help' : 'ios-help');
+        }, { once: true });
     }
 })();
