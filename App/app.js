@@ -83,6 +83,10 @@
 
     let ambientStateTimer = null;
 
+    let ambientPublishedVideo = '';
+
+    let ambientVideoRevision = 0;
+
     let currentVotes = {}; // Armazena votos por usuário da música atual (v9)
     let currentDedometro = {}; // Armazena votos like/dislike do Dedômetro (Novo!)
     let sessionRanking = []; // Armazena os melhores da noite (v20)
@@ -3388,10 +3392,26 @@
         const container = document.getElementById('ambientContainer');
         if (!container || !ytAmbientPlayer) return;
         try {
-            container.dataset.ambientState = String(ytAmbientPlayer.getPlayerState());
-            container.dataset.ambientTime = (ytAmbientPlayer.getCurrentTime() || 0).toFixed(2);
-            container.dataset.ambientRate = String(ytAmbientPlayer.getPlaybackRate?.() || 1);
-            container.dataset.ambientVideo = ytAmbientPlayer.getVideoData?.().video_id || '';
+            const state = String(ytAmbientPlayer.getPlayerState());
+            const time = (ytAmbientPlayer.getCurrentTime() || 0).toFixed(2);
+            const rate = String(ytAmbientPlayer.getPlaybackRate?.() || 1);
+            const currentUrl = ytAmbientPlayer.getVideoUrl?.() || '';
+            const videoId = extractYoutubeInfo(currentUrl).videoId || '';
+
+            if (container.dataset.ambientState !== state) container.dataset.ambientState = state;
+            if (container.dataset.ambientTime !== time) container.dataset.ambientTime = time;
+            if (container.dataset.ambientRate !== rate) container.dataset.ambientRate = rate;
+
+            // Preserva o último ID válido durante os estados transitórios do player.
+            if (videoId && videoId !== ambientPublishedVideo) {
+                ambientPublishedVideo = videoId;
+                ambientVideoRevision += 1;
+                container.dataset.ambientVideo = videoId;
+                container.dataset.ambientRevision = String(ambientVideoRevision);
+            } else if (ambientPublishedVideo && !container.dataset.ambientVideo) {
+                container.dataset.ambientVideo = ambientPublishedVideo;
+                container.dataset.ambientRevision = String(ambientVideoRevision);
+            }
         } catch (e) { }
     }
 
@@ -3494,6 +3514,10 @@
             if (!ambientRankingTimer) startAmbientRankingCycle();
             return;
         }
+
+        // Um novo iframe deve confirmar o próprio conteúdo antes de publicá-lo.
+        // A revisão permanece monotônica para impedir retorno a uma transição anterior.
+        ambientPublishedVideo = '';
 
         playerArea.innerHTML = `
         <div id="ambientContainer" class="ambient-stage">

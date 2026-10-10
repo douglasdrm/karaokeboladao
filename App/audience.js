@@ -3,7 +3,7 @@
  const stage=document.getElementById('audienceStage'),status=document.getElementById('audienceStatus');
  let hideTimer,observer,observedDocument,scheduled=false,vibeSignature='',vibeUntil=0;
  const mirrors=new WeakMap(),videoSources=new WeakMap();
- let ambientMirror={iframe:null,state:null,time:0,stamp:0,rate:1,retryUntil:0,lastCommand:0,video:''};
+ let ambientMirror={iframe:null,ready:false,state:null,time:0,stamp:0,rate:1,retryUntil:0,lastCommand:0,video:'',revision:-1,loadedVideo:''};
  const allowed=['#player','#fsQueueOverlay','#rankingTicker','.qr-fullscreen-box','#topInfoBox','#djFooter','#screensaver','#publicScoreDisplay','#reactionContainer','.applause-overlay','.voice-playback-overlay'];
  const frame=document.createElement('main');frame.id='playerContainer';frame.className='is-native-fullscreen';stage.append(frame);
  function showToolbar(){document.body.classList.remove('toolbar-hidden');clearTimeout(hideTimer);hideTimer=setTimeout(()=>document.body.classList.add('toolbar-hidden'),2200);}
@@ -54,28 +54,61 @@
  function youtubeCommand(iframe,func,args=[]){
   try{iframe.contentWindow?.postMessage(JSON.stringify({event:'command',func,args}),'*');}catch{}
  }
+ function youtubeIdFromIframe(iframe){
+  try{
+   const url=new URL(iframe.src,location.href);
+   const match=url.pathname.match(/\/embed\/([\w-]{11})/);
+   return match?.[1]||'';
+  }catch{return '';}
+ }
  function syncAmbientPlayback(sourceContainer){
   const source=sourceContainer.querySelector('#ambientContainer');
   const target=frame.querySelector('#ambientContainer');
   const iframe=target?.querySelector('iframe');
-  if(!source||!iframe){ambientMirror={iframe:null,state:null,time:0,stamp:0,rate:1,retryUntil:0,lastCommand:0,video:''};return;}
+  if(!source||!iframe){ambientMirror={iframe:null,ready:false,state:null,time:0,stamp:0,rate:1,retryUntil:0,lastCommand:0,video:'',revision:-1,loadedVideo:''};return;}
   const state=Number(source.dataset.ambientState);
   const time=Number(source.dataset.ambientTime);
   const rate=Number(source.dataset.ambientRate)||1;
-  const video=source.dataset.ambientVideo||'';
+  const receivedVideo=source.dataset.ambientVideo||'';
+  const video=/^[\w-]{11}$/.test(receivedVideo)?receivedVideo:'';
+  const receivedRevision=Number(source.dataset.ambientRevision);
+  const revision=Number.isSafeInteger(receivedRevision)&&receivedRevision>=0?receivedRevision:0;
   if(!Number.isFinite(state)||!Number.isFinite(time))return;
   const now=performance.now();
-  const fresh=ambientMirror.iframe!==iframe||ambientMirror.video!==video;
-  if(fresh)ambientMirror={iframe,state:null,time,stamp:now,rate,retryUntil:now+5000,lastCommand:0,video};
+  const fresh=ambientMirror.iframe!==iframe;
+  if(fresh){
+   ambientMirror={iframe,ready:false,state:null,time,stamp:now,rate,retryUntil:now+5000,lastCommand:0,video:'',revision:-1,loadedVideo:youtubeIdFromIframe(iframe)};
+   iframe.addEventListener('load',()=>{
+    if(ambientMirror.iframe!==iframe)return;
+    ambientMirror.ready=true;
+    ambientMirror.state=null;
+    ambientMirror.lastCommand=0;
+    tick();
+   },{once:true});
+  }
+  const currentVideo=revision<ambientMirror.revision?'':video;
+  const videoChanged=Boolean(currentVideo)&&currentVideo!==ambientMirror.loadedVideo;
+  const shouldLoadVideo=videoChanged&&ambientMirror.ready;
+  if(shouldLoadVideo){
+   youtubeCommand(iframe,'loadVideoById',[currentVideo,time]);
+   ambientMirror.loadedVideo=currentVideo;
+   ambientMirror.video=currentVideo;
+   ambientMirror.revision=revision;
+   ambientMirror.retryUntil=now+5000;
+   ambientMirror.lastCommand=now;
+  }else if(currentVideo&&revision>=ambientMirror.revision){
+   ambientMirror.video=currentVideo;
+   ambientMirror.revision=revision;
+  }
   const estimated=ambientMirror.time+(ambientMirror.state===1?(now-ambientMirror.stamp)/1000*ambientMirror.rate:0);
   const drift=Math.abs(time-estimated);
   const stateChanged=ambientMirror.state!==state;
   const retry=now<ambientMirror.retryUntil&&now-ambientMirror.lastCommand>500;
-  if(fresh||retry||stateChanged||drift>.65){
+  if((ambientMirror.ready||!videoChanged)&&(fresh||shouldLoadVideo||retry||stateChanged||drift>.65)){
    youtubeCommand(iframe,'mute');youtubeCommand(iframe,'setVolume',[0]);youtubeCommand(iframe,'setPlaybackRate',[rate]);youtubeCommand(iframe,'seekTo',[time,true]);
    if(state===1)youtubeCommand(iframe,'playVideo');
    else if([0,2,5].includes(state))youtubeCommand(iframe,'pauseVideo');
-   ambientMirror.time=time;ambientMirror.stamp=now;ambientMirror.rate=rate;ambientMirror.state=state;ambientMirror.lastCommand=now;ambientMirror.video=video;
+   ambientMirror.time=time;ambientMirror.stamp=now;ambientMirror.rate=rate;ambientMirror.state=state;ambientMirror.lastCommand=now;
   }
  }
  function tick(){
