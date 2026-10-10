@@ -91,7 +91,7 @@
                 <span class="dashboard-eyebrow">CABINE DO DJ</span>
                 <h1 class="brand-title" id="headerPartyName">KARAOKE PARTY</h1>
                 <div class="status-indicator">
-                    <span class="dot" style="background: #00ff00;"></span>
+                    <span class="dot" style="background: var(--color-state-success);"></span>
                     <span id="hostConnectionLabel">PRONTO</span>
                 </div>
             </div>
@@ -256,12 +256,12 @@
                 <!-- Dedômetro live display (👍 vs 👎) (Novo!) -->
                 <div id="dedometroDisplay" style="display:none; margin-top:12px; border-top:1px solid rgba(255,255,255,0.12); padding-top:10px; width:100%; box-sizing:border-box;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">
-                        <span style="color:#00ff80;"><i class="fas fa-thumbs-up"></i> <span id="likeCount">0</span> Aprovado</span>
-                        <span style="color:#ff4444;"><span id="dislikeCount">0</span> Zoeira <i class="fas fa-thumbs-down"></i></span>
+                        <span style="color:var(--color-state-success);"><i class="fas fa-thumbs-up"></i> <span id="likeCount">0</span> Aprovado</span>
+                        <span style="color:var(--color-state-danger);"><span id="dislikeCount">0</span> Zoeira <i class="fas fa-thumbs-down"></i></span>
                     </div>
                     <div style="height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden; display:flex; width:100%;">
-                        <div id="likeBarInner" style="width:50%; background:#00ff80; transition:width 0.4s cubic-bezier(0.1, 0.8, 0.3, 1);"></div>
-                        <div id="dislikeBarInner" style="width:50%; background:#ff4444; transition:width 0.4s cubic-bezier(0.1, 0.8, 0.3, 1);"></div>
+                        <div id="likeBarInner" style="width:50%; background:var(--color-state-success); transition:width 0.4s cubic-bezier(0.1, 0.8, 0.3, 1);"></div>
+                        <div id="dislikeBarInner" style="width:50%; background:var(--color-state-danger); transition:width 0.4s cubic-bezier(0.1, 0.8, 0.3, 1);"></div>
                     </div>
                 </div>
             </div>
@@ -522,7 +522,7 @@
     </div>
 
     <script src="qrcode.min.js"></script>
-    <script src="singer-selection.js?v=2" defer></script>
+    <script src="singer-selection.js?v=3" defer></script>
     <script src="tone-control.js?v=1" defer></script>
     <script src="party-core.js?v=4" defer></script>
     <script src="party-ui.js?v=1" defer></script>
@@ -531,7 +531,7 @@
     <script src="party-social.js?v=8"></script>
     <script src="challenge-core.js?v=2"></script>
     <script src="challenges.js?v=6" defer></script>
-    <script src="audience-host.js?v=1" defer></script><script src="app.js?v=5.9" defer></script>
+    <script src="audience-host.js?v=1" defer></script><script src="app.js?v=6.0" defer></script>
     <script src="tour-host.js" defer></script>
 </body>
 

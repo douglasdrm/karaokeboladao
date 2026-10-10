@@ -411,7 +411,7 @@
                 .then(data => processCatalogData(data.musicas))
                 .catch(err => {
                     console.error("Erro fatal no catálogo:", err);
-                    if (songList) songList.innerHTML = "<div style='color:red;padding:20px;'>ERRO: Falha ao carregar catálogo.</div>";
+                    if (songList) songList.innerHTML = "<div style='color:var(--color-state-danger);padding:20px;'>ERRO: Falha ao carregar catálogo.</div>";
                 });
         }
 
@@ -749,7 +749,7 @@
         const rawName = hostUser.displayName || (hostUser.email ? hostUser.email.split('@')[0] : "DJ");
         const firstName = rawName.split(' ')[0].toUpperCase();
         const title = isTrial ? "MODO DEGUSTAÇÃO (30 MINUTOS)" : `BEM-VINDO AO COMANDO, ${firstName}`;
-        const subText = isTrial ? "<p style='color:#ffaa00; font-size:0.8rem; margin-bottom:10px;'>Você ainda possui tempo de teste gratuito. Aproveite!</p>" : "";
+        const subText = isTrial ? "<p style='color:var(--color-state-warning); font-size:0.8rem; margin-bottom:10px;'>Você ainda possui tempo de teste gratuito. Aproveite!</p>" : "";
         const currentAmbient = settings.ambientUrl || "";
 
         let modalHTML = `
@@ -840,12 +840,12 @@
                     hasAlerted5Min = true;
                     showToast("Atenção: Seu tempo de teste gratuito vence em 5 minutos!");
                     banner.style.animation = "pulse-warning 1s infinite";
-                    banner.style.borderColor = "#ffaa00";
+                    banner.style.borderColor = "var(--color-state-warning)";
                 }
                 // Alerta crítico ao 1 minuto
                 if (mins === 1 && secs <= 5) {
                     banner.style.animation = "pulse-danger 0.5s infinite";
-                    banner.style.borderColor = "#ff4444";
+                    banner.style.borderColor = "var(--color-state-danger)";
                 }
             }
 
@@ -911,7 +911,7 @@
 
         if (!isPremium || !subscriptionData) {
             content.innerHTML = `
-                <div style="color:#ff4444; margin-bottom:15px;"><i class="fas fa-times-circle" style="font-size:2rem;"></i></div>
+                <div style="color:var(--color-state-danger); margin-bottom:15px;"><i class="fas fa-times-circle" style="font-size:2rem;"></i></div>
                 <h3 style="margin-bottom:10px;">Sem Assinatura Ativa</h3>
                 <p style="font-size:0.9rem; opacity:0.7;">Você está usando o Modo de Degustação Gratuito.</p>
             `;
@@ -933,7 +933,7 @@
                 <div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:10px;">
                     <div style="font-size:0.8rem; opacity:0.6;">Expira em:</div>
                     <div style="font-weight:600;">${expDate}</div>
-                    <div style="font-size:0.85rem; color:#62A8FF; margin-top:5px;">${timeLabel}</div>
+                    <div style="font-size:0.85rem; color:var(--color-state-info); margin-top:5px;">${timeLabel}</div>
                 </div>
             `;
         }
@@ -4255,7 +4255,7 @@
 
         const toast = document.createElement('div');
 
-        toast.style.cssText = `position:fixed;bottom:30px;right:30px;background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));color:white;padding:15px 25px;border-radius:12px;font-weight:700;font-size:0.95rem;box-shadow:0 10px 30px rgba(255, 79, 216,0.5);z-index:99999;transition:all 0.5s;opacity:0;transform:translateX(100px);`;
+        toast.style.cssText = `position:fixed;bottom:30px;right:30px;background:var(--effect-brand-gradient);color:var(--color-text-primary);padding:15px 25px;border-radius:12px;font-weight:700;font-size:0.95rem;box-shadow:var(--effect-shadow-md);z-index:99999;transition:all 0.5s;opacity:0;transform:translateX(100px);`;
 
         toast.innerHTML = `<i class="fas fa-mobile-alt" style="margin-right:10px;"></i> ${msg}`;
 
