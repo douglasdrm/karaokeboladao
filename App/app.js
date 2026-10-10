@@ -3549,6 +3549,8 @@
 
                         'mute': 0,
 
+                        'cc_load_policy': 0,
+
                         'start': Math.floor(ambientLastTime),
 
                         'index': Math.floor(ambientLastIndex)
