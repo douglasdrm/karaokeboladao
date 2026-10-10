@@ -6,14 +6,13 @@
     --mobile-copy: var(--kp-text, #F5F4FA);
     --mobile-muted: var(--kp-muted, #A49BAD);
     --mobile-yellow: var(--kp-yellow, #FF7A00);
-    --mobile-blue: var(--kp-blue, #9C5BFF);
 }
 
 .mobile-modal-overlay {
     box-sizing: border-box;
     padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
     overflow: hidden auto;
-    background: rgba(3, 5, 10, .84) !important;
+    background: var(--color-bg-scrim, rgba(6, 3, 10, .78)) !important;
     backdrop-filter: blur(18px) saturate(.8) !important;
     -webkit-backdrop-filter: blur(18px) saturate(.8) !important;
 }
@@ -25,7 +24,7 @@ body.mobile-body .challenge-dialog {
     box-sizing: border-box;
     border: 1px solid var(--mobile-line) !important;
     color: var(--mobile-copy) !important;
-    background: linear-gradient(150deg, rgba(25, 31, 48, .99), rgba(10, 13, 22, .99)) !important;
+    background: linear-gradient(150deg, var(--mobile-sheet-raised), var(--mobile-sheet)) !important;
     box-shadow: 0 28px 80px rgba(0, 0, 0, .56), inset 0 1px rgba(255, 255, 255, .035) !important;
 }
 
@@ -52,14 +51,14 @@ body.mobile-body .challenge-dialog select {
     border: 1px solid var(--mobile-line) !important;
     border-radius: 13px !important;
     color: var(--mobile-copy) !important;
-    background: rgba(3, 5, 11, .62) !important;
+    background: var(--color-bg-deep, #09060D) !important;
     outline: none;
 }
 .mobile-modal input:focus,
 .mobile-modal textarea:focus,
 body.mobile-body .challenge-dialog input:focus,
 body.mobile-body .challenge-dialog textarea:focus,
-body.mobile-body .challenge-dialog select:focus { border-color: var(--mobile-yellow) !important; box-shadow: 0 0 0 3px rgba(255, 122, 0, .09); }
+body.mobile-body .challenge-dialog select:focus { border-color: var(--color-focus, #8A3FFC) !important; box-shadow: var(--effect-focus-ring, 0 0 0 3px rgba(138, 63, 252, .28)); }
 
 .modal-buttons { align-items: stretch; flex-wrap: wrap; }
 .modal-buttons > button { min-width: 120px; }
@@ -96,26 +95,26 @@ body.mobile-body .challenge-dialog .challenge-close { border: 1px solid var(--mo
 .mobile-state-card .btn-confirm { width: 100%; margin-top: 8px; }
 .mobile-state-icon { display: grid; place-items: center; width: 72px; height: 72px; margin-bottom: 20px; border-radius: 22px; color: #ff6b75; background: rgba(255, 75, 92, .1); font-size: 2rem; }
 
-.voice-alert-overlay { padding: 18px; background: rgba(3, 5, 10, .9) !important; backdrop-filter: blur(18px); }
-.va-content { width: min(100%, 420px); padding: 30px 22px !important; border: 1px solid var(--mobile-line) !important; border-radius: 24px !important; background: linear-gradient(150deg, var(--mobile-sheet-raised), #0a0d16) !important; box-shadow: 0 28px 80px rgba(0,0,0,.56) !important; }
+.voice-alert-overlay { padding: 18px; background: var(--color-bg-scrim, rgba(6, 3, 10, .78)) !important; backdrop-filter: blur(18px); }
+.va-content { width: min(100%, 420px); padding: 30px 22px !important; border: 1px solid var(--mobile-line) !important; border-radius: 24px !important; background: linear-gradient(150deg, var(--mobile-sheet-raised), var(--mobile-sheet)) !important; box-shadow: 0 28px 80px rgba(0,0,0,.56) !important; }
 .va-mic-icon { filter: none !important; }
 .va-text { color: var(--mobile-yellow) !important; }
 .btn-va-close { width: 100%; min-height: 50px; border: 0 !important; border-radius: 14px !important; color: #090b12 !important; background: var(--mobile-yellow) !important; box-shadow: none !important; }
 
 body.mobile-body .challenge-dialog { width: min(100% - 24px, 560px); max-height: min(88dvh, 760px); padding: 22px; border-radius: 24px; }
-body.mobile-body .challenge-dialog::backdrop { background: rgba(3,5,10,.84); backdrop-filter: blur(18px); }
+body.mobile-body .challenge-dialog::backdrop { background: var(--color-bg-scrim, rgba(6, 3, 10, .78)); backdrop-filter: blur(18px); }
 body.mobile-body .challenge-dialog h2 { margin: 4px 48px 18px 0; font: 800 1.35rem/1.2 'Montserrat', sans-serif; letter-spacing: -.025em; }
 body.mobile-body .challenge-dialog h3 { color: var(--mobile-copy); }
 body.mobile-body .challenge-dialog p { color: var(--mobile-muted); }
 body.mobile-body .challenge-card { border-color: var(--mobile-line); background: rgba(255,255,255,.035); }
 body.mobile-body .challenge-hero { color: var(--mobile-copy) !important; }
-body.mobile-body .challenge-note { border-left-color: var(--kp-lilac, #8A3FFC); }
-body.mobile-body .challenge-feedback { color: var(--kp-lilac, #8A3FFC); }
+body.mobile-body .challenge-note { border-left-color: var(--color-social, #FF4FD8); }
+body.mobile-body .challenge-feedback { color: var(--color-state-warning, #FFBF47); }
 body.mobile-body .challenge-dialog .challenge-close { position: absolute; top: 16px; right: 16px; min-height: 38px; padding: 8px 12px; }
 
-.kp-notice-layer { position: fixed; inset: 0; z-index: 3000000; display: grid; place-items: center; padding: 18px; background: rgba(3,5,10,.78); backdrop-filter: blur(14px); }
+.kp-notice-layer { position: fixed; inset: 0; z-index: 3000000; display: grid; place-items: center; padding: 18px; background: var(--color-bg-scrim, rgba(6, 3, 10, .78)); backdrop-filter: blur(14px); }
 .kp-notice-layer[hidden] { display: none; }
-.kp-notice { box-sizing: border-box; width: min(100%, 390px); padding: 24px; border: 1px solid var(--mobile-line); border-radius: 22px; color: var(--mobile-copy); background: linear-gradient(150deg, var(--mobile-sheet-raised), #0a0d16); box-shadow: 0 28px 80px rgba(0,0,0,.56); }
+.kp-notice { box-sizing: border-box; width: min(100%, 390px); padding: 24px; border: 1px solid var(--mobile-line); border-radius: 22px; color: var(--mobile-copy); background: linear-gradient(150deg, var(--mobile-sheet-raised), var(--mobile-sheet)); box-shadow: 0 28px 80px rgba(0,0,0,.56); }
 .kp-notice-icon { display: grid; place-items: center; width: 46px; height: 46px; margin-bottom: 16px; border-radius: 14px; color: #090b12; background: var(--mobile-yellow); font-size: 1.15rem; }
 .kp-notice h2 { margin: 0 0 8px; font: 800 1.25rem/1.2 'Montserrat', sans-serif; }
 .kp-notice p { margin: 0; color: var(--mobile-muted); font: 400 .9rem/1.55 'Inter', sans-serif; white-space: pre-line; overflow-wrap: anywhere; }
