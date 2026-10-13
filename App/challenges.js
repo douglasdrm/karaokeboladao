@@ -65,6 +65,7 @@
   sync();const timer=setInterval(sync,1000);root.addEventListener('pagehide',()=>{clearInterval(timer);ref?.off();});
   async function send(action,extra={}){
    sync();if(!uid||!room)throw Error('Faça login e entre na sala para participar.');
+   if(root.ensureRoomPresence&&!(await root.ensureRoomPresence()))throw Error('Ainda estamos conectando você à sala. Tente novamente em alguns segundos.');
    if(state.available!==true)throw Error('Aguarde a cabine do DJ se conectar aos desafios.');
    const r=room,u=uid;
    const pending=api.db.ref(`salas/${r}/pedidos`).push();

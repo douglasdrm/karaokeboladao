@@ -56,9 +56,9 @@
     <script src="tone-control.js?v=1"></script>
     <link rel="stylesheet" href="challenges.css?v=3">
     <script src="social-core.js?v=2"></script>
-    <script src="party-social.js?v=8"></script>
+    <script src="party-social.js?v=9"></script>
     <script src="challenge-core.js?v=2"></script>
-    <script src="challenges.js?v=5"></script>
+    <script src="challenges.js?v=6"></script>
     <link rel="stylesheet" href="party-social.css?v=14">
     <link rel="stylesheet" href="mobile-overlays.css?v=6">
     <link rel="stylesheet" href="karaoke-theme.css?v=4">
@@ -622,6 +622,72 @@
         let pendingRequest = null;
         let lastSongTitle = ""; // v10.1
         let currentUser = null;
+        let roomPresenceReady = false;
+        let roomPresencePromise = null;
+        let firebaseConnected = false;
+
+        function setRoomPresenceStatus(message, state = 'waiting') {
+            const dot = document.getElementById('statusIndicator');
+            const label = document.getElementById('statusRoomText');
+            if (label && currentRoomCode) label.textContent = message;
+            if (!dot) return;
+            const online = state === 'ready';
+            const failed = state === 'error';
+            dot.style.background = online ? 'var(--color-state-success)' : (failed ? 'var(--color-state-danger)' : 'var(--color-state-warning)');
+            dot.style.boxShadow = online ? '0 0 8px var(--color-state-success)' : (failed ? '0 0 8px var(--color-state-danger)' : '0 0 8px var(--color-state-warning)');
+        }
+
+        async function ensureRoomPresence({ force = false, userData = null } = {}) {
+            const user = currentUser;
+            if (!currentRoomCode || !user) return false;
+            if (roomPresenceReady && !force) return true;
+            if (roomPresencePromise) return roomPresencePromise;
+
+            const room = currentRoomCode;
+            const uid = user.uid;
+            setRoomPresenceStatus('Entrando na sala...', 'waiting');
+            roomPresencePromise = (async () => {
+                try {
+                    const profile = userData || (await db.ref(`users/${uid}`).once('value')).val() || {};
+                    if (currentUser?.uid !== uid || currentRoomCode !== room) return false;
+                    const displayName = profile.customName || profile.name || user.displayName || user.email?.split('@')[0] || 'Participante';
+                    const presenceRef = db.ref(`salas/${room}/active_users/${uid}`);
+                    await presenceRef.set({
+                        uid,
+                        name: displayName.split(' ')[0],
+                        photo: user.photoURL || profile.photo || '',
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+                    const saved = (await presenceRef.once('value')).val();
+                    roomPresenceReady = saved?.uid === uid;
+                    if (!roomPresenceReady) throw new Error('presence-not-confirmed');
+                    setRoomPresenceStatus(`Sala: ${room}`, 'ready');
+                    console.info('✅ Presença na sala confirmada:', { room, uid });
+                    return true;
+                } catch (error) {
+                    roomPresenceReady = false;
+                    setRoomPresenceStatus('Reconectando à sala...', 'error');
+                    console.warn('⚠️ Não foi possível registrar presença na sala:', { room, uid, code: error?.code, message: error?.message });
+                    return false;
+                } finally {
+                    roomPresencePromise = null;
+                }
+            })();
+            return roomPresencePromise;
+        }
+        window.ensureRoomPresence = ensureRoomPresence;
+
+        db.ref('.info/connected').on('value', snapshot => {
+            const wasConnected = firebaseConnected;
+            firebaseConnected = snapshot.val() === true;
+            if (!currentRoomCode) return;
+            if (!firebaseConnected) {
+                roomPresenceReady = false;
+                setRoomPresenceStatus('Sem conexão. Tentando reconectar...', 'error');
+            } else if (!wasConnected || !roomPresenceReady) {
+                ensureRoomPresence({ force: true });
+            }
+        });
 
         // Paginação e filtros do catálogo
         let currentPage = 0;
@@ -835,6 +901,7 @@
             const content = document.getElementById('mainContent');
 
             if (user) {
+                if (currentUser?.uid !== user.uid) roomPresenceReady = false;
                 currentUser = user;
 
                 // Some o overlay suavemente
@@ -885,20 +952,10 @@
                     const headerEl = document.getElementById('headerUserName');
                     if (headerEl) headerEl.innerText = displayFirst;
 
+                    // 5. Registro de presença confirmado na sala. Pedidos, reações e
+                    // interações sociais só são liberados após esta confirmação.
                     if (currentRoomCode) {
-                        db.ref(`salas/${currentRoomCode}/active_users/${user.uid}/name`).set(displayFirst);
-                    }
-
-                    // 5. Registro de presença detalhado na sala
-                    if (currentRoomCode) {
-                        const myRef = db.ref(`salas/${currentRoomCode}/active_users/${user.uid}`);
-                        const nameForRoom = (userData.name || userDisplayName).split(' ')[0];
-                        myRef.set({
-                            uid: user.uid,
-                            name: nameForRoom,
-                            photo: user.photoURL || '',
-                            timestamp: firebase.database.ServerValue.TIMESTAMP
-                        });
+                        ensureRoomPresence({ userData });
                     }
                 }).catch(err => {
                     console.error("❌ Erro na consulta do usuário:", err);
@@ -923,12 +980,14 @@
 
                 if (currentRoomCode) {
                     console.log(`🔑 [v12] Usuário Autenticado: ${user.uid}`);
+                    ensureRoomPresence();
                     initRealtimeListeners();
                     listenForScoreCard();
                 }
 
             } else {
                 currentUser = null;
+                roomPresenceReady = false;
                 window.currentMobileUid = null;
                 profile.style.display = 'none';
 
@@ -1743,7 +1802,7 @@
         }
 
         let sendingSongRequest = false;
-        function confirmNameModal() {
+        async function confirmNameModal() {
             if (sendingSongRequest || !currentUser) return;
             const selection = SingerSelection.current();
             if (!selection.singer) { alert("Selecione pelo menos uma pessoa para cantar."); return; }
@@ -1752,6 +1811,10 @@
             if (!currentRoomCode) {
                 alert("❌ Erro: Sem código de sala. Tente escanear o QR Code novamente.");
                 console.error("❌ Erro: currentRoomCode nulo não envio.");
+                return;
+            }
+            if (!(await ensureRoomPresence())) {
+                alert('Ainda estamos conectando você à sala. Aguarde alguns segundos e tente novamente.');
                 return;
             }
 
@@ -1927,10 +1990,14 @@
                 btn.disabled = false;
             });
         }
-        function sendReaction(emoji) {
+        async function sendReaction(emoji) {
             if (!currentUser) { alert('Faça login para enviar reações!'); return; }
             if (!currentRoomCode) {
                 console.error("❌ Erro: currentRoomCode nulo no mobile!");
+                return;
+            }
+            if (!(await ensureRoomPresence())) {
+                alert('Ainda estamos conectando você à sala. Aguarde alguns segundos e tente novamente.');
                 return;
             }
             const path = `salas/${currentRoomCode}/reactions`;

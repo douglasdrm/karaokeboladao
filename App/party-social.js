@@ -66,6 +66,7 @@
  }
  async function command(api,action,extra){
   const user=api.user(),room=api.room();if(!user||!room)throw Error('Entre na conta e na sala.');
+  if(root.ensureRoomPresence&&!(await root.ensureRoomPresence()))throw Error('Ainda estamos conectando você à sala. Tente novamente em alguns segundos.');
   const ref=api.db.ref(`salas/${room}/pedidos`).push();
   await ref.set({kind:'social',action,id:'social',singer:name(user),singerUid:user.uid,processed:false,timestamp:firebase.database.ServerValue.TIMESTAMP,...extra});
   const ack=api.db.ref(`salas/${room}/audioReceipts/${ref.key}`);
@@ -84,6 +85,7 @@
  }
  async function record(api){
   const user=api.user(),room=api.room();if(!user||!room)throw Error('Entre na sua conta e na sala.');
+  if(root.ensureRoomPresence&&!(await root.ensureRoomPresence()))throw Error('Ainda estamos conectando você à sala. Tente novamente em alguns segundos.');
   if(!navigator.mediaDevices?.getUserMedia||!root.MediaRecorder)throw Error('Este navegador não oferece gravação de áudio. Use um navegador atualizado.');
   const states=Object.freeze({IDLE:'IDLE',RECORDING:'RECORDING',PAUSED:'PAUSED',PREVIEW:'PREVIEW'});
   let state=states.IDLE,stream,recorder,clock,blob,url,closed=false,starting=false,duration=0,recordedMs=0,segmentStarted=0,chunks=[];
