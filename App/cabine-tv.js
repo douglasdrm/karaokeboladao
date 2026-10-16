@@ -516,6 +516,16 @@
     async function playCurrent({ resumeAt = 0, autoplay = true, intro = true } = {}) {
         if (!queue.length || !roomRef) {
             currentSongId = '';
+            // Ao pular a última música, a tela voltava ao estado vazio mas o
+            // elemento de vídeo anterior continuava tocando em segundo plano.
+            suppressVideoEvents = true;
+            try { elements.video.pause(); } catch {}
+            elements.video.removeAttribute('src');
+            elements.video.load();
+            suppressVideoEvents = false;
+            stopYoutube();
+            elements.startPlayback.hidden = true;
+            elements.progress.style.width = '0%';
             elements.idle.hidden = false;
             elements.nowPlaying.hidden = true;
             elements.stage.classList.remove('is-playing');
