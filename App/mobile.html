@@ -523,7 +523,7 @@
         <div class="mobile-modal">
             <span class="mobile-modal-eyebrow">PEDIDO ESPECIAL</span>
             <h3>Adicionar do YouTube</h3>
-            <p>Cole o link do vídeo. Ele entra na fila como uma música normal.</p>
+            <p>Cole o link do vídeo. O título e o canal são preenchidos automaticamente.</p>
             <input id="youtubeRequestUrl" type="url" placeholder="https://youtu.be/..." autocomplete="url">
             <input id="youtubeRequestTitle" type="text" maxlength="120" placeholder="Nome da música (opcional)" autocomplete="off" style="margin-top:10px;">
             <div class="modal-buttons">
@@ -1819,13 +1819,30 @@
             overlay.style.display = 'none';
         }
 
-        function submitYoutubeRequest() {
+        async function submitYoutubeRequest() {
             const url = document.getElementById('youtubeRequestUrl').value.trim();
             const videoId = extractYoutubeId(url);
             if (!videoId) { alert('Cole um link válido de vídeo do YouTube.'); return; }
-            const title = document.getElementById('youtubeRequestTitle').value.trim() || 'Pedido do YouTube';
+            const titleInput = document.getElementById('youtubeRequestTitle');
+            const enteredTitle = titleInput.value.trim();
+            const submitButton = document.querySelector('#youtubeRequestOverlay .btn-confirm');
+            submitButton.disabled = true;
+            submitButton.textContent = 'LENDO VÍDEO…';
+            const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
+            let metadata = null;
+            try {
+                const response = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(youtubeUrl)}&format=json`);
+                if (response.ok) metadata = await response.json();
+            } catch (error) {
+                console.info('Não foi possível obter os dados do vídeo do YouTube.', error);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'CONTINUAR 🎵';
+            }
+            const title = enteredTitle || String(metadata?.title || 'Pedido do YouTube').slice(0, 120);
+            const artist = String(metadata?.author_name || 'YouTube').slice(0, 100);
             closeYoutubeRequest();
-            pendingRequest = { id: `YT:${videoId}`, title, artist: 'YouTube', source: 'youtube', youtubeId: videoId, youtubeUrl: `https://www.youtube.com/watch?v=${videoId}` };
+            pendingRequest = { id: `YT:${videoId}`, title, artist, source: 'youtube', youtubeId: videoId, youtubeUrl };
             const overlay = document.getElementById('nameModalOverlay');
             overlay.style.display = 'flex'; overlay.style.opacity = '1'; overlay.style.pointerEvents = 'all';
             const input = document.getElementById('modalSingerName');
