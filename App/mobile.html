@@ -713,6 +713,7 @@
 
         // Inicialização de variáveis globais com persistência local
         let catalog = [];
+        let youtubeCatalog = [];
         const ALPHA_LETTERS = ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
         let alphaValidLetters = [];
         let alphaRulerDebounce = null;
@@ -1703,6 +1704,13 @@
             renderPage(0);
         }
 
+        // Vídeos que já tocaram com sucesso em uma festa passam a aparecer nas buscas.
+        db.ref('youtube_catalog').on('value', snapshot => {
+            youtubeCatalog = Object.values(snapshot.val() || {}).filter(item =>
+                item?.source === 'youtube' && /^[\w-]{11}$/.test(String(item.youtubeId || ''))
+            );
+        }, error => console.warn('Catálogo do YouTube indisponível:', error));
+
         function loadLocalFallback() {
             fetch('songs.json')
                 .then(r => r.json())
@@ -1726,13 +1734,14 @@
             list.innerHTML = '';
             items.forEach(song => {
                 const isFav = favorites.includes(song.id);
+                const isYoutubeSong = song.source === 'youtube';
                 const count = userHistory[song.id]?.count || 0;
                 const div = document.createElement('div');
                 div.className = 'song-card';
                 div.innerHTML = `
                     <div class="info">
                         <div class="title">
-                            ${song.title}
+                            ${song.title} ${isYoutubeSong ? '<span style="font-size:.55rem;padding:2px 5px;border:1px solid #ff4d4d;border-radius:6px;color:#ff6464;vertical-align:middle;">▶ YOUTUBE</span>' : ''}
                             ${count > 0 ? `<span style="font-size:0.58rem;background:rgba(255, 79, 216,0.18);padding:2px 6px;border-radius:8px;margin-left:4px;">🌟 ${count}x</span>` : ''}
                         </div>
                         <div class="artist">${song.artist}</div>
@@ -1745,11 +1754,14 @@
                     <div class="song-actions">
                         <i class="fas fa-star star-btn ${isFav ? 'active' : ''}"
                            onclick="toggleFavorite('${song.id}', this)"></i>
-                        ${currentRoomCode ? `
+                        ${currentRoomCode ? (isYoutubeSong ? `
+                        <button class="btn-request" onclick="requestYoutubeCatalog('${song.youtubeId}')" title="Pedir do YouTube">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>` : `
                         <button class="btn-request"
                                 onclick="requestSong('${song.id}','${song.title.replace(/'/g, "\\'")}','${song.artist.replace(/'/g, "\\'")}')">
                             <i class="fas fa-paper-plane"></i>
-                        </button>` : `
+                        </button>`) : `
                         <button class="btn-request connect-hint" onclick="showRoomFinderModal()" title="Conecte-se a uma sala para pedir">
                             <i class="fas fa-link"></i>
                         </button>
@@ -1814,6 +1826,20 @@
             const title = document.getElementById('youtubeRequestTitle').value.trim() || 'Pedido do YouTube';
             closeYoutubeRequest();
             pendingRequest = { id: `YT:${videoId}`, title, artist: 'YouTube', source: 'youtube', youtubeId: videoId, youtubeUrl: `https://www.youtube.com/watch?v=${videoId}` };
+            const overlay = document.getElementById('nameModalOverlay');
+            overlay.style.display = 'flex'; overlay.style.opacity = '1'; overlay.style.pointerEvents = 'all';
+            const input = document.getElementById('modalSingerName');
+            SingerSelection.mount(document.getElementById('activeUsersChips'), input, activeUsers, currentUser);
+            setTimeout(() => input.focus(), 100);
+        }
+
+        function requestYoutubeCatalog(videoId) {
+            const song = youtubeCatalog.find(item => item.youtubeId === videoId);
+            if (!song) { alert('Esse vídeo não está mais disponível.'); return; }
+            pendingRequest = {
+                id: `YT:${song.youtubeId}`, title: song.title, artist: song.artist || 'YouTube', source: 'youtube',
+                youtubeId: song.youtubeId, youtubeUrl: song.youtubeUrl || `https://www.youtube.com/watch?v=${song.youtubeId}`
+            };
             const overlay = document.getElementById('nameModalOverlay');
             overlay.style.display = 'flex'; overlay.style.opacity = '1'; overlay.style.pointerEvents = 'all';
             const input = document.getElementById('modalSingerName');
@@ -1910,7 +1936,7 @@
             activeAlphaFilter = null;
             updateAlphaIndex();
             if (term.length < 2) { renderPage(0); return; }
-            const filtered = catalog.filter(s =>
+            const filtered = [...catalog, ...youtubeCatalog].filter(s =>
                 normalizeStr(s.title).includes(term) ||
                 normalizeStr(s.artist).includes(term) ||
                 normalizeStr(s.lyrics).includes(term) ||

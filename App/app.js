@@ -68,6 +68,7 @@
     let ytPlayer = null;         // Referência global ao YouTube IFrame (não usado diretamente)
 
     let ytAmbientPlayer = null;  // Player de música ambiente (YouTube API)
+    let ytQueuePlayer = null;    // Player de pedidos do YouTube na fila da Cabine PC
 
     let isAmbientPlaying = false;
 
@@ -2431,6 +2432,7 @@
             video.onended = null;
             try { video.pause(); } catch (e) { }
         }
+        try { ytQueuePlayer?.stopVideo(); } catch (e) { }
         if (typeof audioSource !== 'undefined' && audioSource) {
             try { audioSource.disconnect(); } catch (e) { }
             audioSource = null;
@@ -2732,7 +2734,7 @@
             if (currentRoomCode) {
                 db.ref('salas/' + currentRoomCode + '/now_playing').set({
                     title: current.title, artist: current.artist, singer: current.singer, playing: true,
-                    songId: current.id, performanceId: tonePerformanceId, pitch: 1, remoteToneEnabled: true,
+                    songId: current.id, source: current.source || 'catalog', youtubeId: current.youtubeId || null, performanceId: tonePerformanceId, pitch: 1, remoteToneEnabled: true,
                     requesterUid: current.requesterUid || current.singerUid || null,
                     recipientVersion: 1, recipientUids: SingerSelection.recipients(current)
                 });
@@ -2746,6 +2748,11 @@
                     currentDedometro = snap.val() || {};
                     updateDedometroUI();
                 });
+            }
+
+            if (current.source === 'youtube' && /^[\w-]{11}$/.test(String(current.youtubeId || ''))) {
+                startYoutubeQueueVideo(current);
+                return;
             }
 
             const videoId = String(current.id).padStart(5, '0');
@@ -2818,6 +2825,46 @@
         } catch (err) {
             console.error("Erro em startVideoPlay:", err);
         }
+    }
+
+    function startYoutubeQueueVideo(current) {
+        if (!playerArea) return;
+        playerArea.innerHTML = `<div class="video-overlay-banner"><div class="banner-left"><img src="../Assets/brand/logo-horizontal.png" alt="Karaoke Party"></div><div class="banner-right"><span>PEDIDO<br>DO<br>YOUTUBE</span></div></div><div id="queueYoutube" style="width:100%;height:100%;background:#000"></div>`;
+        const start = () => {
+            if (!window.YT?.Player) {
+                setTimeout(start, 400);
+                return;
+            }
+            try { ytQueuePlayer?.destroy(); } catch (e) { }
+            ytQueuePlayer = new YT.Player('queueYoutube', {
+                width: '100%', height: '100%', videoId: current.youtubeId,
+                playerVars: { autoplay: 1, controls: 1, rel: 0, playsinline: 1 },
+                events: {
+                    onReady: event => { event.target.setVolume(Math.round(currentVolume * 100)); event.target.playVideo(); },
+                    onStateChange: event => {
+                        if (event.data === YT.PlayerState.PLAYING) saveYoutubeToCatalog(current);
+                        if (event.data === YT.PlayerState.ENDED) showScore();
+                    },
+                    onError: () => { showToast('Vídeo do YouTube indisponível. Pulando…'); setTimeout(showScore, 1200); }
+                }
+            });
+        };
+        start();
+    }
+
+    function saveYoutubeToCatalog(current) {
+        if (!currentRoomCode || !current?.youtubeId) return;
+        const id = String(current.youtubeId);
+        const entry = {
+            id: `YT:${id}`, source: 'youtube', youtubeId: id,
+            youtubeUrl: `https://www.youtube.com/watch?v=${id}`,
+            title: String(current.title || 'Pedido do YouTube').slice(0, 120),
+            artist: String(current.artist || 'YouTube').slice(0, 100),
+            addedAt: firebase.database.ServerValue.TIMESTAMP,
+            addedByRoom: currentRoomCode
+        };
+        db.ref(`youtube_catalog/${id}`).transaction(existing => existing || entry)
+            .catch(error => console.warn('Não foi possível salvar o vídeo no catálogo:', error));
     }
 
     // ─── Audio Routing & Pitch Shifting ──────────────────────────────────────────
@@ -4244,6 +4291,23 @@
             }
 
             if (req && !req.processed) {
+
+                if (req.source === 'youtube') {
+                    const info = extractYoutubeInfo(req.youtubeUrl || '');
+                    const videoId = info?.videoId || (/^[\w-]{11}$/.test(String(req.youtubeId || '')) ? req.youtubeId : '');
+                    if (!videoId || !req.singer) return;
+                    const entry = {
+                        id: `YT:${videoId}`, source: 'youtube', youtubeId: videoId,
+                        youtubeUrl: `https://www.youtube.com/watch?v=${videoId}`,
+                        title: String(req.title || 'Pedido do YouTube').slice(0, 120), artist: String(req.artist || 'YouTube').slice(0, 100),
+                        singer: req.singer, singerUid: req.singerUid || null, requesterUid: req.requesterUid || req.singerUid || null,
+                        time: Number(req.timestamp) || Date.now()
+                    };
+                    enqueue(entry, false);
+                    requestsRef.child(snapshot.key).update({ processed: true, youtubeStatus: 'queued' });
+                    showToast(`▶ ${req.singer} pediu no YouTube: ${entry.title}`);
+                    return;
+                }
 
                 const song = catalog.find(s => s.id === req.id);
 

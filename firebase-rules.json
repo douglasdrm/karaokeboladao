@@ -10,6 +10,12 @@
       ".read": "true",
       ".write": "auth != null && auth.token.email === 'douglasdrm@gmail.com'"
     },
+    "youtube_catalog": {
+      ".read": "true",
+      "$video_id": {
+        ".write": "auth != null && auth.token.email === 'douglasdrm@gmail.com'"
+      }
+    },
     "feedback": {
       ".read": "auth != null && auth.token.email === 'douglasdrm@gmail.com'",
       ".write": "auth != null"
