@@ -519,6 +519,20 @@
         </div>
     </div>
 
+    <div id="youtubeRequestOverlay" class="mobile-modal-overlay" style="display:none; z-index:11000;">
+        <div class="mobile-modal">
+            <span class="mobile-modal-eyebrow">PEDIDO ESPECIAL</span>
+            <h3>Adicionar do YouTube</h3>
+            <p>Cole o link do vídeo. Ele entra na fila como uma música normal.</p>
+            <input id="youtubeRequestUrl" type="url" placeholder="https://youtu.be/..." autocomplete="url">
+            <input id="youtubeRequestTitle" type="text" maxlength="120" placeholder="Nome da música (opcional)" autocomplete="off" style="margin-top:10px;">
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeYoutubeRequest()">Cancelar</button>
+                <button class="btn-confirm" onclick="submitYoutubeRequest()">CONTINUAR 🎵</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ══════════════════════════════════
          MODAL — música surpresa
     ══════════════════════════════════ -->
@@ -1706,7 +1720,7 @@
         function render(items) {
             const list = document.getElementById('mobileList');
             if (!items.length) {
-                list.innerHTML = '<div style="text-align:center;padding:40px;opacity:0.4;">Nenhuma música encontrada.</div>';
+                list.innerHTML = `<div style="text-align:center;padding:40px;opacity:0.65;"><p>Nenhuma música encontrada.</p>${currentRoomCode ? '<button class="btn-request" type="button" onclick="openYoutubeRequest()" style="margin-top:12px;width:auto;padding:12px 18px;">▶ Adicionar link do YouTube</button>' : ''}</div>`;
                 return;
             }
             list.innerHTML = '';
@@ -1770,6 +1784,43 @@
         // ════════════════════════════════
         // PEDIDO DE MÚSICA
         // ════════════════════════════════
+        function extractYoutubeId(value) {
+            try {
+                const url = new URL(String(value || '').trim());
+                if (url.hostname === 'youtu.be') return /^[\w-]{11}$/.test(url.pathname.slice(1)) ? url.pathname.slice(1) : '';
+                if (!/(^|\.)youtube\.com$/.test(url.hostname)) return '';
+                const id = url.searchParams.get('v') || (url.pathname.match(/^\/(?:embed|shorts)\/([\w-]{11})/) || [])[1] || '';
+                return /^[\w-]{11}$/.test(id) ? id : '';
+            } catch { return ''; }
+        }
+
+        function openYoutubeRequest() {
+            if (!currentUser) { alert('Faça login primeiro!'); return; }
+            if (!currentRoomCode) { alert('Entre em uma sala para pedir uma música.'); return; }
+            const overlay = document.getElementById('youtubeRequestOverlay');
+            overlay.style.display = 'flex'; overlay.style.opacity = '1';
+            document.getElementById('youtubeRequestUrl').focus();
+        }
+
+        function closeYoutubeRequest() {
+            const overlay = document.getElementById('youtubeRequestOverlay');
+            overlay.style.display = 'none';
+        }
+
+        function submitYoutubeRequest() {
+            const url = document.getElementById('youtubeRequestUrl').value.trim();
+            const videoId = extractYoutubeId(url);
+            if (!videoId) { alert('Cole um link válido de vídeo do YouTube.'); return; }
+            const title = document.getElementById('youtubeRequestTitle').value.trim() || 'Pedido do YouTube';
+            closeYoutubeRequest();
+            pendingRequest = { id: `YT:${videoId}`, title, artist: 'YouTube', source: 'youtube', youtubeId: videoId, youtubeUrl: `https://www.youtube.com/watch?v=${videoId}` };
+            const overlay = document.getElementById('nameModalOverlay');
+            overlay.style.display = 'flex'; overlay.style.opacity = '1'; overlay.style.pointerEvents = 'all';
+            const input = document.getElementById('modalSingerName');
+            SingerSelection.mount(document.getElementById('activeUsersChips'), input, activeUsers, currentUser);
+            setTimeout(() => input.focus(), 100);
+        }
+
         function requestSong(id, title, artist) {
             console.log("🖱️ Clique em pedir música:", title);
             if (!currentUser) { alert('Faça login primeiro!'); return; }

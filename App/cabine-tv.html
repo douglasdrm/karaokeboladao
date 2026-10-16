@@ -7,7 +7,7 @@
     <title>Cabine na TV | Karaoke Party</title>
     <link rel="icon" type="image/png" href="../Assets/brand/favicon-64.png">
     <link rel="stylesheet" href="cabine-tv-base.css?v=3">
-    <link rel="stylesheet" href="cabine-tv.css?v=11">
+    <link rel="stylesheet" href="cabine-tv.css?v=12">
     <link rel="stylesheet" href="karaoke-theme.css?v=4">
     <link rel="stylesheet" href="playback-theme.css?v=4">
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
@@ -15,6 +15,7 @@
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-functions-compat.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
     <main id="tvSetup" class="tv-setup">
@@ -69,6 +70,7 @@
             <form id="tvRoomForm" class="tv-form">
                 <label for="tvPartyInput">Nome da festa</label>
                 <input id="tvPartyInput" type="text" maxlength="50" autocomplete="off" placeholder="Ex.: Festa do Douglas" required>
+                <label class="tv-check"><input id="tvYoutubeApproval" type="checkbox"> Aprovar pedidos do YouTube antes de entrar na fila</label>
                 <button class="tv-primary-button" type="submit">Abrir festa na TV</button>
             </form>
             <p id="tvRoomError" class="tv-error" role="alert" hidden></p>
@@ -82,6 +84,7 @@
 
     <main id="tvStage" class="tv-stage" hidden aria-label="Apresentação da festa">
         <video id="tvVideo" class="tv-video" playsinline preload="auto" crossorigin="anonymous"></video>
+        <div id="tvYoutubePlayer" class="tv-youtube-player" hidden aria-label="Vídeo do YouTube"><div id="tvYoutubeFrame"></div></div>
         <div class="tv-backdrop" aria-hidden="true"></div>
 
         <header class="tv-stage-header">
@@ -137,6 +140,11 @@
             <ol id="tvQueue"></ol>
         </section>
 
+        <section id="tvYoutubeRequests" class="tv-youtube-requests" hidden aria-live="polite">
+            <div><span>YOUTUBE</span><strong>Pedidos aguardando aprovação</strong></div>
+            <ol id="tvYoutubeRequestsList"></ol>
+        </section>
+
         <section id="tvScore" class="tv-score" hidden aria-live="polite">
             <span id="tvScoreLabel">NOTA FINAL</span>
             <strong id="tvScoreValue">0</strong>
@@ -170,6 +178,6 @@
     </main>
 
     <script src="qrcode.min.js"></script>
-    <script src="cabine-tv.js?v=10" defer></script>
+    <script src="cabine-tv.js?v=11" defer></script>
 </body>
 </html>

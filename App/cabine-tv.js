@@ -48,7 +48,7 @@
         partyInput: document.getElementById('tvPartyInput'), identity: document.getElementById('tvIdentity'),
         resumeCard: document.getElementById('tvResumeCard'), resumeName: document.getElementById('tvResumeName'),
         resumeMeta: document.getElementById('tvResumeMeta'), newPartyDivider: document.getElementById('tvNewPartyDivider'),
-        video: document.getElementById('tvVideo'), idle: document.getElementById('tvIdle'),
+        video: document.getElementById('tvVideo'), youtube: document.getElementById('tvYoutubePlayer'), idle: document.getElementById('tvIdle'),
         idleEyebrow: document.getElementById('tvIdleEyebrow'), idleTitle: document.getElementById('tvIdleTitle'),
         idleDescription: document.getElementById('tvIdleDescription'), nowPlaying: document.getElementById('tvNowPlaying'),
         connection: document.getElementById('tvConnection'), partyName: document.getElementById('tvPartyName'),
@@ -65,7 +65,8 @@
         scorePhrase: document.getElementById('tvScorePhrase'), ranking: document.getElementById('tvRanking'),
         rankingList: document.getElementById('tvRankingList'), rankingTicker: document.getElementById('tvRankingTicker'),
         rankingLeader: document.getElementById('tvRankingLeader'), rankingLeaderScore: document.getElementById('tvRankingLeaderScore'),
-        reactionLayer: document.getElementById('tvReactionLayer'),
+        reactionLayer: document.getElementById('tvReactionLayer'), youtubeRequests: document.getElementById('tvYoutubeRequests'),
+        youtubeRequestsList: document.getElementById('tvYoutubeRequestsList'), youtubeApproval: document.getElementById('tvYoutubeApproval'),
         progress: document.querySelector('#tvProgress span'),
         startPlayback: document.getElementById('tvStartPlayback'), sound: document.getElementById('tvSound')
     };
@@ -105,6 +106,43 @@
     let pairingTimer = null;
     let activePairing = null;
     let pairedPartyStarting = false;
+    let youtubeApprovalRequired = false;
+    let youtubePlayer = null;
+    let youtubeApiReady = false;
+    let youtubeApiWaiters = [];
+    let pendingYoutube = {};
+    let youtubePendingRef = null;
+    let youtubePendingHandler = null;
+
+    window.onYouTubeIframeAPIReady = () => {
+        youtubeApiReady = true;
+        youtubeApiWaiters.splice(0).forEach(resolve => resolve());
+    };
+
+    function youtubeId(value) {
+        try {
+            const url = new URL(String(value || '').trim());
+            if (url.hostname === 'youtu.be') return /^[\w-]{11}$/.test(url.pathname.slice(1)) ? url.pathname.slice(1) : '';
+            if (!/(^|\.)youtube\.com$/.test(url.hostname)) return '';
+            const id = url.searchParams.get('v') || (url.pathname.match(/^\/(?:embed|shorts)\/([\w-]{11})/) || [])[1] || '';
+            return /^[\w-]{11}$/.test(id) ? id : '';
+        } catch { return ''; }
+    }
+
+    function isYoutube(item) { return item?.source === 'youtube' && /^[\w-]{11}$/.test(String(item.youtubeId || '')); }
+
+    function youtubeEntry(request, requestKey = '') {
+        const id = youtubeId(request.youtubeUrl) || String(request.youtubeId || '');
+        if (!/^[\w-]{11}$/.test(id)) return null;
+        return {
+            id: `YT:${id}`, source: 'youtube', youtubeId: id, youtubeUrl: `https://www.youtube.com/watch?v=${id}`,
+            title: String(request.title || 'Vídeo do YouTube').slice(0, 120),
+            artist: String(request.artist || 'YouTube').slice(0, 100),
+            singer: request.singer, singerUid: request.singerUid || null,
+            requesterUid: request.requesterUid || request.singerUid || null,
+            requestKey, time: Number(request.timestamp) || Date.now()
+        };
+    }
 
     function readSession() {
         try {
@@ -123,8 +161,8 @@
             queue,
             processedRequestKeys: [...processedRequestKeys],
             currentSongId,
-            currentTime: Number(elements.video.currentTime) || 0,
-            wasPlaying: Boolean(currentSongId && !elements.video.paused),
+            currentTime: currentTime(),
+            wasPlaying: Boolean(currentSongId && !isCurrentPaused()),
             volume,
             sessionRanking,
             updatedAt: Date.now(),
@@ -433,6 +471,48 @@
         saveSession({ wasPlaying: playing });
     }
 
+    async function ensureYoutubePlayer() {
+        if (youtubePlayer) return youtubePlayer;
+        if (window.YT?.Player) youtubeApiReady = true;
+        if (!youtubeApiReady) await new Promise(resolve => youtubeApiWaiters.push(resolve));
+        return new Promise((resolve, reject) => {
+            try {
+                youtubePlayer = new YT.Player('tvYoutubeFrame', {
+                    width: '100%', height: '100%', playerVars: { autoplay: 1, controls: 1, rel: 0, playsinline: 1 },
+                    events: {
+                        onReady: () => resolve(youtubePlayer),
+                        onStateChange: event => {
+                            if (!isYoutube(queue[0])) return;
+                            if (event.data === YT.PlayerState.PLAYING) publishPlaying(true).catch(console.warn);
+                            if (event.data === YT.PlayerState.PAUSED) publishPlaying(false).catch(console.warn);
+                            if (event.data === YT.PlayerState.ENDED) showScoreAndAdvance().catch(console.warn);
+                        },
+                        onError: event => {
+                            console.warn('YouTube não permitiu a reprodução:', event.data);
+                            elements.startPlayback.textContent = 'Vídeo indisponível — pular';
+                            elements.startPlayback.hidden = false;
+                        }
+                    }
+                });
+            } catch (error) { reject(error); }
+        });
+    }
+
+    function stopYoutube() {
+        try { youtubePlayer?.stopVideo(); } catch {}
+        elements.youtube.hidden = true;
+    }
+
+    function currentTime() {
+        if (isYoutube(queue[0])) { try { return Number(youtubePlayer?.getCurrentTime()) || 0; } catch { return 0; } }
+        return Number(elements.video.currentTime) || 0;
+    }
+
+    function isCurrentPaused() {
+        if (isYoutube(queue[0])) { try { return youtubePlayer?.getPlayerState() !== YT.PlayerState.PLAYING; } catch { return true; } }
+        return elements.video.paused;
+    }
+
     async function playCurrent({ resumeAt = 0, autoplay = true, intro = true } = {}) {
         if (!queue.length || !roomRef) {
             currentSongId = '';
@@ -449,7 +529,7 @@
             await showSingerIntro(current);
             if (!queue.length || queue[0] !== current || !roomRef) return;
         }
-        currentSongId = String(current.id).padStart(5, '0');
+        currentSongId = isYoutube(current) ? `YT:${current.youtubeId}` : String(current.id).padStart(5, '0');
         elements.idle.hidden = true;
         elements.nowPlaying.hidden = false;
         elements.stage.classList.add('is-playing');
@@ -461,11 +541,22 @@
         renderQueue();
         await roomRef.child('now_playing').set({
             title: current.title, artist: current.artist, singer: current.singer,
-            songId: currentSongId, playing: autoplay, pitch: 1,
+            songId: currentSongId, playing: autoplay, pitch: 1, source: current.source || 'catalog', youtubeId: current.youtubeId || null,
             requesterUid: current.requesterUid || current.singerUid || null,
             time: { current: resumeAt, total: 0 }
         });
-        suppressVideoEvents = true;
+        if (isYoutube(current)) {
+            suppressVideoEvents = true;
+            elements.video.pause(); elements.video.removeAttribute('src'); elements.video.load();
+            suppressVideoEvents = false;
+            elements.youtube.hidden = false;
+            const player = await ensureYoutubePlayer();
+            player.setVolume(Math.round(volume * 100));
+            player.loadVideoById({ videoId: current.youtubeId, startSeconds: resumeAt || 0 });
+            if (!autoplay) player.pauseVideo();
+        } else {
+            stopYoutube();
+            suppressVideoEvents = true;
         elements.video.src = `${CDN_BASE_URL}${currentSongId}.mp4`;
         elements.video.volume = volume;
         elements.video.muted = !soundEnabled;
@@ -477,7 +568,8 @@
                 if (autoplay) requestPlayback();
             }, { once: true });
         } else if (autoplay) requestPlayback();
-        if (!autoplay) elements.startPlayback.hidden = false;
+            if (!autoplay) elements.startPlayback.hidden = false;
+        }
         saveSession({ currentSongId, currentTime: resumeAt, wasPlaying: autoplay });
     }
 
@@ -522,7 +614,7 @@
         if (!currentSongId || !queue.length || scoreShowing) return;
         scoreShowing = true;
         const entry = queue[0];
-        elements.video.pause();
+        if (isYoutube(entry)) youtubePlayer?.pauseVideo(); else elements.video.pause();
         await publishPlaying(false).catch(() => {});
         let votes = {};
         try { votes = (await roomRef.child('now_playing/votes').once('value')).val() || {}; } catch {}
@@ -582,6 +674,10 @@
     }
 
     function requestPlayback() {
+        if (isYoutube(queue[0])) {
+            try { youtubePlayer?.playVideo(); } catch {}
+            return;
+        }
         elements.video.play().then(() => {
             elements.startPlayback.hidden = true;
             publishPlaying(true).catch(console.warn);
@@ -611,15 +707,16 @@
                         if (queue.length) await playCurrent();
                         break;
                     }
-                    if (elements.video.paused) requestPlayback();
-                    else { elements.video.pause(); await publishPlaying(false); }
+                    if (isCurrentPaused()) requestPlayback();
+                    else { if (isYoutube(queue[0])) youtubePlayer?.pauseVideo(); else elements.video.pause(); await publishPlaying(false); }
                     break;
-                case 'restart': elements.video.currentTime = 0; break;
+                case 'restart': if (isYoutube(queue[0])) youtubePlayer?.seekTo(0, true); else elements.video.currentTime = 0; break;
                 case 'skip': await finishCurrent(); break;
                 case 'volume':
                     if (!Number.isFinite(Number(payload.value))) break;
                     volume = Math.max(0, Math.min(1, Number(payload.value)));
                     elements.video.volume = volume;
+                    try { youtubePlayer?.setVolume(Math.round(volume * 100)); } catch {}
                     await roomRef.child('host_state').update({ volume, updatedAt: firebase.database.ServerValue.TIMESTAMP });
                     saveSession();
                     break;
@@ -658,10 +755,47 @@
         }
     }
 
+    function renderPendingYoutube() {
+        const items = Object.entries(pendingYoutube);
+        elements.youtubeRequests.hidden = items.length === 0;
+        elements.youtubeRequestsList.replaceChildren();
+        items.forEach(([key, request]) => {
+            const row = document.createElement('li');
+            const title = document.createElement('strong'); title.textContent = request.title || 'Vídeo do YouTube';
+            const meta = document.createElement('small'); meta.textContent = `${request.singer || 'Convidado'} · ${request.artist || 'YouTube'}`;
+            const approve = document.createElement('button'); approve.textContent = 'Adicionar à fila';
+            approve.onclick = async () => {
+                const entry = youtubeEntry(request, key);
+                if (!entry) return;
+                approve.disabled = true;
+                await enqueue(entry, entry.singer, false, entry);
+                processedRequestKeys.add(key);
+                await roomRef.child(`youtube_pending/${key}`).remove();
+            };
+            const reject = document.createElement('button'); reject.textContent = 'Recusar';
+            reject.onclick = () => roomRef.child(`youtube_pending/${key}`).remove();
+            row.append(title, meta, approve, reject); elements.youtubeRequestsList.append(row);
+        });
+    }
+
     async function handleRequest(snapshot) {
         const request = snapshot.val() || {};
         if (request.processed || request.kind) return;
         if (processedRequestKeys.has(snapshot.key) || queue.some(item => item.requestKey === snapshot.key)) return;
+        if (request.source === 'youtube') {
+            const entry = youtubeEntry(request, snapshot.key);
+            if (!entry || !request.singer) return;
+            if (youtubeApprovalRequired) {
+                await roomRef.child(`youtube_pending/${snapshot.key}`).set({ ...request, requestKey: snapshot.key });
+                await snapshot.ref.update({ processed: true, youtubeStatus: 'pending' });
+                return;
+            }
+            await enqueue(entry, entry.singer, false, entry);
+            processedRequestKeys.add(snapshot.key);
+            saveSession();
+            snapshot.ref.update({ processed: true, youtubeStatus: 'queued' }).catch(() => {});
+            return;
+        }
         const song = catalog.find(item => item.id === String(request.id || '').padStart(5, '0'));
         if (!song || !request.singer) return;
         await enqueue(song, request.singer, false, {
@@ -684,6 +818,10 @@
         if (reactionsRef && reactionHandler) reactionsRef.off('child_added', reactionHandler);
         connectionRef = connectionHandler = controllerRef = controllerHandler = null;
         reactionsRef = reactionHandler = null;
+        if (youtubePendingRef && youtubePendingHandler) youtubePendingRef.off('value', youtubePendingHandler);
+        youtubePendingRef = youtubePendingHandler = null;
+        pendingYoutube = {};
+        renderPendingYoutube();
     }
 
     function startRoomListeners() {
@@ -724,6 +862,9 @@
             setTimeout(() => snapshot.ref.remove().catch(() => {}), 6500);
         };
         reactionsRef.on('child_added', reactionHandler);
+        youtubePendingRef = roomRef.child('youtube_pending');
+        youtubePendingHandler = snapshot => { pendingYoutube = snapshot.val() || {}; renderPendingYoutube(); };
+        youtubePendingRef.on('value', youtubePendingHandler);
     }
 
     async function generateRoomCode() {
@@ -744,6 +885,7 @@
             hostPhoto: currentUser.photoURL || '',
             status: 'online',
             mode: 'tv-standalone',
+            youtubeApprovalRequired,
             timestamp: firebase.database.ServerValue.TIMESTAMP
         };
     }
@@ -799,6 +941,7 @@
         }
         clearSession();
         currentRoom = await generateRoomCode();
+        youtubeApprovalRequired = elements.youtubeApproval.checked;
         roomRef = db.ref(`salas/${currentRoom}`);
         queue = [];
         sessionRanking = [];
@@ -835,6 +978,8 @@
         const snapshot = await roomRef.once('value');
         const remote = snapshot.val();
         if (remote?.info?.hostId && remote.info.hostId !== currentHostUid) throw new Error('O código anterior agora pertence a outra festa.');
+        youtubeApprovalRequired = remote?.info?.youtubeApprovalRequired === true;
+        elements.youtubeApproval.checked = youtubeApprovalRequired;
         queue = remote ? parseQueue(remote.queue_v13) : (Array.isArray(session.queue) ? session.queue : []);
         sessionRanking = Array.isArray(session.sessionRanking) ? session.sessionRanking.slice(0, 5) : [];
         renderRanking();
@@ -844,7 +989,7 @@
         const remoteSongId = String(remote?.now_playing?.songId || '');
         const savedSongId = String(session.currentSongId || '');
         const candidateSongId = remoteSongId || savedSongId;
-        const hasCurrent = Boolean(queue[0] && String(queue[0].id).padStart(5, '0') === candidateSongId.padStart(5, '0'));
+        const hasCurrent = Boolean(queue[0] && (isYoutube(queue[0]) ? `YT:${queue[0].youtubeId}` : String(queue[0].id).padStart(5, '0')) === candidateSongId);
         const resumeAt = Number(remote?.now_playing?.time?.current ?? session.currentTime) || 0;
         const wasPlaying = remote?.now_playing?.playing ?? session.wasPlaying ?? false;
         currentSongId = '';
@@ -876,6 +1021,7 @@
         elements.video.removeAttribute('src');
         elements.video.load();
         suppressVideoEvents = false;
+        stopYoutube();
         if (roomRef) {
             await roomRef.onDisconnect().cancel().catch(() => {});
             await roomRef.remove().catch(console.warn);
@@ -955,8 +1101,9 @@
     elements.sound.addEventListener('click', () => {
         soundEnabled = !soundEnabled;
         elements.video.muted = !soundEnabled;
+        try { youtubePlayer?.mute && (soundEnabled ? youtubePlayer.unMute() : youtubePlayer.mute()); } catch {}
         elements.sound.textContent = soundEnabled ? '🔊 Desativar som' : '🔇 Ativar som';
-        if (soundEnabled && currentSongId && elements.video.paused) requestPlayback();
+        if (soundEnabled && currentSongId && isCurrentPaused()) requestPlayback();
     });
     document.getElementById('tvFullscreen').addEventListener('click', async () => {
         try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); else await document.exitFullscreen(); }
@@ -981,6 +1128,16 @@
         elements.startPlayback.textContent = 'Vídeo indisponível · pular pelo celular';
         elements.startPlayback.hidden = false;
     });
+    setInterval(() => {
+        if (!roomRef || !currentSongId || !isYoutube(queue[0])) return;
+        try {
+            const current = Number(youtubePlayer?.getCurrentTime()) || 0;
+            const total = Number(youtubePlayer?.getDuration()) || 0;
+            elements.progress.style.width = `${total ? current / total * 100 : 0}%`;
+            roomRef.child('now_playing/time').set({ current, total }).catch(() => {});
+            saveSession({ currentTime: current });
+        } catch {}
+    }, 1000);
     function showToolbar() {
         clearTimeout(toolbarTimer);
         elements.stage.classList.add('toolbar-visible');
