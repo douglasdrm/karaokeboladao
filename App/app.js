@@ -17,6 +17,8 @@
     let currentAudio = null;
 
     let maxVolume = 0;
+    let micSongSamples = 0;
+    let performanceScoreSettings = null;
 
     let audioContext = null, analyzer = null, dataArray = null;
 
@@ -89,7 +91,6 @@
     let ambientVideoRevision = 0;
 
     let currentVotes = {}; // Armazena votos por usuário da música atual (v9)
-    let currentDedometro = {}; // Armazena votos like/dislike do Dedômetro (Novo!)
     let sessionRanking = []; // Armazena os melhores da noite (v20)
     let currentVolume = parseFloat(localStorage.getItem('djVolume') || '0.7');
 
@@ -123,6 +124,8 @@
         scoreMode: 'mic',
 
         minRandomScore: 75,
+
+        scoreWeights: { mic: 20, audience: 70, random: 10 },
 
         difficulty: 'normal'
 
@@ -1354,6 +1357,13 @@
 
         if (btnSave) btnSave.onclick = saveSettings;
 
+        modalSettings?.querySelectorAll('input[name="scoreMode"]').forEach(input => {
+            input.addEventListener('change', updateScoreSettingsUI);
+        });
+        ['setWeightMic', 'setWeightAudience', 'setWeightRandom'].forEach(id => {
+            document.getElementById(id)?.addEventListener('input', updateScoreSettingsUI);
+        });
+
         // Fechar ao clicar fora
 
         window.addEventListener('click', (e) => {
@@ -1362,6 +1372,35 @@
 
         });
 
+    }
+
+    function readScoreWeights() {
+        return {
+            mic: Number(document.getElementById('setWeightMic')?.value),
+            audience: Number(document.getElementById('setWeightAudience')?.value),
+            random: Number(document.getElementById('setWeightRandom')?.value)
+        };
+    }
+
+    function updateScoreSettingsUI() {
+        const mode = document.querySelector('input[name="scoreMode"]:checked')?.value || 'mic';
+        const weightsSection = document.getElementById('scoreWeightsSection');
+        if (weightsSection) weightsSection.hidden = mode !== 'mixed';
+        const difficultySection = document.getElementById('difficultySection');
+        if (difficultySection) difficultySection.hidden = !['mic', 'audience', 'mixed'].includes(mode);
+        const total = Object.values(readScoreWeights()).reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
+        const totalLabel = document.getElementById('scoreWeightTotal');
+        if (totalLabel) {
+            totalLabel.textContent = `Total: ${total}%${total === 100 ? '' : ' — ajuste para 100%'}`;
+            totalLabel.classList.toggle('is-invalid', total !== 100);
+        }
+    }
+
+    function scoreSettingsNeedMic(scoreSettings) {
+        if (!scoreSettings || scoreSettings.enableScore === false) return false;
+        if (scoreSettings.scoreMode === 'random') return false;
+        if (scoreSettings.scoreMode === 'mixed') return Number(scoreSettings.scoreWeights?.mic) > 0;
+        return true;
     }
 
     function closeSettings() {
@@ -1389,11 +1428,15 @@
 
         document.getElementById('setEnableScore').checked = settings.enableScore !== false;
 
-        if (settings.scoreMode === 'random') document.getElementById('modeRandom').checked = true;
-
-        else document.getElementById('modeMic').checked = true;
+        const scoreModeInput = modal.querySelector(`input[name="scoreMode"][value="${settings.scoreMode || 'mic'}"]`);
+        (scoreModeInput || document.getElementById('modeMic')).checked = true;
 
         document.getElementById('setMinRandomScore').value = settings.minRandomScore || 75;
+        const weights = ScoreCore.normalizeSettings(settings).scoreWeights;
+        document.getElementById('setWeightMic').value = weights.mic;
+        document.getElementById('setWeightAudience').value = weights.audience;
+        document.getElementById('setWeightRandom').value = weights.random;
+        updateScoreSettingsUI();
 
         const diffRadio = modal.querySelector(`input[name="difficulty"][value="${settings.difficulty || 'normal'}"]`);
         if (diffRadio) diffRadio.checked = true;
@@ -1467,7 +1510,21 @@
 
         const scoreMode = document.querySelector('input[name="scoreMode"]:checked').value;
 
+        const scoreWeights = readScoreWeights();
+        if (scoreMode === 'mixed' && Object.values(scoreWeights).some(value => !Number.isInteger(value) || value < 0 || value > 100)) {
+            showToast('Informe pesos inteiros entre 0% e 100%.');
+            return;
+        }
+        if (scoreMode === 'mixed' && Object.values(scoreWeights).reduce((sum, value) => sum + value, 0) !== 100) {
+            showToast('Os pesos do modo misto precisam totalizar 100%.');
+            return;
+        }
+
         const minRandom = parseInt(document.getElementById('setMinRandomScore').value);
+        if (!Number.isInteger(minRandom) || minRandom < 0 || minRandom > 100) {
+            showToast('A menor pontuação aleatória deve ficar entre 0 e 100.');
+            return;
+        }
 
         const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
 
@@ -1492,6 +1549,8 @@
 
             minRandomScore: minRandom,
 
+            scoreWeights,
+
             difficulty
 
         };
@@ -1506,7 +1565,8 @@
         localStorage.setItem('karaokeSettings', JSON.stringify(settings));
 
         closeSettings();
-        if (settings.enableScore === false || settings.scoreMode !== 'mic') stopMic('song');
+        const effectiveScoreSettings = isPlaying ? performanceScoreSettings : settings;
+        if (!scoreSettingsNeedMic(effectiveScoreSettings)) stopMic('song');
         else if (isPlaying && !document.getElementById('mainVideo')?.paused) startMic('song');
 
         showToast("Configurações salvas com sucesso!");
@@ -2721,6 +2781,13 @@
             if (!topInfoBox) topInfoBox = document.getElementById('topInfoBox');
 
             isPlaying = true;
+            performanceScoreSettings = {
+                ...ScoreCore.normalizeSettings(settings),
+                enableScore: settings.enableScore !== false,
+                difficulty: settings.difficulty || 'normal'
+            };
+            maxVolume = 0;
+            micSongSamples = 0;
             refreshRankingTicker();
             stopAmbientMusic();
             forcedScore = null;
@@ -2742,11 +2809,6 @@
                 db.ref('salas/' + currentRoomCode + '/now_playing/votes').on('value', snap => {
                     currentVotes = snap.val() || {};
                     updatePublicScoreUI();
-                });
-                currentDedometro = {};
-                db.ref('salas/' + currentRoomCode + '/now_playing/dedometro').on('value', snap => {
-                    currentDedometro = snap.val() || {};
-                    updateDedometroUI();
                 });
             }
 
@@ -2800,7 +2862,7 @@
 
                 video.onpause = () => stopMic('song');
                 video.onplaying = () => {
-                    if (settings.enableScore !== false && settings.scoreMode === 'mic') startMic('song');
+                    if (scoreSettingsNeedMic(performanceScoreSettings)) startMic('song');
                     if (fallback) fallback.style.display = 'none';
                     updateDebugInfo(`✅ TOCANDO: ${videoId}.mp4`);
                 };
@@ -2842,7 +2904,10 @@
                 events: {
                     onReady: event => { event.target.setVolume(Math.round(currentVolume * 100)); event.target.playVideo(); },
                     onStateChange: event => {
-                        if (event.data === YT.PlayerState.PLAYING) saveYoutubeToCatalog(current);
+                        if (event.data === YT.PlayerState.PLAYING) {
+                            saveYoutubeToCatalog(current);
+                            if (scoreSettingsNeedMic(performanceScoreSettings)) startMic('song');
+                        }
                         if (event.data === YT.PlayerState.ENDED) showScore();
                     },
                     onError: () => { showToast('Vídeo do YouTube indisponível. Pulando…'); setTimeout(showScore, 1200); }
@@ -3020,34 +3085,45 @@
             } catch (e) { return null; }
         }
 
-        // Calcular nota
+        // Calcula a nota com a configuração capturada quando a apresentação começou.
         let finalScore = 75;
+        let scoreMeta = { mode: 'manual', source: 'manual', voteCount: 0, fallback: false, sources: {} };
         const singer = (queue[0] && queue[0].singer) ? queue[0].singer : "Convidado";
+        const scoreSettings = performanceScoreSettings || {
+            ...ScoreCore.normalizeSettings(settings), enableScore: settings.enableScore !== false
+        };
+        const scoreEnabled = scoreSettings.enableScore !== false;
+        const technicalBase = 70 + Math.floor(Math.random() * 15);
+        const technicalVolumeBonus = Math.floor((maxVolume / 150) * 15);
+        const technicalScore = Math.max(0, Math.min(100, technicalBase + technicalVolumeBonus));
+        const microphoneAvailable = micSongSamples > 0 && Number.isFinite(maxVolume) && maxVolume > 0;
 
         if (typeof forceScore === 'number') {
             finalScore = forceScore;
+            scoreMeta.source = 'manual';
         } else if (typeof forcedScore === 'number') {
             finalScore = forcedScore;
-        } else if (settings && settings.enableScore === false) {
+            scoreMeta.source = 'manual-secret';
+        } else if (!scoreEnabled) {
             finalScore = 0;
+            scoreMeta = { mode: scoreSettings.scoreMode, source: 'disabled', voteCount: 0, fallback: false, sources: {} };
         } else {
-            let base = 70 + Math.floor(Math.random() * 15);
-            let volBonus = Math.floor((maxVolume / 150) * 15);
-            finalScore = base + volBonus;
-            if (currentVotes) {
-                const votes = Object.values(currentVotes);
-                if (votes.length > 0) {
-                    const avg = votes.reduce((a, b) => a + (b.stars || 0), 0) / votes.length;
-                    finalScore = Math.round((finalScore * 0.7) + ((avg / 5 * 100) * 0.3));
-                }
-            }
+            const result = ScoreCore.calculate({
+                settings: scoreSettings,
+                votes: currentVotes,
+                micAvailable: microphoneAvailable,
+                micScore: technicalScore,
+                legacyScore: technicalScore
+            });
+            finalScore = result.score;
+            scoreMeta = result.meta;
         }
         finalScore = Math.max(0, Math.min(100, Number(finalScore) || 75));
-        PartyHost.complete(settings.enableScore === false ? null : finalScore);
+        PartyHost.complete(scoreEnabled ? finalScore : null);
         ChallengeHost.complete(queue[0]?.challengeId);
         forcedScore = null;
         maxVolume = 0;
-        console.log("📊 [SCORE] Nota calculada:", finalScore, "| Cantor:", singer);
+        console.log("📊 [SCORE] Nota calculada:", finalScore, "| Cantor:", singer, "| Origem:", scoreMeta);
 
         // Salva pontuação no ranking da noite
         if (queue[0]) {
@@ -3079,6 +3155,7 @@
                 title: scoreEntry.title || '',
                 artist: scoreEntry.artist || '',
                 score: finalScore,
+                scoreMeta,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             };
             db.ref(`salas/${scoreRoomCode}/display_score`).set({
@@ -3148,10 +3225,17 @@
                 const phrases = scorePhrases[cat] || scorePhrases['med1'];
                 const phrase = phrases[Math.floor(Math.random() * phrases.length)];
 
+                const sourceLabels = {
+                    random: 'NOTA ALEATÓRIA', mic: 'NOTA DO MICROFONE', audience: `NOTA DA PLATEIA · ${scoreMeta.voteCount} ${scoreMeta.voteCount === 1 ? 'VOTO' : 'VOTOS'}`,
+                    mixed: scoreMeta.voteCount > 0 ? `NOTA MISTA · ${scoreMeta.voteCount} ${scoreMeta.voteCount === 1 ? 'VOTO' : 'VOTOS'}` : 'NOTA MISTA · SEM VOTOS DA PLATEIA',
+                    'fallback-legacy': 'SEM VOTOS · NOTA AUTOMÁTICA', 'fallback-random': 'FONTE INDISPONÍVEL · NOTA ALEATÓRIA',
+                    manual: 'NOTA DEFINIDA PELO DJ', 'manual-secret': 'NOTA ESPECIAL'
+                };
+                const sourceLabel = sourceLabels[scoreMeta.source] || 'NOTA FINAL';
                 targetPlayer.innerHTML = `
     <div class="score-final-overlay">
         <div class="cn-stage-glow"></div>
-        <div class="sf-badge">NOTA FINAL</div>
+        <div class="sf-badge">${safeEscape(sourceLabel)}</div>
         <div class="sf-score-value">${finalScore}</div>
         <div class="sf-singer">${safeEscape(singer)}</div>
         <div class="sf-phrase">${phrase}</div>
@@ -3196,6 +3280,7 @@
         refreshRankingTicker();
         resetTone(); // Garante que o tom resete para TOM: 0 a cada término de música
         queue.shift(); // Remove a música que terminou
+        performanceScoreSettings = null;
 
         // Pré-atualiza o topInfoBox com a próxima música ANTES de renderizar
 
@@ -3234,19 +3319,12 @@
             if (!SocialHost.beforeNext(enterIdle)) enterIdle();
         }
 
-        // Limpa listener de votos e dedômetro para a próxima música
+        // Limpa os votos por estrelas para a próxima música.
 
         if (currentRoomCode) {
             db.ref('salas/' + currentRoomCode + '/now_playing/votes').off();
             db.ref('salas/' + currentRoomCode + '/now_playing/votes').remove(); // Reseta votos no DB
 
-            db.ref('salas/' + currentRoomCode + '/now_playing/dedometro').off();
-            db.ref('salas/' + currentRoomCode + '/now_playing/dedometro').remove(); // Reseta dedometro no DB
-
-            // Reseta variáveis locais e oculta dedômetro na TV
-            currentDedometro = {};
-            const dedoDisplay = document.getElementById('dedometroDisplay');
-            if (dedoDisplay) dedoDisplay.style.display = 'none';
         }
 
     }
@@ -3301,43 +3379,6 @@
 
         if (el.style.display !== 'flex') el.style.setProperty('display', 'flex', 'important');
 
-    }
-
-    function updateDedometroUI() {
-        const el = document.getElementById('dedometroDisplay');
-        const likeCountEl = document.getElementById('likeCount');
-        const dislikeCountEl = document.getElementById('dislikeCount');
-        const likeBar = document.getElementById('likeBarInner');
-        const dislikeBar = document.getElementById('dislikeBarInner');
-        const publicScoreDisp = document.getElementById('publicScoreDisplay');
-
-        if (!el || !likeCountEl || !dislikeCountEl || !likeBar || !dislikeBar) return;
-
-        const entries = Object.values(currentDedometro);
-        const total = entries.length;
-
-        if (total === 0) {
-            el.style.display = 'none';
-            return;
-        }
-
-        const likes = entries.filter(e => e.type === 'like').length;
-        const dislikes = total - likes;
-
-        likeCountEl.innerText = likes;
-        dislikeCountEl.innerText = dislikes;
-
-        const likePercent = (likes / total) * 100;
-        const dislikePercent = 100 - likePercent;
-
-        likeBar.style.width = likePercent + '%';
-        dislikeBar.style.width = dislikePercent + '%';
-
-        el.style.display = 'block';
-        if (publicScoreDisp) {
-            publicScoreDisp.style.display = 'flex';
-            if (publicScoreDisp.style.display !== 'flex') publicScoreDisp.style.setProperty('display', 'flex', 'important');
-        }
     }
 
     // ─── Ambient Music (YouTube) ──────────────────────────────────────────────────
@@ -3732,7 +3773,10 @@
                     if (!analyzer || generation !== micGeneration) return;
                     analyzer.getByteFrequencyData(dataArray);
                     const avg = dataArray.reduce((p, c) => p + c, 0) / dataArray.length;
-                    if (micReasons.has('song') && avg > maxVolume) maxVolume = avg;
+                    if (micReasons.has('song')) {
+                        micSongSamples++;
+                        if (avg > maxVolume) maxVolume = avg;
+                    }
                     const bar = document.getElementById('vuBar');
                     if (bar) bar.style.height = Math.min(100, avg / 140 * 100) + '%';
                     const badge = document.getElementById('micBadge');

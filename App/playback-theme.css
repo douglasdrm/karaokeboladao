@@ -440,10 +440,10 @@ body.cabin-pc-page .vu-meter-bar {
 .mobile-body :is(.tab-btn.active,.active-tab,.selected,.is-active) {
     border-color: var(--kp-lilac-line) !important;
 }
-.mobile-body :is(.reactions-row,.dedometro-row,.interaction-section) :is(button,.interaction-chip) {
+.mobile-body :is(.reactions-row,.interaction-section) :is(button,.interaction-chip) {
     border-color: var(--color-social-line) !important;
 }
-.mobile-body :is(.reaction-btn,.like-btn,.interaction-chip-icon) {
+.mobile-body :is(.reaction-btn,.interaction-chip-icon) {
     color: var(--color-social) !important;
 }
 .mobile-body #btnSendMobileMsg {

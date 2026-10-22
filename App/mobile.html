@@ -28,7 +28,7 @@
     <!-- Favicon -->
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="mobile.css?v=17">
+    <link rel="stylesheet" href="mobile.css?v=18">
 
     <!-- Driver.js Tour -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css" />
@@ -62,7 +62,7 @@
     <link rel="stylesheet" href="party-social.css?v=14">
     <link rel="stylesheet" href="mobile-overlays.css?v=6">
     <link rel="stylesheet" href="karaoke-theme.css?v=4">
-    <link rel="stylesheet" href="playback-theme.css?v=4">
+    <link rel="stylesheet" href="playback-theme.css?v=5">
     <script src="mobile-ui.js?v=3" defer></script>
 </head>
 
@@ -296,64 +296,37 @@
                 </div>
             </div>
             <!-- Estrelas de Votação Galera (v10) -->
-            <div class="voting-container" id="votingSection"
+            <div class="voting-container audience-rating" id="votingSection"
                 style="display:flex; flex-direction:column; align-items:center; gap:8px; border-top:1px solid rgba(255,255,255,0.08); padding-top:10px; width:100%;">
                 <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                    <span
-                        style="font-size:0.75rem; color:var(--accent); font-weight:900; letter-spacing:1px; text-transform:uppercase;">Vibe
-                        da Galera:</span>
+                    <span class="audience-rating-label">Sua nota para esta apresentação</span>
                     <span id="avgVoteDisplay"
                         style="font-size:1.0rem; color:#fff; font-weight:900; background:rgba(255, 79, 216,0.25); padding:4px 10px; border-radius:10px;">⭐
                         0.0</span>
                 </div>
-                <div class="stars-row" id="starsContainer" style="display:flex; gap:12px;">
-                    <button class="star-btn" data-value="1" onclick="sendVote(1)">⭐</button>
-                    <button class="star-btn" data-value="2" onclick="sendVote(2)">⭐</button>
-                    <button class="star-btn" data-value="3" onclick="sendVote(3)">⭐</button>
-                    <button class="star-btn" data-value="4" onclick="sendVote(4)">⭐</button>
-                    <button class="star-btn" data-value="5" onclick="sendVote(5)">⭐</button>
+                <div class="stars-row" id="starsContainer" role="group" aria-label="Avaliação de uma a cinco estrelas">
+                    <button type="button" class="star-btn" data-value="1" aria-label="Dar uma estrela" aria-pressed="false" onclick="sendVote(1)">⭐</button>
+                    <button type="button" class="star-btn" data-value="2" aria-label="Dar duas estrelas" aria-pressed="false" onclick="sendVote(2)">⭐</button>
+                    <button type="button" class="star-btn" data-value="3" aria-label="Dar três estrelas" aria-pressed="false" onclick="sendVote(3)">⭐</button>
+                    <button type="button" class="star-btn" data-value="4" aria-label="Dar quatro estrelas" aria-pressed="false" onclick="sendVote(4)">⭐</button>
+                    <button type="button" class="star-btn" data-value="5" aria-label="Dar cinco estrelas" aria-pressed="false" onclick="sendVote(5)">⭐</button>
                 </div>
             </div>
 
-            <!-- DEDÔMETRO (👍 vs 👎) (Novo!) -->
-            <div class="dedometro-row"
-                style="display:flex; justify-content:center; gap:20px; margin-top:10px; width:100%;">
-                <button class="dedo-btn like-btn" onclick="sendLikeDislike('like')"
-                    style="background:var(--color-state-success-soft); border:1px solid var(--color-state-success); color:var(--color-state-success); border-radius:15px; padding:6px 14px; font-size:0.9rem; display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; transition:0.2s; font-family:'Inter',sans-serif;">
-                    👍 <span id="likeText">Aprovado</span>
-                </button>
-                <button class="dedo-btn dislike-btn" onclick="sendLikeDislike('dislike')"
-                    style="background:var(--color-state-danger-soft); border:1px solid var(--color-state-danger); color:var(--color-state-danger); border-radius:15px; padding:6px 14px; font-size:0.9rem; display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; transition:0.2s; font-family:'Inter',sans-serif;">
-                    👎 <span id="dislikeText">Zoeira</span>
-                </button>
-            </div>
             <div id="voteFeedback"
-                style="display:none; font-size:0.55rem; color:#FF7A00; margin-top:5px; text-align:center; font-weight:bold;">
-                VOTO RECEBIDO! 🔥</div>
+                role="status" aria-live="polite" style="display:none;">
+                Avaliação registrada! ⭐</div>
 
             <!-- Reações em Tempo Real (v20) -->
-            <div class="reactions-row"
-                style="display:flex; justify-content:center; gap:18px; margin-top:12px; border-top:1px solid rgba(255,255,255,0.08); padding-top:12px; width:100%;">
-                <button class="reaction-btn" onclick="sendReaction('🔥')" aria-label="Mandar fogo"
-                    style="background:none; border:none; font-size:1.6rem; cursor:pointer; transition:0.2s;"
-                    onmousedown="this.style.transform='scale(1.4)'"
-                    onmouseup="this.style.transform='scale(1)'">🔥</button>
-                <button class="reaction-btn" onclick="sendReaction('❤️')" aria-label="Mandar coração"
-                    style="background:none; border:none; font-size:1.6rem; cursor:pointer; transition:0.2s;"
-                    onmousedown="this.style.transform='scale(1.4)'"
-                    onmouseup="this.style.transform='scale(1)'">❤️</button>
-                <button class="reaction-btn" onclick="sendReaction('👏')" aria-label="Mandar palmas"
-                    style="background:none; border:none; font-size:1.6rem; cursor:pointer; transition:0.2s;"
-                    onmousedown="this.style.transform='scale(1.4)'"
-                    onmouseup="this.style.transform='scale(1)'">👏</button>
-                <button class="reaction-btn" onclick="sendReaction('🙉')" aria-label="Zoar: não quero ouvir"
-                    style="background:none; border:none; font-size:1.6rem; cursor:pointer; transition:0.2s;"
-                    onmousedown="this.style.transform='scale(1.4)'"
-                    onmouseup="this.style.transform='scale(1)'">🙉</button>
-                <button class="reaction-btn" onclick="sendReaction('🤡')" aria-label="Zoar: palhaçada"
-                    style="background:none; border:none; font-size:1.6rem; cursor:pointer; transition:0.2s;"
-                    onmousedown="this.style.transform='scale(1.4)'"
-                    onmouseup="this.style.transform='scale(1)'">🤡</button>
+            <div class="reaction-panel">
+                <span class="reaction-panel-label">Reaja no telão</span>
+                <div class="reactions-row" role="group" aria-label="Reações divertidas">
+                    <button type="button" class="reaction-btn" onclick="sendReaction('🔥')" aria-label="Mandar fogo">🔥</button>
+                    <button type="button" class="reaction-btn" onclick="sendReaction('❤️')" aria-label="Mandar coração">❤️</button>
+                    <button type="button" class="reaction-btn" onclick="sendReaction('👏')" aria-label="Mandar palmas">👏</button>
+                    <button type="button" class="reaction-btn" onclick="sendReaction('🙉')" aria-label="Mandar macaco cobrindo os ouvidos">🙉</button>
+                    <button type="button" class="reaction-btn" onclick="sendReaction('🤡')" aria-label="Mandar palhaço">🤡</button>
+                </div>
             </div>
 
             <!-- CHAT / MENSAGENS NA TELA (Novo!) -->
@@ -1356,55 +1329,16 @@
         }
 
         function updateStarsUI(val) {
-            const btns = document.querySelectorAll('.star-btn');
+            const btns = document.querySelectorAll('#starsContainer .star-btn');
             btns.forEach(btn => {
                 const starVal = parseInt(btn.getAttribute('data-value'));
                 if (starVal <= val) {
                     btn.classList.add('voted');
-                    btn.style.opacity = '1';
-                    btn.style.transform = 'scale(1.1)';
                 } else {
                     btn.classList.remove('voted');
-                    btn.style.opacity = '0.4';
-                    btn.style.transform = 'scale(1)';
                 }
+                btn.setAttribute('aria-pressed', String(starVal === Number(val)));
             });
-        }
-
-        // --- DEDÔMETRO (👍 vs 👎) (Novo!) ---
-        async function sendLikeDislike(type) {
-            if (!currentRoomCode) {
-                alert("Você precisa estar conectado a uma sala!");
-                return;
-            }
-            if (!currentUser) {
-                alert("Faça login para votar no Dedômetro!");
-                return;
-            }
-            const dedoRef = db.ref(`salas/${currentRoomCode}/now_playing/dedometro/${currentUser.uid}`);
-
-            // Feedback tátil/visual
-            if (window.navigator.vibrate) window.navigator.vibrate(30);
-
-            const likeBtn = document.querySelector('.dedo-btn.like-btn');
-            const dislikeBtn = document.querySelector('.dedo-btn.dislike-btn');
-            if (likeBtn && dislikeBtn) {
-                if (type === 'like') {
-                    likeBtn.style.background = 'var(--color-state-success)';
-                    likeBtn.style.color = 'var(--color-text-inverse)';
-                    dislikeBtn.style.background = 'var(--color-state-danger-soft)';
-                    dislikeBtn.style.color = 'var(--color-state-danger)';
-                } else {
-                    dislikeBtn.style.background = 'var(--color-state-danger)';
-                    dislikeBtn.style.color = 'var(--color-text-inverse)';
-                    likeBtn.style.background = 'var(--color-state-success-soft)';
-                    likeBtn.style.color = 'var(--color-state-success)';
-                }
-            }
-
-            try {
-                await dedoRef.set({ type: type, timestamp: firebase.database.ServerValue.TIMESTAMP });
-            } catch (e) { console.error("Erro ao votar no Dedômetro:", e); }
         }
 
         // --- ENVIAR MENSAGENS DE TEXTO NA TELA (Novo!) ---

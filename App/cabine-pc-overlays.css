@@ -45,6 +45,15 @@
 .cabin-pc-page .photo-input-btn { justify-content: center; min-height: 39px; padding: 0 12px !important; border: 1px solid var(--pc-dialog-line); border-radius: 9px; color: #101116 !important; background: var(--pc-dialog-yellow) !important; font-size: .68rem !important; }
 .cabin-pc-page .setting-subtitle { margin-bottom: 9px; color: #D8D2E2; font-size: .72rem; font-weight: 700; }
 .cabin-pc-page .difficulty-section { margin-top: 10px; padding: 12px; border-color: var(--pc-dialog-line); border-radius: 12px; background: rgba(0,0,0,.12); }
+.cabin-pc-page .score-weights-section { margin-top: 10px; padding: 12px; border: 1px solid var(--pc-dialog-line); border-radius: 12px; background: rgba(0,0,0,.12); }
+.cabin-pc-page .score-weights-section[hidden] { display: none; }
+.cabin-pc-page .score-weights-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.cabin-pc-page .score-weights-grid label { display: grid; gap: 6px; color: #D8D2E2; font-size: .7rem; font-weight: 700; }
+.cabin-pc-page .score-weights-grid label span { display: flex; align-items: center; gap: 5px; }
+.cabin-pc-page .score-weights-grid input { width: 100%; min-height: 38px; }
+.cabin-pc-page .score-weight-total { margin: 10px 0 5px; color: var(--color-state-success,#56db91); font-size: .72rem; font-weight: 800; }
+.cabin-pc-page .score-weight-total.is-invalid { color: var(--color-state-danger,#ff6685); }
+@media (max-width: 620px) { .cabin-pc-page .score-weights-grid { grid-template-columns: 1fr; } }
 .cabin-pc-page .difficulty-radios { gap: 5px; }
 .cabin-pc-page .diff-btn span { border-color: var(--pc-dialog-line); background: rgba(255,255,255,.035); font-size: .62rem; }
 .cabin-pc-page .diff-btn input:checked + span { border-color: var(--pc-dialog-yellow); color: #101116; background: var(--pc-dialog-yellow); }

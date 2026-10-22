@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="party-social.css?v=14">
     <link rel="stylesheet" href="cabin-layout.css?v=5">
     <link rel="stylesheet" href="cabine-pc-v2.css?v=9">
-    <link rel="stylesheet" href="cabine-pc-overlays.css?v=5">
+    <link rel="stylesheet" href="cabine-pc-overlays.css?v=6">
     <link rel="stylesheet" href="show-style.css?v=6">
     <link rel="stylesheet" href="karaoke-theme.css?v=4">
     <link rel="stylesheet" href="playback-theme.css?v=5">
@@ -253,17 +253,6 @@
                 <div class="vibe-bar-bg" style="width:100%; height:12px; background:rgba(255,255,255,0.1); border-radius:6px; overflow:hidden; margin-top:5px;">
                     <div id="vibeBarInner" class="vibe-bar-fill" style="height:100%; width:0%; transition: width 0.3s ease;"></div>
                 </div>
-                <!-- Dedômetro live display (👍 vs 👎) (Novo!) -->
-                <div id="dedometroDisplay" style="display:none; margin-top:12px; border-top:1px solid rgba(255,255,255,0.12); padding-top:10px; width:100%; box-sizing:border-box;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">
-                        <span style="color:var(--color-state-success);"><i class="fas fa-thumbs-up"></i> <span id="likeCount">0</span> Aprovado</span>
-                        <span style="color:var(--color-state-danger);"><span id="dislikeCount">0</span> Zoeira <i class="fas fa-thumbs-down"></i></span>
-                    </div>
-                    <div style="height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden; display:flex; width:100%;">
-                        <div id="likeBarInner" style="width:50%; background:var(--color-state-success); transition:width 0.4s cubic-bezier(0.1, 0.8, 0.3, 1);"></div>
-                        <div id="dislikeBarInner" style="width:50%; background:var(--color-state-danger); transition:width 0.4s cubic-bezier(0.1, 0.8, 0.3, 1);"></div>
-                    </div>
-                </div>
             </div>
         </main>
 
@@ -403,6 +392,31 @@
                                     A partir do Microfone
                                 </label>
                             </div>
+                            <div class="score-mode-choice">
+                                <label class="radio-label">
+                                    <input type="radio" name="scoreMode" value="audience" id="modeAudience">
+                                    Avaliação da Plateia
+                                </label>
+                                <small>Usa as estrelas enviadas pelos participantes autenticados.</small>
+                            </div>
+                            <div class="score-mode-choice">
+                                <label class="radio-label">
+                                    <input type="radio" name="scoreMode" value="mixed" id="modeMixed">
+                                    Modo Misto
+                                </label>
+                                <small>Combina as fontes com pesos configuráveis.</small>
+                            </div>
+                        </div>
+
+                        <div class="score-weights-section" id="scoreWeightsSection" hidden>
+                            <div class="setting-subtitle">Pesos do modo misto</div>
+                            <div class="score-weights-grid">
+                                <label>Microfone <span><input type="number" id="setWeightMic" min="0" max="100" value="20">%</span></label>
+                                <label>Plateia <span><input type="number" id="setWeightAudience" min="0" max="100" value="70">%</span></label>
+                                <label>Aleatório <span><input type="number" id="setWeightRandom" min="0" max="100" value="10">%</span></label>
+                            </div>
+                            <div id="scoreWeightTotal" class="score-weight-total" role="status">Total: 100%</div>
+                            <small>Se uma fonte estiver indisponível, seu peso será redistribuído entre as fontes válidas.</small>
                         </div>
 
                         <div class="difficulty-section" id="difficultySection">
@@ -527,11 +541,12 @@
     <script src="party-core.js?v=4" defer></script>
     <script src="party-ui.js?v=1" defer></script>
     <script src="party-host.js?v=5" defer></script>
+    <script src="score-core.js?v=1"></script>
     <script src="social-core.js?v=2"></script>
     <script src="party-social.js?v=8"></script>
     <script src="challenge-core.js?v=2"></script>
     <script src="challenges.js?v=6" defer></script>
-    <script src="audience-host.js?v=1" defer></script><script src="app.js?v=6.5" defer></script>
+    <script src="audience-host.js?v=1" defer></script><script src="app.js?v=6.7" defer></script>
     <script src="tour-host.js" defer></script>
 </body>
 
