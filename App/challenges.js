@@ -25,6 +25,7 @@
   let screenBar=null;
   // O acesso aos desafios permanece no painel lateral. A faixa inferior fica
   // reservada às informações públicas da festa.
+  const visible=c=>ChallengeCore.canView(c,uid,api.host?uid:null);
   function dialogBox(title){
    if(dialog){dialog.close();dialog.remove();}listBody=null;mode=null;
    dialog=el('dialog',undefined,'challenge-dialog');
@@ -34,7 +35,7 @@
    document.body.append(dialog);dialog.showModal();const body=el('div');dialog.append(body);return body;
   }
   function sync(){
-   const u=api.user(),r=api.room();if(r===room&&u?.uid===uid)return;
+   const u=api.user(),r=api.room();if(r===room&&u?.uid===uid){if(mode==='list')renderList();return;}
    ref?.off();room=r;uid=u?.uid||null;state={};seen.clear();announcement.hidden=true;
    if(dialog)dialog.close();dock.hidden=!uid||!room;
    if(!uid||!room)return;
@@ -43,14 +44,15 @@
    ref.on('value',snap=>{
     if(room!==capturedRoom||uid!==capturedUid)return;
     state=snap.val()||{};
-    const items=Object.values(state.items||{}),open=items.filter(ChallengeCore.open);
+    const items=Object.values(state.items||{}).filter(visible),open=items.filter(ChallengeCore.open);
     caption.textContent=state.available===false?'Cabine desconectada. Aguarde o DJ.':`${open.length} desafio(s) aberto(s) · toque para participar`;if(hostCount){hostCount.textContent=String(open.length);hostCount.hidden=!open.length;}
     if(screenBar)screenBar.textContent='🔥 Desafios da festa · '+open.length+' aberto(s)';
-    const changes=items.filter(c=>seen.get(c.id)!==c.status && (c.status==='open'||c.status==='forming'||c.status==='queued'));
+    const changes=items.filter(c=>seen.get(c.id)!==c.status && (c.status==='open'||c.status==='forming'||c.status==='queued'||c.status==='declined'));
     if(!initial&&changes.length){
      const c=changes.sort((a,b)=>(b.updatedAt||b.createdAt)-(a.updatedAt||a.createdAt))[0];
      const who=Object.values(c.members||{}).map(m=>m.name).join(' e ');
-     const text=c.status==='queued'?`🔥 ${who} aceitou: ${c.title} — ${c.artist}`:c.status==='forming'?`🔥 ${c.authorName}: desafio aguardando confirmação do grupo`:`🔥 ${c.authorName} desafiou a galera: ${c.suspense?'música surpresa de '+c.artist:c.title+' — '+c.artist}`;
+     const target=c.targetUid?` ${c.targetName}`:' a galera';
+     const text=c.status==='declined'?`🔥 ${c.targetName} recusou o desafio de ${c.authorName}`:c.status==='queued'?`🔥 ${who} aceitou: ${c.title} — ${c.artist}`:c.status==='forming'?`🔥 ${c.authorName}: desafio aguardando confirmação do grupo`:`🔥 ${c.authorName} desafiou${target}: ${c.suspense?'música surpresa de '+c.artist:c.title+' — '+c.artist}`;
      announcement.textContent=text;announcement.hidden=false;
      if(screenBar)screenBar.textContent=text;
      if(!api.host&&document.hidden&&'Notification' in root&&Notification.permission==='granted'){
@@ -85,18 +87,25 @@
   }
   function renderList(){
    if(!listBody)return;listBody.replaceChildren();
-   const items=Object.values(state.items||{}).filter(c=>!['cancelled','expired'].includes(c.status)).sort((a,b)=>b.createdAt-a.createdAt);
+   const items=Object.values(state.items||{}).filter(c=>visible(c)&&!['cancelled','expired'].includes(c.status)).sort((a,b)=>b.createdAt-a.createdAt);
    const hasOwnOpen=items.some(c=>c.authorUid===uid&&ChallengeCore.open(c));
    listBody.append(btn(hasOwnOpen?'＋ Lançar outro desafio':'＋ Lançar um desafio',()=>compose()));
    if(state.available!==true)listBody.append(el('p','A cabine está desconectada. Os desafios ficam disponíveis quando o DJ retornar.','challenge-feedback'));
    if(!items.length)listBody.append(el('p','Ainda não há desafios. Escolha uma música e convide a galera!','challenge-muted'));
    for(const c of items){
     const card=el('article',undefined,'challenge-card');
+    if(c.targetUid)card.classList.add('challenge-directed');
     if(c.status==='forming'&&c.members?.[uid]&&!c.members[uid].confirmed)card.classList.add('challenge-invite');
-    card.append(el('h3',`${c.authorName} lançou um desafio`),el('p',c.suspense&&c.status==='open'?'🎁 Música surpresa':c.title,'challenge-hero'),el('p',c.artist));
+    card.append(el('h3',c.targetUid?`${c.authorName} desafiou ${c.targetName}`:`${c.authorName} desafiou a galera`));
+    if(c.targetUid)card.append(el('span','DESAFIO DIRECIONADO','challenge-directed-badge'));
+    card.append(el('p',c.suspense&&c.status==='open'?'🎁 Música surpresa':c.title,'challenge-hero'),el('p',c.artist));
     if(c.note&&!c.noteHidden)card.append(el('p',c.note,'challenge-note'));
     const actions=el('div',undefined,'challenge-actions');
-    if(c.status==='open')actions.append(btn(c.suspense?'Revelar e decidir':'Eu aceito!',()=>accept(c,false)),btn('Aceito, mas quero companhia!',()=>accept(c,true)));
+    if(c.status==='open'&&(!c.targetUid||c.targetUid===uid)){
+     actions.append(btn(c.suspense?'Revelar e decidir':'Eu aceito!',()=>accept(c,false)),btn('Aceito, mas quero companhia!',()=>accept(c,true)));
+     if(c.targetUid===uid)actions.append(btn('Agora não',()=>send('decline',{challengeId:c.id})));
+    }
+    if(c.status==='open'&&c.targetUid&&!api.users()?.[c.targetUid]?.uid&&(c.authorUid===uid||api.host))card.append(el('p','A pessoa desafiada saiu da sala. Você pode cancelar o desafio.','challenge-feedback'));
     if(c.status==='forming'){
      card.append(el('p','Grupo: '+Object.values(c.members||{}).map(m=>m.name+(m.confirmed?' ✓':' · aguardando')).join(' / '),'challenge-muted'));
      if(c.members?.[uid]&&!c.members[uid].confirmed)actions.append(btn('Ver música e confirmar convite',()=>confirmInvite(c)));
@@ -104,9 +113,10 @@
     }
     if(['ready','queued','completed'].includes(c.status))card.append(el('p',(c.status==='completed'?'🏅 Desafio concluído por ':c.status==='ready'?'Preparando entrada na fila: ':'🎤 Na fila: ')+Object.values(c.members||{}).map(m=>m.name).join(' e '),'challenge-counter'));
     if(c.status==='skipped')card.append(el('p','Apresentação encerrada.','challenge-muted'));
+    if(c.status==='declined')card.append(el('p',`${c.targetName} preferiu não aceitar este desafio.`,'challenge-muted'));
     if(ChallengeCore.open(c)&&(c.authorUid===uid||api.host))actions.append(btn(api.host?'Remover desafio':'Cancelar desafio',()=>send('cancel',{challengeId:c.id})));
     if(api.host&&c.note&&!c.noteHidden)actions.append(btn('Ocultar recado',()=>send('hideNote',{challengeId:c.id})));
-    for(const emoji of ['🔥','👏','😂']){const count=Object.values(c.reactions||{}).filter(v=>v===emoji).length;actions.append(btn(`${emoji} ${count}`,()=>send('react',{challengeId:c.id,emoji})));}
+    if(c.status!=='declined')for(const emoji of ['🔥','👏','😂']){const count=Object.values(c.reactions||{}).filter(v=>v===emoji).length;actions.append(btn(`${emoji} ${count}`,()=>send('react',{challengeId:c.id,emoji})));}
     card.append(actions);listBody.append(card);
    }
   }
@@ -132,9 +142,14 @@
    const search=el('input');search.placeholder='Buscar música, artista ou código';search.setAttribute('aria-label','Buscar música para desafiar');body.append(search);
    const results=el('div',undefined,'challenge-results');body.append(results);
    search.oninput=()=>{results.replaceChildren();const q=search.value.trim().toLocaleLowerCase();if(q.length<2)return;(api.catalog()||[]).filter(s=>`${s.id} ${s.title} ${s.artist}`.toLocaleLowerCase().includes(q)).slice(0,20).forEach(s=>results.append(btn(`${s.title} — ${s.artist}`,()=>{song=s;selectedLabel.textContent=`${s.title} — ${s.artist}`;results.replaceChildren();search.value='';})));};
+   const targetLabel=el('label','Quem você quer desafiar?');const target=el('select');target.setAttribute('aria-label','Destinatário do desafio');
+   const publicOption=el('option','Toda a galera (desafio público)');publicOption.value='';target.append(publicOption);
+   for(const [id,u] of Object.entries(api.users()||{})){if(id===uid||u.uid!==id)continue;const option=el('option',name(u));option.value=id;target.append(option);}
+   targetLabel.append(target);body.append(targetLabel);
    const label=el('label','Recado ou pista (até 140 caracteres)');const note=el('textarea');note.maxLength=140;note.rows=2;label.append(note);body.append(label);
    const surprise=el('input');surprise.type='checkbox';const l=el('label');l.append(surprise,document.createTextNode('Suspense: mostrar artista e pista; revelar a música antes do aceite.'));body.append(l);
-   body.append(el('p','Você pode lançar mais de um desafio. Cada música só entra na fila depois que alguém aceitar.','challenge-muted'),btn('🔥 Desafiar a galera',async()=>{if(!song)throw Error('Selecione uma música.');await send('create',{songId:String(song.id),note:note.value,suspense:surprise.checked});showList();}));
+   const submit=btn('🔥 Lançar desafio',async()=>{if(!song)throw Error('Selecione uma música.');await send('create',{songId:String(song.id),note:note.value,suspense:surprise.checked,...(target.value?{targetUid:target.value}:{})});showList();});
+   body.append(el('p','O desafio só entra na fila depois que alguém aceitar. Desafios direcionados podem ser recusados.','challenge-muted'),submit);
   }
   return {compose,showList,sync};
  }

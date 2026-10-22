@@ -2,6 +2,8 @@
  'use strict';
  const open=c=>c && ['open','forming'].includes(c.status);
  const clean=(v,n=80)=>String(v||'').replace(/[<>]/g,'').trim().slice(0,n);
+ const targeted=c=>Boolean(c?.targetUid);
+ const canView=(c,uid,hostUid)=>Boolean(c&&(!targeted(c)||uid===c.authorUid||uid===c.targetUid||uid===hostUid||Object.hasOwn(c.members||{},uid)));
  function reduce(input,command,env){
   const state=JSON.parse(JSON.stringify(input||{items:{},receipts:{}}));state.items ||= {};state.receipts ||= {};
   const {key,uid,action}=command;
@@ -16,12 +18,17 @@
   if(action==='create'){
    const song=Object.hasOwn(env.songs,String(command.songId))?env.songs[String(command.songId)]:null;if(!song)return deny('Música não encontrada no catálogo.');
    if(command.suspense&&!clean(command.note,140))return deny('Escreva uma pista para o desafio surpresa.');
-   c={id:key,songId:String(song.id),title:clean(song.title,180),artist:clean(song.artist,120),authorUid:uid,authorName:clean(env.members[uid].name),note:clean(command.note,140),suspense:command.suspense===true,status:'open',createdAt:env.now,reactions:{}};
-   state.items[key]=c;receipt.challengeId=key;receipt.message='Desafio lançado!';
+   const targetUid=typeof command.targetUid==='string'&&command.targetUid?command.targetUid:null;
+   if(targetUid===uid)return deny('Escolha outra pessoa para o desafio.');
+   if(targetUid&&!Object.hasOwn(env.members,targetUid))return deny('Essa pessoa não está mais disponível na sala.');
+   c={id:key,songId:String(song.id),title:clean(song.title,180),artist:clean(song.artist,120),authorUid:uid,authorName:clean(env.members[uid].name),note:clean(command.note,140),suspense:command.suspense===true,status:'open',createdAt:env.now,reactions:{},...(targetUid?{targetUid,targetName:clean(env.members[targetUid].name)}:{})};
+   state.items[key]=c;receipt.challengeId=key;receipt.message=targetUid?`Desafio enviado para ${c.targetName}!`:'Desafio lançado para a galera!';
   }else{
    if(!c)return deny('Esse desafio não está mais disponível.');
    if(action==='accept'){
     if(c.status!=='open')return deny('Outra pessoa já aceitou este desafio.');
+    if(targeted(c)&&uid!==c.targetUid)return deny('Somente a pessoa desafiada pode aceitar.');
+    if(targeted(c)&&!Object.hasOwn(env.members,c.targetUid))return deny('A pessoa desafiada não está mais disponível na sala.');
     if(command.revealed!==true)return deny('Veja a música antes de confirmar.');
     const partners=Array.isArray(command.partners)?[...new Set(command.partners)]:[];
     if(partners.length>2||partners.includes(uid)||partners.some(id=>typeof id!=='string'||!Object.hasOwn(env.members,id)))return deny('Escolha até duas pessoas conectadas, além de você.');
@@ -30,12 +37,15 @@
     c.status=partners.length?'forming':'ready';c.claimedAt=env.now;
     if(!partners.length)c.acceptedAt=env.now;
     receipt.message=partners.length?'Convites enviados. Aguardando confirmação.':'Desafio aceito! Enviando para a fila.';
+   }else if(action==='decline'){
+    if(!targeted(c)||c.status!=='open'||uid!==c.targetUid)return deny('Não é possível recusar este desafio.');
+    c.status='declined';c.declinedAt=env.now;receipt.message='Desafio recusado.';
    }else if(action==='confirm'){
     if(c.status!=='forming'||!c.members?.[uid]||c.members[uid].confirmed)return deny('Este convite não está mais disponível.');
     if(command.revealed!==true)return deny('Veja a música antes de confirmar.');
-    c.members[uid].confirmed=true;
-    if(Object.values(c.members).every(m=>m.confirmed)){c.status='ready';c.acceptedAt=env.now;}
-    receipt.message=c.status==='ready'?'Grupo confirmado! Enviando para a fila.':'Participação confirmada.';
+    const missing=Object.keys(c.members).filter(id=>!Object.hasOwn(env.members,id));
+    if(missing.length){c.status='open';delete c.members;delete c.leaderUid;delete c.claimedAt;receipt.message='Uma das pessoas saiu da sala. O desafio foi liberado novamente.';}
+    else{c.members[uid].confirmed=true;if(Object.values(c.members).every(m=>m.confirmed)){c.status='ready';c.acceptedAt=env.now;}receipt.message=c.status==='ready'?'Grupo confirmado! Enviando para a fila.':'Participação confirmada.';}
    }else if(action==='release'){
     if(c.status!=='forming'||!c.members?.[uid])return deny('Você não participa deste convite.');
     c.status='open';delete c.members;delete c.leaderUid;delete c.claimedAt;receipt.message='Desafio disponível novamente.';
@@ -46,7 +56,7 @@
     if(uid!==env.hostUid)return deny('Somente o DJ pode ocultar recados.');
     c.noteHidden=true;receipt.message='Recado ocultado.';
    }else if(action==='react'){
-    if(!['🔥','👏','😂'].includes(command.emoji)||['expired','cancelled'].includes(c.status))return deny('Reação indisponível.');
+    if(!canView(c,uid,env.hostUid)||!['🔥','👏','😂'].includes(command.emoji)||['expired','cancelled','declined'].includes(c.status))return deny('Reação indisponível.');
     c.reactions ||= {};c.reactions[uid]=command.emoji;receipt.message='Reação enviada!';
    }else return deny('Ação desconhecida.');
    c.updatedAt=env.now;
@@ -58,7 +68,7 @@
  }
  function request(c){
   const ids=Object.keys(c.members||{});if(c.status!=='ready'||!ids.length||!Object.values(c.members).every(m=>m.confirmed))return null;
-  return {id:c.songId,singer:ids.map(id=>c.members[id].name).join(' E '),singerUid:c.leaderUid,requesterUid:c.leaderUid,recipientVersion:1,recipientUids:ids,processed:false,timestamp:c.acceptedAt,challengeId:c.id,challenge:{id:c.id,authorName:c.authorName,authorUid:c.authorUid,singers:ids.map(uid=>({uid,name:c.members[uid].name}))}};
+  return {id:c.songId,singer:ids.map(id=>c.members[id].name).join(' E '),singerUid:c.leaderUid,requesterUid:c.leaderUid,recipientVersion:1,recipientUids:ids,processed:false,timestamp:c.acceptedAt,challengeId:c.id,challenge:{id:c.id,authorName:c.authorName,authorUid:c.authorUid,...(c.targetUid?{targetUid:c.targetUid,targetName:c.targetName}:{}),singers:ids.map(uid=>({uid,name:c.members[uid].name}))}};
  }
- const api={reduce,request,open};root.ChallengeCore=api;if(typeof module!=='undefined')module.exports=api;
+ const api={reduce,request,open,targeted,canView};root.ChallengeCore=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
