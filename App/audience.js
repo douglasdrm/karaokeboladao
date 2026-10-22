@@ -132,7 +132,7 @@
    reconcile(frame,topRoots.map(n=>mirror(n,true)).filter(Boolean));
    syncAmbientPlayback(container);
    const vibe=source.getElementById('publicScoreDisplay');
-   const signature=vibe&&vibe.style.display!=='none'?[vibe.querySelector('#publicScoreVal')?.textContent,vibe.querySelector('#likeCount')?.textContent,vibe.querySelector('#dislikeCount')?.textContent].join('|'):'';
+   const signature=vibe&&vibe.style.display!=='none'?vibe.querySelector('#publicScoreVal')?.textContent||'':'';
    if(signature!==vibeSignature){vibeSignature=signature;vibeUntil=signature?Date.now()+1500:0;}
    stage.classList.toggle('vibe-active',Boolean(signature)&&Date.now()<vibeUntil);
    stage.querySelectorAll('video[data-display-video]').forEach(v=>{

@@ -33,6 +33,12 @@
     let currentCallAudio = null; // Áudio ativo da apresentação do próximo cantor
 
     let currentCallTimer = null; // Timer ativo da apresentação do próximo cantor
+    let scoreFlowActive = false;
+    let engagementAdActive = false;
+    let engagementAdTimer = null;
+    let engagementAdContinuation = null;
+    let engagementAdIndex = -1;
+    let completedPresentationsSinceAd = 0;
     let partyRankingTransition = 0;
     let rankingRefreshTimer = null;
     const PARTY_RANKING_CATEGORIES = [
@@ -116,6 +122,10 @@
 
         playIntroCall: true,
         autoApproveVoiceMessages: false,
+
+        interactionAdsEnabled: true,
+        interactionAdsFrequency: 3,
+        interactionAdsDuration: 8,
 
         screensaverTimeout: 30000,
 
@@ -479,6 +489,7 @@
         loadScreensaverImages(); // Carrega fotos salvas
 
         initSettingsUI();
+        initInteractionAdControls();
 
         try {
             initAmbientPlayer();
@@ -953,6 +964,10 @@
     function startRoom(name) {
         PartyHost.begin(name);
 
+        completedPresentationsSinceAd = 0;
+        if (engagementAdActive) completeInteractionAd(false);
+        updateInteractionAdControl();
+
         stopHostCommandListener();
 
         // Remove sala anterior deste host (se existir) para não acumular
@@ -1261,6 +1276,7 @@
 
     async function logoutHost() {
         stopHostCommandListener();
+        if (engagementAdActive) completeInteractionAd(false);
 
         try { await PartyHost.end(); } catch (error) {
             if (!confirm("Não foi possível salvar o resumo. Sair mesmo assim?")) return;
@@ -1289,7 +1305,7 @@
 
     SocialHost.init({db, user: () => hostUser, room: () => currentRoomCode, mount: () => document.getElementById('tab-queue'),
         autoApproveAudio: () => settings.autoApproveVoiceMessages === true,
-        busy: () => isPlaying || !!currentCallAudio || !!currentCallTimer, pauseAmbient: stopAmbientMusic, resumeAmbient: checkAmbientMusic});
+        busy: () => isPlaying || engagementAdActive || !!currentCallAudio || !!currentCallTimer, pauseAmbient: stopAmbientMusic, resumeAmbient: checkAmbientMusic});
 
     ChallengeHost.init({db, user: () => hostUser, room: () => currentRoomCode,
         catalog: () => catalog, users: () => activeUsers, mount: () => document.getElementById('tab-queue')});
@@ -1401,6 +1417,145 @@
         if (scoreSettings.scoreMode === 'random') return false;
         if (scoreSettings.scoreMode === 'mixed') return Number(scoreSettings.scoreWeights?.mic) > 0;
         return true;
+    }
+
+    const INTERACTION_ADS = [
+        { icon: '🎉', eyebrow: 'A PLATEIA TAMBÉM FAZ PARTE DO SHOW', title: 'Não precisa cantar para participar!', text: 'Entre pelo celular, avalie os cantores, mande recados e divirta-se.' },
+        { icon: '⭐', eyebrow: 'SUA OPINIÃO CONTA', title: 'E aí, que nota você daria?', text: 'Avalie esta apresentação com estrelas diretamente pelo celular.' },
+        { icon: '💬', eyebrow: 'PARTICIPE DO TELÃO', title: 'Quer aparecer por aqui?', text: 'Envie mensagens e recados pelo celular durante a festa.' },
+        { icon: '🎙️', eyebrow: 'SOLTE A VOZ DE OUTRO JEITO', title: 'Sua voz também pode participar!', text: 'Grave um recado de áudio e mande para a festa.' },
+        { icon: '🔥', eyebrow: 'DESAFIOS MUSICAIS', title: 'Quem você desafia a cantar?', text: 'Escolha uma música, lance um desafio e veja quem aceita.' }
+    ];
+
+    function normalizedInteractionAdSettings() {
+        const frequency = [2, 3, 4, 5].includes(Number(settings.interactionAdsFrequency)) ? Number(settings.interactionAdsFrequency) : 3;
+        const duration = Math.max(5, Math.min(12, Math.round(Number(settings.interactionAdsDuration) || 8)));
+        return { enabled: settings.interactionAdsEnabled !== false, frequency, duration };
+    }
+
+    function persistInteractionAdSettings(values) {
+        settings.interactionAdsEnabled = values.enabled;
+        settings.interactionAdsFrequency = values.frequency;
+        settings.interactionAdsDuration = values.duration;
+        if (!values.enabled) completedPresentationsSinceAd = 0;
+        localStorage.setItem('karaokeSettings', JSON.stringify(settings));
+        updateInteractionAdControl();
+    }
+
+    function initInteractionAdControls() {
+        const actions = document.querySelector('#tab-queue .host-interaction-actions');
+        if (!actions || document.getElementById('interactionAdControl')) return;
+        const shell = document.createElement('section');
+        shell.id = 'interactionAdControl';
+        shell.className = 'host-action-expandable interaction-ad-control';
+        shell.innerHTML = `
+            <button type="button" class="interaction-chip host-action-card interaction-ad-toggle" aria-expanded="false">
+                <span class="interaction-chip-icon" aria-hidden="true"><i class="fas fa-bullhorn"></i></span>
+                <span class="host-action-copy"><span class="interaction-chip-label">Divulgação no telão</span><small id="interactionAdStatus">A cada 3 apresentações</small></span>
+                <i class="fas fa-chevron-down interaction-chevron" aria-hidden="true"></i>
+            </button>
+            <div class="host-action-details interaction-ad-details" hidden>
+                <label class="interaction-ad-switch"><input id="interactionAdsEnabled" type="checkbox"> <span>Ativar propagandas automáticas</span></label>
+                <label>Frequência<select id="interactionAdsFrequency" aria-label="Frequência das propagandas"><option value="2">A cada 2 apresentações</option><option value="3">A cada 3 apresentações</option><option value="4">A cada 4 apresentações</option><option value="5">A cada 5 apresentações</option></select></label>
+                <label>Duração<select id="interactionAdsDuration" aria-label="Duração das propagandas">${Array.from({length: 8}, (_, index) => `<option value="${index + 5}">${index + 5} segundos</option>`).join('')}</select></label>
+                <button id="skipInteractionAd" type="button" class="challenge-btn interaction-ad-skip" hidden><i class="fas fa-forward"></i> Pular propaganda atual</button>
+            </div>`;
+        actions.append(shell);
+        const toggle = shell.querySelector('.interaction-ad-toggle');
+        const details = shell.querySelector('.interaction-ad-details');
+        toggle.addEventListener('click', () => {
+            const opening = details.hidden;
+            actions.querySelectorAll('.host-action-details').forEach(node => {
+                node.hidden = true;
+                node.previousElementSibling?.setAttribute('aria-expanded', 'false');
+            });
+            details.hidden = !opening;
+            toggle.setAttribute('aria-expanded', String(opening));
+        });
+        shell.querySelector('#interactionAdsEnabled').addEventListener('change', event => {
+            const current = normalizedInteractionAdSettings();
+            persistInteractionAdSettings({ ...current, enabled: event.target.checked });
+        });
+        shell.querySelector('#interactionAdsFrequency').addEventListener('change', event => {
+            const current = normalizedInteractionAdSettings();
+            persistInteractionAdSettings({ ...current, frequency: Number(event.target.value) });
+        });
+        shell.querySelector('#interactionAdsDuration').addEventListener('change', event => {
+            const current = normalizedInteractionAdSettings();
+            persistInteractionAdSettings({ ...current, duration: Number(event.target.value) });
+        });
+        shell.querySelector('#skipInteractionAd').addEventListener('click', skipInteractionAd);
+        updateInteractionAdControl();
+    }
+
+    function updateInteractionAdControl() {
+        const control = document.getElementById('interactionAdControl');
+        if (!control) return;
+        const config = normalizedInteractionAdSettings();
+        const enabled = control.querySelector('#interactionAdsEnabled');
+        const frequency = control.querySelector('#interactionAdsFrequency');
+        const duration = control.querySelector('#interactionAdsDuration');
+        const status = control.querySelector('#interactionAdStatus');
+        const skip = control.querySelector('#skipInteractionAd');
+        if (enabled) enabled.checked = config.enabled;
+        if (frequency) frequency.value = String(config.frequency);
+        if (duration) duration.value = String(config.duration);
+        if (skip) skip.hidden = !engagementAdActive;
+        if (status) {
+            const remaining = Math.max(1, config.frequency - completedPresentationsSinceAd);
+            status.textContent = engagementAdActive ? 'Exibindo agora · pode pular' : !config.enabled ? 'Desativada' : `Próxima em ${remaining} ${remaining === 1 ? 'apresentação' : 'apresentações'}`;
+        }
+        if (engagementAdActive) {
+            const details = control.querySelector('.interaction-ad-details');
+            const toggle = control.querySelector('.interaction-ad-toggle');
+            if (details) details.hidden = false;
+            toggle?.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    function maybeShowInteractionAd(continuation) {
+        const config = normalizedInteractionAdSettings();
+        if (!config.enabled || engagementAdActive || completedPresentationsSinceAd < config.frequency) return false;
+        const target = document.getElementById('player');
+        if (!target) return false;
+        engagementAdActive = true;
+        completedPresentationsSinceAd = 0;
+        engagementAdContinuation = continuation;
+        engagementAdIndex = (engagementAdIndex + 1) % INTERACTION_ADS.length;
+        const piece = INTERACTION_ADS[engagementAdIndex];
+        const roomAccess = currentRoomCode ? `Código da sala: ${currentRoomCode}` : 'Entre pelo QR Code do telão';
+        target.innerHTML = `
+            <div class="interaction-ad-overlay" role="status" aria-live="polite" style="--interaction-ad-duration:${config.duration}s">
+                <div class="interaction-ad-glow" aria-hidden="true"></div>
+                <div class="interaction-ad-content">
+                    <div class="interaction-ad-icon" aria-hidden="true">${piece.icon}</div>
+                    <div class="interaction-ad-eyebrow">${safeEscape(piece.eyebrow)}</div>
+                    <h2>${safeEscape(piece.title)}</h2>
+                    <p>${safeEscape(piece.text)}</p>
+                    <div class="interaction-ad-access"><i class="fas fa-mobile-screen-button" aria-hidden="true"></i><span>${safeEscape(roomAccess)}</span></div>
+                </div>
+                <div class="interaction-ad-progress" aria-hidden="true"><i></i></div>
+            </div>`;
+        updateInteractionAdControl();
+        engagementAdTimer = setTimeout(() => completeInteractionAd(true), config.duration * 1000);
+        return true;
+    }
+
+    function completeInteractionAd(shouldContinue = true) {
+        if (!engagementAdActive) return;
+        clearTimeout(engagementAdTimer);
+        engagementAdTimer = null;
+        engagementAdActive = false;
+        const continuation = engagementAdContinuation;
+        engagementAdContinuation = null;
+        const target = document.getElementById('player');
+        if (target?.querySelector('.interaction-ad-overlay')) target.innerHTML = '<div class="placeholder-msg">PREPARANDO O PRÓXIMO SHOW…</div>';
+        updateInteractionAdControl();
+        if (shouldContinue) continuation?.();
+    }
+
+    function skipInteractionAd() {
+        if (engagementAdActive) completeInteractionAd(true);
     }
 
     function closeSettings() {
@@ -2478,6 +2633,8 @@
     // ─── Player ───────────────────────────────────────────────────────────────────
 
     function skipSong() {
+        if (engagementAdActive) { skipInteractionAd(); return; }
+        if (scoreFlowActive) return;
         if (queue.length === 0) return;
         if (currentCallAudio) {
             try { currentCallAudio.pause(); } catch (e) { }
@@ -2506,6 +2663,7 @@
     }
 
     function playNext() {
+        if (engagementAdActive) return;
         if (!isPlaying && SocialHost.beforeNext(playNextAfterAudio)) return;
         playNextAfterAudio();
     }
@@ -2882,7 +3040,7 @@
                     if (time) time.innerText = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
                 };
 
-                video.onended = () => showScore();
+                video.onended = () => showScore(null, true);
             }
         } catch (err) {
             console.error("Erro em startVideoPlay:", err);
@@ -2908,7 +3066,7 @@
                             saveYoutubeToCatalog(current);
                             if (scoreSettingsNeedMic(performanceScoreSettings)) startMic('song');
                         }
-                        if (event.data === YT.PlayerState.ENDED) showScore();
+                        if (event.data === YT.PlayerState.ENDED) showScore(null, true);
                     },
                     onError: () => { showToast('Vídeo do YouTube indisponível. Pulando…'); setTimeout(showScore, 1200); }
                 }
@@ -3059,7 +3217,9 @@
 
     // ─── Scoring ──────────────────────────────────────────────────────────────────
 
-    function showScore(forceScore = null) {
+    function showScore(forceScore = null, completedNormally = false) {
+        if (scoreFlowActive || engagementAdActive || !queue.length) return;
+        scoreFlowActive = true;
         stopMic();
         const ticker = document.getElementById('rankingTicker');
         if (ticker) ticker.hidden = true;
@@ -3174,7 +3334,7 @@
         const targetPlayer = document.getElementById('player');
         if (!targetPlayer) {
             console.error("❌ [SCORE] #player não encontrado, chamando finishSong diretamente");
-            finishSong();
+            finishSong(false);
             return;
         }
 
@@ -3256,7 +3416,7 @@
                 // PASSO 4: Após 8s — próxima música
                 setTimeout(() => {
                     console.log("⏭️ [SCORE] Chamando finishSong");
-                    finishSong();
+                    finishSong(completedNormally);
                 }, 8000);
             }
 
@@ -3271,9 +3431,10 @@
         }, 2000);
     }
 
-    function finishSong() {
+    function finishSong(completedNormally = false) {
         stopMic();
         console.log("🎬 Encerrando música atual...");
+        scoreFlowActive = false;
 
         // Aplausos já tocaram no showScore, então aqui apenas limpamos
         isPlaying = false;
@@ -3299,9 +3460,18 @@
 
         document.querySelector('.compact-controls-wrapper')?.classList.remove('autohide'); // Show on finish
 
-        if (queue.length > 0) {
+        // Encerra a escuta da apresentação concluída antes de iniciar a próxima.
+        if (currentRoomCode) {
+            db.ref('salas/' + currentRoomCode + '/now_playing/playing').set(false).catch(console.warn);
+            publishHostState({ playing: false });
+            db.ref('salas/' + currentRoomCode + '/now_playing/votes').off();
+            db.ref('salas/' + currentRoomCode + '/now_playing/votes').remove();
+        }
+
+        const continueAutomaticQueue = () => {
+          if (queue.length > 0) {
             playNext();
-        } else {
+          } else {
             const enterIdle = () => {
                 const infoBox = document.getElementById('topInfoBox');
                 if (infoBox) infoBox.style.display = 'none';
@@ -3317,14 +3487,15 @@
             // Recados aprovados também entram quando a fila termina. Antes,
             // eles só eram consultados se já existisse uma próxima música.
             if (!SocialHost.beforeNext(enterIdle)) enterIdle();
-        }
+          }
+        };
 
-        // Limpa os votos por estrelas para a próxima música.
-
-        if (currentRoomCode) {
-            db.ref('salas/' + currentRoomCode + '/now_playing/votes').off();
-            db.ref('salas/' + currentRoomCode + '/now_playing/votes').remove(); // Reseta votos no DB
-
+        if (completedNormally) {
+            completedPresentationsSinceAd++;
+            updateInteractionAdControl();
+            if (!maybeShowInteractionAd(continueAutomaticQueue)) continueAutomaticQueue();
+        } else {
+            continueAutomaticQueue();
         }
 
     }

@@ -54,6 +54,15 @@
 .cabin-pc-page .score-weight-total { margin: 10px 0 5px; color: var(--color-state-success,#56db91); font-size: .72rem; font-weight: 800; }
 .cabin-pc-page .score-weight-total.is-invalid { color: var(--color-state-danger,#ff6685); }
 @media (max-width: 620px) { .cabin-pc-page .score-weights-grid { grid-template-columns: 1fr; } }
+.cabin-pc-page .interaction-ad-control .interaction-chip-icon { border-radius: 7px; color: #ffb83d !important; background: rgba(255,122,0,.1); }
+.cabin-pc-page .interaction-ad-details { display: grid; gap: 8px; }
+.cabin-pc-page .interaction-ad-details[hidden] { display: none; }
+.cabin-pc-page .interaction-ad-details > label { display: grid; gap: 4px; color: #aeb2bf; font: 700 .6rem/1.2 'Inter',sans-serif; }
+.cabin-pc-page .interaction-ad-details select { margin: 0; }
+.cabin-pc-page .interaction-ad-switch { grid-template-columns: auto 1fr !important; align-items: center; }
+.cabin-pc-page .interaction-ad-switch input { accent-color: #ff7a00; }
+.cabin-pc-page .interaction-ad-skip { width: 100%; color: #16100a !important; background: #ffb83d !important; }
+.cabin-pc-page .interaction-ad-skip[hidden] { display: none !important; }
 .cabin-pc-page .difficulty-radios { gap: 5px; }
 .cabin-pc-page .diff-btn span { border-color: var(--pc-dialog-line); background: rgba(255,255,255,.035); font-size: .62rem; }
 .cabin-pc-page .diff-btn input:checked + span { border-color: var(--pc-dialog-yellow); color: #101116; background: var(--pc-dialog-yellow); }

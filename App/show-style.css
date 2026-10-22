@@ -109,8 +109,49 @@
 @keyframes show-score-tick { to { transform: scale(1.025); opacity: .8; } }
 @keyframes show-score-reveal { from { opacity: 0; transform: scale(1.65) rotate(-4deg); } }
 
+/* Chamadas das funcionalidades: aparecem apenas na transição entre shows. */
+.interaction-ad-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 42;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: clamp(34px, 6vw, 92px);
+    color: #f8f7fb;
+    background:
+        radial-gradient(circle at 18% 22%, rgba(255,79,216,.25), transparent 34%),
+        radial-gradient(circle at 82% 76%, rgba(138,63,252,.3), transparent 38%),
+        linear-gradient(145deg, #0d0914 0%, #171024 52%, #090b14 100%);
+    isolation: isolate;
+}
+.interaction-ad-glow {
+    position: absolute;
+    width: min(72vw, 920px);
+    aspect-ratio: 1;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 50%;
+    background: repeating-radial-gradient(circle, transparent 0 45px, rgba(255,255,255,.025) 46px 47px);
+    animation: interaction-ad-orbit 8s linear infinite;
+}
+.interaction-ad-content { position: relative; z-index: 1; width: min(920px, 92%); text-align: center; animation: interaction-ad-enter .7s cubic-bezier(.2,.9,.2,1) both; }
+.interaction-ad-icon { margin-bottom: clamp(12px, 2vh, 22px); font-size: clamp(3.2rem, 8vw, 7rem); filter: drop-shadow(0 12px 24px rgba(0,0,0,.34)); }
+.interaction-ad-eyebrow { color: #ffb83d; font: 800 clamp(.72rem, 1.6vw, 1.18rem)/1.2 'Montserrat',sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+.interaction-ad-content h2 { max-width: 900px; margin: clamp(10px,2vh,20px) auto 0; color: #fff; font: 900 clamp(2.1rem, 6vw, 5.7rem)/1.02 'Montserrat',sans-serif; letter-spacing: -.045em; text-wrap: balance; }
+.interaction-ad-content p { max-width: 780px; margin: clamp(14px,2.5vh,26px) auto 0; color: #d9d3e2; font: 500 clamp(1rem, 2.2vw, 1.8rem)/1.38 'Inter',sans-serif; text-wrap: balance; }
+.interaction-ad-access { width: fit-content; max-width: 100%; margin: clamp(20px,4vh,42px) auto 0; padding: 11px 18px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid rgba(255,184,61,.42); border-radius: 999px; color: #fff3d8; background: rgba(255,122,0,.11); font: 750 clamp(.82rem,1.5vw,1.08rem)/1.2 'Inter',sans-serif; letter-spacing: .03em; }
+.interaction-ad-access i { color: #ffb83d; }
+.interaction-ad-progress { position: absolute; z-index: 2; right: clamp(20px,4vw,54px); bottom: clamp(18px,4vh,46px); left: clamp(20px,4vw,54px); height: 4px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.12); }
+.interaction-ad-progress i { display: block; width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#ff7a00,#ff4fd8,#8a3ffc); transform-origin: left; animation: interaction-ad-progress var(--interaction-ad-duration,8s) linear both; }
+@keyframes interaction-ad-enter { from { opacity: 0; transform: translateY(28px) scale(.97); } }
+@keyframes interaction-ad-orbit { to { transform: rotate(360deg) scale(1.04); } }
+@keyframes interaction-ad-progress { to { transform: scaleX(0); } }
+
 @media (prefers-reduced-motion: reduce) {
     .coming-next-overlay,.score-suspense-overlay,.score-final-overlay,.cn-stage-glow,.cn-badge,.sf-badge,.cn-text-lead,.cn-text-trail,.cn-singer-name,.sf-ticker-value,.sf-score-value,.sf-singer,.sf-phrase,.cn-bar { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    .interaction-ad-content,.interaction-ad-glow { animation: none !important; }
 }
 
 /* Cabine PC em modo janela: dimensiona a apresentacao pelo palco, nao pela
