@@ -76,10 +76,34 @@
 }
 
 @media (max-width: 600px) {
-    .challenge-dialog { padding: 16px; }
+    .challenge-dialog { padding: 20px 16px calc(18px + env(safe-area-inset-bottom)); }
     .challenge-dialog h2 { font-size: 19px; }
-    .challenge-btn { min-height: 42px; }
+    .challenge-btn { min-height: 46px; }
+    .challenge-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .challenge-actions .challenge-btn { width: 100%; margin: 0; }
+    .challenge-results { max-height: 34dvh; }
 }
+
+body.mobile-body .challenge-dialog { overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(156,91,255,.42) transparent; }
+body.mobile-body .challenge-dialog > div { clear: both; }
+body.mobile-body .challenge-dialog :is(input:not([type=checkbox]), textarea, select) { min-height: 48px; padding: 12px 14px; }
+body.mobile-body .challenge-dialog textarea { min-height: 82px; resize: vertical; }
+body.mobile-body .challenge-dialog label { color: var(--color-text-secondary, #D8D2E2); font-size: .84rem; line-height: 1.45; }
+body.mobile-body .challenge-dialog label:has(input[type=checkbox]) {
+    display: flex; align-items: flex-start; gap: 10px; padding: 12px;
+    border: 1px solid var(--color-border-default, rgba(245,244,250,.12)); border-radius: 13px; background: rgba(255,255,255,.025);
+}
+body.mobile-body .challenge-dialog input[type=checkbox] { flex: 0 0 20px; width: 20px; height: 20px; margin: 1px 0 0; }
+body.mobile-body .challenge-results { margin: 8px 0; padding-right: 3px; }
+body.mobile-body .challenge-results .challenge-btn {
+    min-height: 48px; margin: 7px 0; padding: 10px 13px;
+    border-color: var(--color-border-default, rgba(245,244,250,.12)); border-radius: 12px; background: rgba(255,255,255,.035);
+}
+body.mobile-body .challenge-card { margin: 10px 0; padding: 15px; border-radius: 16px; }
+body.mobile-body .challenge-card h3 { line-height: 1.35; }
+body.mobile-body .challenge-card .challenge-actions .challenge-btn { min-height: 44px; padding: 9px 10px; font-size: .76rem; }
+body.mobile-body .challenge-directed-badge { margin-bottom: 7px; }
+@media (max-width: 380px) { body.mobile-body .challenge-actions { grid-template-columns: 1fr; } }
 
 .challenge-screen-bar { display: none; }
 #playerContainer:fullscreen { box-sizing: border-box; padding-bottom: 44px !important; }

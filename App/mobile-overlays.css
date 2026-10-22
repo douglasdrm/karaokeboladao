@@ -169,3 +169,69 @@ body.mobile-body .challenge-dialog .challenge-close { position: absolute; top: 1
 @media (prefers-reduced-motion: reduce) {
     .mobile-modal, .score-card-modal-inner, .kp-notice { animation: none !important; transition: none !important; }
 }
+
+/* Etapa 5: linguagem comum para ações e superfícies secundárias do mobile. */
+body.mobile-body { --mobile-control-height: 48px; --mobile-radius-control: 13px; --mobile-radius-card: 16px; }
+body.mobile-body :is(.btn-confirm, .btn-cancel, .btn-modal-close, .btn-share-card, .btn-download-card, .btn-va-close) {
+    box-sizing: border-box; min-height: var(--mobile-control-height); padding: 0 16px;
+    border-radius: var(--mobile-radius-control) !important;
+    font: 800 .78rem/1 var(--font-family-interface, 'Inter', sans-serif); letter-spacing: .035em;
+    cursor: pointer; transition: transform .16s ease, filter .16s ease, border-color .16s ease, background .16s ease;
+}
+body.mobile-body :is(button, input, select, textarea):focus-visible { outline: 3px solid rgba(156, 91, 255, .35); outline-offset: 2px; }
+body.mobile-body :is(button, input, select, textarea):disabled { cursor: not-allowed; opacity: .52; }
+body.mobile-body .mobile-modal > :is(h2, h3) { margin: 0 0 8px; }
+body.mobile-body .mobile-modal > p { margin: 0 0 18px; font: 400 .86rem/1.55 var(--font-family-interface, 'Inter', sans-serif); }
+body.mobile-body .mobile-modal > input + input { margin-top: 10px; }
+body.mobile-body .modal-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-top: 20px !important; }
+body.mobile-body .modal-buttons > button { width: 100%; min-width: 0; }
+body.mobile-body .modal-buttons > :only-child,
+body.mobile-body .modal-buttons > .challenge-btn { grid-column: 1 / -1; }
+body.mobile-body .modal-buttons > .challenge-btn { min-height: var(--mobile-control-height); }
+body.mobile-body #nameModalOverlay .active-users-list { justify-content: flex-start; max-height: 32dvh; margin: 4px 0 14px; padding: 3px; gap: 8px; }
+body.mobile-body #nameModalOverlay .user-chip {
+    box-sizing: border-box; min-height: 44px; padding: 8px 12px; border-radius: 12px;
+    color: var(--mobile-copy); background: rgba(255,255,255,.035);
+}
+body.mobile-body #nameModalOverlay .user-chip:has(input:checked) {
+    border-color: var(--color-navigation, #8A3FFC); background: var(--color-navigation-soft, rgba(138,63,252,.14));
+    box-shadow: inset 0 0 0 1px rgba(156,91,255,.16);
+}
+body.mobile-body #surpriseSongBox {
+    margin: 16px 0 !important; padding: 16px !important; border-width: 1px !important;
+    border-radius: var(--mobile-radius-card) !important; background: rgba(255,122,0,.045) !important; box-shadow: none !important;
+}
+body.mobile-body .song-card .song-actions { gap: 8px; }
+body.mobile-body .song-card .song-actions > .star-btn {
+    display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; border-radius: 12px;
+}
+body.mobile-body .song-card .btn-request { min-height: 44px; }
+body.mobile-body #nowPlayingBar { padding: 15px !important; }
+body.mobile-body #nowPlayingBar .audience-rating,
+body.mobile-body #nowPlayingBar .reaction-panel,
+body.mobile-body #nowPlayingBar .message-row { box-sizing: border-box; border-top-color: var(--mobile-line) !important; }
+body.mobile-body #nowPlayingBar #avgVoteDisplay {
+    min-height: 30px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px !important;
+}
+body.mobile-body #nowPlayingBar :is(.star-btn, .reaction-btn) { min-width: 44px; min-height: 44px; }
+body.mobile-body #nowPlayingBar .message-row { align-items: stretch; }
+body.mobile-body #mobileMsgText {
+    min-width: 0; min-height: var(--mobile-control-height); padding: 0 14px !important;
+    border-radius: var(--mobile-radius-control) !important; font-size: .82rem !important;
+}
+body.mobile-body #btnSendMobileMsg {
+    min-height: var(--mobile-control-height); padding: 0 15px !important; border-radius: var(--mobile-radius-control) !important;
+}
+body.mobile-body .queue-indicator {
+    max-width: calc(100vw - 32px); box-sizing: border-box; padding: 13px 18px; border-radius: 14px;
+    font: 800 .8rem/1.3 var(--font-family-interface, 'Inter', sans-serif); letter-spacing: .035em; text-align: center;
+}
+@media (hover: hover) {
+    body.mobile-body :is(.btn-confirm, .btn-cancel, .btn-modal-close, .btn-share-card, .btn-download-card, .btn-va-close):hover { filter: brightness(1.08); }
+}
+@media (max-width: 380px) {
+    body.mobile-body .modal-buttons { grid-template-columns: 1fr; }
+    body.mobile-body .modal-buttons > * { grid-column: 1; }
+    body.mobile-body #nowPlayingBar .message-row { flex-direction: column; }
+    body.mobile-body #btnSendMobileMsg { width: 100%; }
+}

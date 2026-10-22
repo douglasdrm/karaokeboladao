@@ -99,6 +99,18 @@
 .cabin-pc-page .hotkey-legend h3 { color: var(--pc-dialog-text); }
 .cabin-pc-page .hotkey-legend strong { color: var(--kp-blue, #9C5BFF); }
 
+/* Estados consistentes para janelas e ações secundárias da cabine. */
+.cabin-pc-page .modal-content :is(button, a, input, select, textarea):focus-visible,
+.cabin-pc-page .host-action-details :is(button, select):focus-visible { outline: 3px solid rgba(156,91,255,.3); outline-offset: 2px; }
+.cabin-pc-page .modal-content :is(button, input, select, textarea):disabled,
+.cabin-pc-page .host-action-details :is(button, select):disabled { cursor: not-allowed; opacity: .5; }
+.cabin-pc-page #customModal #modalBody { margin-top: 14px; color: var(--pc-dialog-muted); font-size: .82rem; line-height: 1.55; }
+.cabin-pc-page #customModal #modalBody :is(input, select, textarea) {
+    box-sizing: border-box; width: 100%; min-height: 42px; padding: 9px 11px;
+    border: 1px solid var(--pc-dialog-line); border-radius: 10px; color: var(--pc-dialog-text); background: #090c14;
+}
+.cabin-pc-page .host-action-details { scrollbar-width: thin; scrollbar-color: rgba(156,91,255,.35) transparent; }
+
 @media (max-width: 1180px), (max-height: 760px) {
     .cabin-pc-page #settingsModal { padding: 12px !important; }
     .cabin-pc-page .settings-content { width: min(920px, calc(100vw - 24px)) !important; height: calc(100dvh - 24px) !important; max-width: calc(100vw - 24px) !important; max-height: calc(100dvh - 24px) !important; }
