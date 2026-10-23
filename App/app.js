@@ -3278,7 +3278,8 @@
             finalScore = result.score;
             scoreMeta = result.meta;
         }
-        finalScore = Math.max(0, Math.min(100, Number(finalScore) || 75));
+        const numericFinalScore = Number(finalScore);
+        finalScore = Math.max(0, Math.min(100, Number.isFinite(numericFinalScore) ? numericFinalScore : 75));
         PartyHost.complete(scoreEnabled ? finalScore : null);
         ChallengeHost.complete(queue[0]?.challengeId);
         forcedScore = null;

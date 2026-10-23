@@ -1228,6 +1228,13 @@
                 currentProgress = snap.val() || { current: 0, total: 0 };
             });
 
+            // Um único listener acompanha as avaliações da apresentação atual.
+            // Como os votos são filhos de now_playing, registrá-lo dentro do
+            // listener pai criava uma nova assinatura a cada voto recebido.
+            db.ref(`salas/${currentRoomCode}/now_playing/votes`).on('value', snap => {
+                updateMobileVotesUI(snap.val() || {});
+            });
+
             // Tocando Agora
             db.ref(`salas/${currentRoomCode}/now_playing`).on('value', snap => {
                 const np = snap.val();
@@ -1249,12 +1256,6 @@
                         if (avgDisplay) avgDisplay.innerText = '⭐ 0.0';
                         lastSongTitle = np.title;
                     }
-
-                    // Monitora votos em tempo real não Mobile (v10)
-                    db.ref(`salas/${currentRoomCode}/now_playing/votes`).on('value', snap => {
-                        const votes = snap.val() || {};
-                        updateMobileVotesUI(votes);
-                    });
 
                     // Alerta "Sua Vez" (quando começa a cantar)
                     const myFirst = (currentUser?.displayName || '').split(' ')[0].toLowerCase();
@@ -2650,7 +2651,8 @@
             ctx.fillStyle = '#FFD700'; // Amarelo
             ctx.font = 'bold 180px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(data.score || '--', leftCx, boxY + 190);
+            const cardScore = Number(data.score);
+            ctx.fillText(Number.isFinite(cardScore) ? cardScore : '--', leftCx, boxY + 190);
 
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 28px sans-serif';
