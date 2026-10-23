@@ -325,6 +325,99 @@ body.cabin-pc-page .vu-meter-bar {
     color: var(--kp-text-soft) !important;
 }
 
+/* Rodape publico ampliado para leitura em projetores. A mesma geometria vale
+   para a cabine em tela cheia e para a segunda tela. */
+:is(
+    body.cabin-pc-page #playerContainer:fullscreen,
+    body.cabin-pc-page #playerContainer.is-native-fullscreen,
+    #audienceStage #playerContainer
+) {
+    --public-footer-height: 56px;
+    --public-footer-gap: 12px;
+}
+:is(
+    body.cabin-pc-page #playerContainer:fullscreen,
+    body.cabin-pc-page #playerContainer.is-native-fullscreen,
+    #audienceStage #playerContainer
+) .ranking-ticker {
+    bottom: 0 !important;
+    height: var(--public-footer-height) !important;
+}
+:is(
+    body.cabin-pc-page #playerContainer:fullscreen,
+    body.cabin-pc-page #playerContainer.is-native-fullscreen,
+    #audienceStage #playerContainer
+) :is(.ranking-ticker-viewport,.ranking-ticker-track,.ranking-ticker-card) {
+    height: var(--public-footer-height) !important;
+}
+:is(
+    body.cabin-pc-page #playerContainer:fullscreen,
+    body.cabin-pc-page #playerContainer.is-native-fullscreen,
+    #audienceStage #playerContainer
+) .ranking-ticker-card {
+    padding-inline: clamp(22px, 2vw, 34px) !important;
+}
+:is(
+    body.cabin-pc-page #playerContainer:fullscreen,
+    body.cabin-pc-page #playerContainer.is-native-fullscreen,
+    #audienceStage #playerContainer
+) :is(.ranking-ticker-card-title,.ranking-ticker-card-title i) {
+    font-size: clamp(12px, .82vw, 15px) !important;
+}
+:is(
+    body.cabin-pc-page #playerContainer:fullscreen,
+    body.cabin-pc-page #playerContainer.is-native-fullscreen,
+    #audienceStage #playerContainer
+) .ranking-ticker-leader {
+    margin-left: 11px !important;
+    font-size: clamp(16px, 1.08vw, 20px) !important;
+}
+:is(
+    body.cabin-pc-page #playerContainer:fullscreen,
+    body.cabin-pc-page #playerContainer.is-native-fullscreen,
+    #audienceStage #playerContainer
+) .ranking-ticker-value {
+    margin-left: 9px !important;
+    font-size: clamp(12px, .82vw, 15px) !important;
+}
+:is(
+    body.cabin-pc-page #playerContainer:fullscreen,
+    body.cabin-pc-page #playerContainer.is-native-fullscreen,
+    #audienceStage #playerContainer
+) .progress-container {
+    bottom: var(--public-footer-height) !important;
+    height: 7px !important;
+}
+:is(
+    body.cabin-pc-page #playerContainer:fullscreen,
+    body.cabin-pc-page #playerContainer.is-native-fullscreen,
+    #audienceStage #playerContainer
+) .progress-time-display {
+    bottom: calc(var(--public-footer-height) + var(--public-footer-gap)) !important;
+    font-size: clamp(.9rem, 1vw, 1.12rem) !important;
+}
+:is(
+    body.cabin-pc-page #playerContainer:fullscreen,
+    body.cabin-pc-page #playerContainer.is-native-fullscreen,
+    #audienceStage #playerContainer
+) .compact-controls-wrapper {
+    bottom: calc(var(--public-footer-height) + 10px) !important;
+}
+:is(
+    body.cabin-pc-page #playerContainer:fullscreen,
+    body.cabin-pc-page #playerContainer.is-native-fullscreen,
+    #audienceStage #playerContainer
+) .qr-fullscreen-box {
+    bottom: calc(var(--public-footer-height) + var(--public-footer-gap)) !important;
+}
+:is(
+    body.cabin-pc-page #playerContainer:fullscreen,
+    body.cabin-pc-page #playerContainer.is-native-fullscreen,
+    #audienceStage #playerContainer
+) .qr-fullscreen-box .qr-fs-label {
+    font-size: clamp(13px, .9vw, 16px) !important;
+}
+
 /* TV / Android TV */
 .tv-setup {
     background: radial-gradient(circle at 18% 0, rgba(138, 63, 252, .15), transparent 32%), radial-gradient(circle at 90% 80%, rgba(255, 122, 0, .08), transparent 28%), var(--color-bg-canvas) !important;
