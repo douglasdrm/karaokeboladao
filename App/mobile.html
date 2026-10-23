@@ -28,7 +28,7 @@
     <!-- Favicon -->
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="mobile.css?v=18">
+    <link rel="stylesheet" href="mobile.css?v=19">
 
     <!-- Driver.js Tour -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css" />
@@ -158,6 +158,15 @@
                     <span id="statusRoomText">Conectando...</span>
                 </div>
             </div>
+        </div>
+        <div class="profile-random-actions" aria-label="Sugestões de músicas">
+            <button class="profile-random-btn" id="btnMobileShuffle" type="button"
+                title="Mostrar músicas aleatórias" aria-label="Mostrar músicas aleatórias">
+                <i class="fas fa-random" aria-hidden="true"></i>
+            </button>
+            <button class="profile-random-btn profile-random-btn--surprise" id="btnMobileSurprise" type="button"
+                onclick="requestSurpriseSong()" title="Sortear uma música surpresa"
+                aria-label="Sortear uma música surpresa">🎲</button>
         </div>
         <button class="btn-logout" onclick="firebase.auth().signOut()">SAIR</button>
     </div>
@@ -369,18 +378,6 @@
                 <div class="alpha-ruler-focus"></div>
             </div>
         </div>
-
-        <!-- Botão shuffle flutuante -->
-        <button class="btn-shuffle-float" id="btnMobileShuffle" title="Música aleatória">
-            <i class="fas fa-random"></i>
-        </button>
-        <!-- Botão surpresa flutuante (Me Surpreende) (Novo!) -->
-        <button class="btn-surprise-float" id="btnMobileSurprise" onclick="requestSurpriseSong()"
-            title="Me Surpreende! 🎲"
-            style="position:fixed; bottom:140px; right:20px; width:50px; height:50px; border-radius:50%; background:#FF7A00; border:none; color:#180B00; font-size:1.4rem; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 20px rgba(255, 122, 0,0.3); z-index:999; transition:0.3s;"
-            onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'">
-            🎲
-        </button>
 
         <!-- Lista de músicas -->
         <div id="mobileList">

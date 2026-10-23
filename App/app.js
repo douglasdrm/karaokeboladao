@@ -2626,7 +2626,7 @@
 
     function removeFromQueue(idx) {
 
-        if (idx === 0) { showScore(); } else { ChallengeHost.complete(queue[idx]?.challengeId, "skipped"); queue.splice(idx, 1); renderQueue(); }
+        if (idx === 0) { showScore(null, false, true); } else { ChallengeHost.complete(queue[idx]?.challengeId, "skipped"); queue.splice(idx, 1); renderQueue(); }
 
     }
 
@@ -2659,7 +2659,7 @@
         ChallengeHost.complete(queue[0]?.challengeId, "skipped");
         // Pula para a próxima música imediatamente sem dar nota
         // finishSong já cuida de isPlaying=false, queue.shift(), renderQueue() e playNext()
-        finishSong();
+        finishSong(false, true);
     }
 
     function playNext() {
@@ -3217,7 +3217,7 @@
 
     // ─── Scoring ──────────────────────────────────────────────────────────────────
 
-    function showScore(forceScore = null, completedNormally = false) {
+    function showScore(forceScore = null, completedNormally = false, countForInteractionAd = completedNormally) {
         if (scoreFlowActive || engagementAdActive || !queue.length) return;
         scoreFlowActive = true;
         stopMic();
@@ -3335,7 +3335,7 @@
         const targetPlayer = document.getElementById('player');
         if (!targetPlayer) {
             console.error("❌ [SCORE] #player não encontrado, chamando finishSong diretamente");
-            finishSong(false);
+            finishSong(false, countForInteractionAd);
             return;
         }
 
@@ -3417,7 +3417,7 @@
                 // PASSO 4: Após 8s — próxima música
                 setTimeout(() => {
                     console.log("⏭️ [SCORE] Chamando finishSong");
-                    finishSong(completedNormally);
+                    finishSong(completedNormally, countForInteractionAd);
                 }, 8000);
             }
 
@@ -3432,7 +3432,7 @@
         }, 2000);
     }
 
-    function finishSong(completedNormally = false) {
+    function finishSong(completedNormally = false, countForInteractionAd = completedNormally) {
         stopMic();
         console.log("🎬 Encerrando música atual...");
         scoreFlowActive = false;
@@ -3491,7 +3491,7 @@
           }
         };
 
-        if (completedNormally) {
+        if (countForInteractionAd) {
             completedPresentationsSinceAd++;
             updateInteractionAdControl();
             if (!maybeShowInteractionAd(continueAutomaticQueue)) continueAutomaticQueue();
@@ -4220,7 +4220,7 @@
 
             case 'Delete':
                 e.preventDefault();
-                showScore();
+                showScore(null, false, true);
                 break;
 
             case ',': // Hidden hotkey: apenas agenda a nota 100 (discreto)
