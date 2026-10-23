@@ -127,8 +127,8 @@
    const roots=allowed.flatMap(selector=>[...(selector==='#reactionContainer'?source:container).querySelectorAll(selector)]);
    // A root can already belong to another public root; never move it twice.
    const queue=container.querySelector('#fsQueueOverlay');
-   const queueVisible=queue&&window.opener.getComputedStyle(queue).display!=='none';
-   const topRoots=roots.filter(n=>!(queueVisible&&n.id==='topInfoBox')&&!roots.some(other=>other!==n&&other.contains(n)));
+   const queueAvailable=queue?.dataset.queueAvailable==='true';
+   const topRoots=roots.filter(n=>!(queueAvailable&&n.id==='topInfoBox')&&!roots.some(other=>other!==n&&other.contains(n)));
    reconcile(frame,topRoots.map(n=>mirror(n,true)).filter(Boolean));
    syncAmbientPlayback(container);
    const vibe=source.getElementById('publicScoreDisplay');

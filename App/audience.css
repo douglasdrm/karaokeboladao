@@ -19,6 +19,8 @@ body.toolbar-hidden #audienceToolbar{opacity:0;pointer-events:none}
 #audienceStage #reactionContainer{position:absolute;inset:0;z-index:2147483641;pointer-events:none}
 
 /* Composição pública: fila no topo, vídeo ao centro e rankings na base. */
+#audienceStage .fs-queue-box[data-queue-available="true"]{display:flex!important}
+#audienceStage .fs-queue-box[data-queue-available="false"]{display:none!important}
 #audienceStage .ranking-ticker{left:0;right:0;bottom:0;z-index:1800}
 #audienceStage .ranking-ticker-track{animation-duration:90s}
 #audienceStage .party-ranking-board{width:100%;height:100%}

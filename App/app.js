@@ -4369,16 +4369,22 @@
             )
         );
 
-        // No dashboard a fila lateral ja apresenta a ordem completa. A faixa
-        // sobre o video fica reservada para o palco em fullscreen.
-        if (!box || !isStageFullscreen || queue.length <= 1) {
-            if (box) box.style.display = 'none';
+        if (!box) return;
+
+        const hasWaitingQueue = queue.length > 1;
+        box.dataset.queueAvailable = String(hasWaitingQueue);
+
+        if (!hasWaitingQueue) {
+            box.style.display = 'none';
+            box.replaceChildren();
             if (topInfo && isPlaying) topInfo.style.display = 'block';
             return;
         }
 
-        box.style.display = 'flex';
-        if (topInfo) topInfo.style.display = 'none';
+        // No dashboard a fila lateral já apresenta a ordem completa. Mesmo
+        // oculta ali, a faixa permanece preenchida para a segunda tela.
+        box.style.display = isStageFullscreen ? 'flex' : 'none';
+        if (topInfo && isPlaying) topInfo.style.display = isStageFullscreen ? 'none' : 'block';
 
         const current = queue[0];
 
