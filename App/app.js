@@ -77,6 +77,7 @@
 
     let ytAmbientPlayer = null;  // Player de música ambiente (YouTube API)
     let ytQueuePlayer = null;    // Player de pedidos do YouTube na fila da Cabine PC
+    let ytQueueStateTimer = null;
 
     let isAmbientPlaying = false;
 
@@ -3004,6 +3005,7 @@
     function startVideoPlay(current) {
         SocialHost.stopAudio();
         try {
+            stopYoutubeQueueStateBroadcast();
             tonePerformanceId = Date.now().toString(36) + Math.random().toString(36).slice(2);
             toneManuallyAdjusted = false;
             // Reseta o tom para 0 para toda nova música que iniciar
@@ -3131,7 +3133,7 @@
 
     function startYoutubeQueueVideo(current) {
         if (!playerArea) return;
-        playerArea.innerHTML = `<div class="video-overlay-banner"><div class="banner-left"><img src="../Assets/brand/logo-horizontal.png" alt="Karaoke Party"></div><div class="banner-right"><span>PEDIDO<br>DO<br>YOUTUBE</span></div></div><div id="queueYoutube" style="width:100%;height:100%;background:#000"></div>`;
+        playerArea.innerHTML = `<div class="video-overlay-banner"><div class="banner-left"><img src="../Assets/brand/logo-horizontal.png" alt="Karaoke Party"></div><div class="banner-right"><span>PEDIDO<br>DO<br>YOUTUBE</span></div></div><div id="queueYoutube" style="width:100%;height:100%;background:#000"></div><div class="progress-time-display" id="progressTime">00:00 / 00:00</div><div class="progress-container" id="progressContainer"><div class="progress-bar-inner" id="progressBar"></div></div>`;
         const start = () => {
             if (!window.YT?.Player) {
                 setTimeout(start, 400);
@@ -3142,8 +3144,9 @@
                 width: '100%', height: '100%', videoId: current.youtubeId,
                 playerVars: { autoplay: 1, controls: 1, rel: 0, playsinline: 1 },
                 events: {
-                    onReady: event => { event.target.setVolume(Math.round(currentVolume * 100)); event.target.playVideo(); },
+                    onReady: event => { event.target.setVolume(Math.round(currentVolume * 100)); event.target.playVideo(); startYoutubeQueueStateBroadcast(current.youtubeId); },
                     onStateChange: event => {
+                        publishYoutubeQueueState(current.youtubeId);
                         if (event.data === YT.PlayerState.PLAYING) {
                             saveYoutubeToCatalog(current);
                             if (scoreSettingsNeedMic(performanceScoreSettings)) startMic('song');
@@ -3155,6 +3158,39 @@
             });
         };
         start();
+    }
+
+    function stopYoutubeQueueStateBroadcast() {
+        if (ytQueueStateTimer) clearInterval(ytQueueStateTimer);
+        ytQueueStateTimer = null;
+    }
+
+    function publishYoutubeQueueState(fallbackVideoId = '') {
+        const iframe = document.getElementById('queueYoutube');
+        if (!iframe || !ytQueuePlayer) return;
+        try {
+            const state = String(ytQueuePlayer.getPlayerState());
+            const timeValue = Number(ytQueuePlayer.getCurrentTime()) || 0;
+            const duration = Number(ytQueuePlayer.getDuration()) || 0;
+            const rate = String(ytQueuePlayer.getPlaybackRate?.() || 1);
+            const currentUrl = ytQueuePlayer.getVideoUrl?.() || '';
+            const videoId = extractYoutubeInfo(currentUrl).videoId || fallbackVideoId;
+            iframe.dataset.queueYoutubeState = state;
+            iframe.dataset.queueYoutubeTime = timeValue.toFixed(2);
+            iframe.dataset.queueYoutubeDuration = duration.toFixed(2);
+            iframe.dataset.queueYoutubeRate = rate;
+            if (/^[\w-]{11}$/.test(String(videoId || ''))) iframe.dataset.queueYoutubeVideo = videoId;
+            const progress = document.getElementById('progressBar');
+            if (progress) progress.style.width = duration > 0 ? `${timeValue / duration * 100}%` : '0%';
+            const display = document.getElementById('progressTime');
+            if (display) display.textContent = `${formatTime(timeValue)} / ${formatTime(duration)}`;
+        } catch (_) { }
+    }
+
+    function startYoutubeQueueStateBroadcast(videoId) {
+        stopYoutubeQueueStateBroadcast();
+        publishYoutubeQueueState(videoId);
+        ytQueueStateTimer = setInterval(() => publishYoutubeQueueState(videoId), 200);
     }
 
     function saveYoutubeToCatalog(current) {
@@ -3303,6 +3339,8 @@
         if (scoreFlowActive || engagementAdActive || !queue.length) return;
         scoreFlowActive = true;
         stopMic();
+        stopYoutubeQueueStateBroadcast();
+        try { ytQueuePlayer?.pauseVideo(); } catch (_) { }
         const ticker = document.getElementById('rankingTicker');
         if (ticker) ticker.hidden = true;
         console.log("📊 [SCORE] showScore iniciado");
