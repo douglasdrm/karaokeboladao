@@ -495,6 +495,19 @@ a { color: inherit; }
 .mobile-song-results small { margin-top: 5px; color: #686d7e; font: 700 .56rem/1 'Montserrat', sans-serif; letter-spacing: .07em; }
 .mobile-song-results button { min-height: 36px; padding: 0 12px; border: 1px solid var(--color-action-primary-line, rgba(255, 122, 0, .46)); border-radius: 10px; color: var(--entry-text); background: var(--color-action-primary-soft, rgba(255, 122, 0, .14)); font: 700 .68rem/1 'Inter', sans-serif; cursor: pointer; }
 .mobile-song-results button:disabled { cursor: default; opacity: .3; }
+.mobile-search-requests { margin-top: 16px; padding: 13px; border: 1px solid rgba(255,122,0,.24); border-radius: 14px; background: rgba(255,122,0,.035); }
+.mobile-search-requests-heading { display: flex; justify-content: space-between; font-size: .72rem; }
+.mobile-search-request { padding: 10px 0; border-top: 1px solid var(--entry-border); }
+.mobile-search-request:first-child { margin-top: 8px; }
+.mobile-search-request strong,.mobile-search-request small { display: block; overflow-wrap: anywhere; }
+.mobile-search-request strong { font-size: .78rem; }.mobile-search-request small { margin-top: 4px; color: #8d91a1; font-size: .66rem; }
+.mobile-search-request-actions { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; margin-top: 9px; }
+.mobile-search-request-actions button { min-height: 38px; border: 1px solid var(--entry-border); border-radius: 9px; color: #dfe1e8; background: rgba(255,255,255,.04); font-size: .63rem; }
+.mobile-youtube-form { display: grid; gap: 10px; margin-top: 18px; padding-top: 17px; border-top: 1px solid var(--entry-border); }
+.mobile-youtube-form p { margin: 0 0 2px; }
+.mobile-youtube-form label { display: grid; gap: 6px; color: #b9bdca; font-size: .7rem; font-weight: 700; }
+.mobile-youtube-form input { box-sizing: border-box; width: 100%; min-height: 46px; padding: 0 12px; border: 1px solid var(--entry-border); border-radius: 11px; color: #fff; background: var(--color-bg-deep,#09060D); }
+.mobile-youtube-form button { min-height: 46px; border: 0; border-radius: 11px; color: #111318; background: var(--entry-yellow); font-weight: 800; }
 
 .mobile-queue-card { padding: 20px; }
 .mobile-section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }

@@ -738,6 +738,21 @@
                     if (song && String(payload.singer || '').trim()) await enqueue(song, payload.singer, payload.playNext === true);
                     break;
                 }
+                case 'queue_add_youtube': {
+                    const videoId = String(payload.youtubeId || '');
+                    const singer = String(payload.singer || '').trim().slice(0, 40);
+                    if (/^[\w-]{11}$/.test(videoId) && singer) {
+                        let title = String(payload.title || '').trim().slice(0, 120);
+                        let artist = 'YouTube';
+                        try {
+                            const response = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${videoId}`)}&format=json`);
+                            if (response.ok) { const metadata=await response.json();title=String(metadata.title||title).slice(0,120);artist=String(metadata.author_name||artist).slice(0,100); }
+                        } catch (error) { console.info('Metadados do YouTube indisponíveis:', error); }
+                        const song = { id:`YT:${videoId}`,source:'youtube',youtubeId:videoId,youtubeUrl:`https://www.youtube.com/watch?v=${videoId}`,title:title||'Pedido do YouTube',artist };
+                        await enqueue(song, singer, payload.playNext === true);
+                    }
+                    break;
+                }
                 case 'queue_move': {
                     const index = findQueueIndex(payload);
                     const target = index + Number(payload.direction);
@@ -793,17 +808,8 @@
         if (request.processed || request.kind) return;
         if (processedRequestKeys.has(snapshot.key) || queue.some(item => item.requestKey === snapshot.key)) return;
         if (request.source === 'youtube') {
-            const entry = youtubeEntry(request, snapshot.key);
-            if (!entry || !request.singer) return;
-            if (youtubeApprovalRequired) {
-                await roomRef.child(`youtube_pending/${snapshot.key}`).set({ ...request, requestKey: snapshot.key });
-                await snapshot.ref.update({ processed: true, youtubeStatus: 'pending' });
-                return;
-            }
-            await enqueue(entry, entry.singer, false, entry);
-            processedRequestKeys.add(snapshot.key);
-            saveSession();
-            snapshot.ref.update({ processed: true, youtubeStatus: 'queued' }).catch(() => {});
+            console.warn('Pedido direto do YouTube ignorado: somente o DJ pode adicionar vídeos.');
+            snapshot.ref.remove().catch(() => {});
             return;
         }
         const song = catalog.find(item => item.id === String(request.id || '').padStart(5, '0'));

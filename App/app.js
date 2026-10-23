@@ -324,6 +324,7 @@
     let codeEntryOverlay, codeDisplay, codeSongInfo;
 
     let modal;
+    const songSearchRequests = new Map();
 
     // ─── Init ─────────────────────────────────────────────────────────────────────
 
@@ -490,6 +491,7 @@
 
         initSettingsUI();
         initInteractionAdControls();
+        initDjYoutubeControls();
 
         try {
             initAmbientPlayer();
@@ -1185,6 +1187,19 @@
                         }
                         break;
                     }
+                    case 'queue_add_youtube': {
+                        const videoId = String(command.payload?.youtubeId || '');
+                        const singer = String(command.payload?.singer || '').trim().slice(0, 40);
+                        if (!/^[\w-]{11}$/.test(videoId) || !singer) break;
+                        let title = String(command.payload?.title || '').trim().slice(0, 120);
+                        let artist = 'YouTube';
+                        try {
+                            const response = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${videoId}`)}&format=json`);
+                            if (response.ok) { const metadata=await response.json();title=String(metadata.title||title).slice(0,120);artist=String(metadata.author_name||'YouTube').slice(0,100); }
+                        } catch (error) { console.info('Metadados do YouTube indisponíveis:', error); }
+                        enqueue({ id:`YT:${videoId}`,source:'youtube',youtubeId:videoId,youtubeUrl:`https://www.youtube.com/watch?v=${videoId}`,title:title||'Pedido do YouTube',artist,singer,time:Date.now() }, command.payload?.playNext === true);
+                        break;
+                    }
                     default:
                         console.warn('Comando remoto ignorado:', command.action);
                 }
@@ -1486,6 +1501,73 @@
         });
         shell.querySelector('#skipInteractionAd').addEventListener('click', skipInteractionAd);
         updateInteractionAdControl();
+    }
+
+    function renderSongSearchRequests() {
+        const panel = document.getElementById('songSearchRequests');
+        const list = document.getElementById('songSearchRequestList');
+        const count = document.getElementById('songSearchRequestCount');
+        if (!panel || !list || !count) return;
+        const items = [...songSearchRequests.entries()].sort((a, b) => Number(a[1].timestamp || 0) - Number(b[1].timestamp || 0));
+        panel.hidden = items.length === 0;
+        count.textContent = String(items.length);
+        list.replaceChildren();
+        for (const [key, request] of items) {
+            const card = document.createElement('article'); card.className = 'song-search-request';
+            const query = document.createElement('strong'); query.textContent = request.query || 'Música não informada';
+            const sender = document.createElement('small'); sender.textContent = `Pedido de ${request.singer || 'Participante'}`;
+            const actions = document.createElement('div'); actions.className = 'song-search-request-actions';
+            const search = document.createElement('button'); search.type = 'button'; search.textContent = 'Buscar catálogo';
+            search.onclick = () => { songSearch.value = request.query || ''; songSearch.dispatchEvent(new Event('input')); songSearch.focus(); };
+            const youtube = document.createElement('button'); youtube.type = 'button'; youtube.textContent = 'Adicionar YouTube';
+            youtube.onclick = () => openDjYoutubeModal({ requestKey: key, title: request.query, singer: request.singer });
+            const dismiss = document.createElement('button'); dismiss.type = 'button'; dismiss.textContent = 'Dispensar';
+            dismiss.onclick = () => db.ref(`salas/${currentRoomCode}/pedidos/${key}`).remove().catch(console.warn);
+            actions.append(search, youtube, dismiss); card.append(query, sender, actions); list.append(card);
+        }
+    }
+
+    function openDjYoutubeModal(prefill = {}) {
+        const modalElement = document.getElementById('djYoutubeModal');
+        modalElement.dataset.requestKey = prefill.requestKey || '';
+        document.getElementById('djYoutubeUrl').value = '';
+        document.getElementById('djYoutubeSongTitle').value = prefill.title || '';
+        document.getElementById('djYoutubeSinger').value = prefill.singer || '';
+        document.getElementById('djYoutubeError').textContent = '';
+        modalElement.style.display = 'flex';
+        setTimeout(() => document.getElementById('djYoutubeUrl').focus(), 60);
+    }
+
+    function closeDjYoutubeModal() { document.getElementById('djYoutubeModal').style.display = 'none'; }
+
+    function initDjYoutubeControls() {
+        document.getElementById('btnDjYoutube')?.addEventListener('click', () => openDjYoutubeModal());
+        document.getElementById('djYoutubeCancel')?.addEventListener('click', closeDjYoutubeModal);
+        document.getElementById('djYoutubeConfirm')?.addEventListener('click', async event => {
+            const button = event.currentTarget;
+            const url = document.getElementById('djYoutubeUrl').value.trim();
+            const info = extractYoutubeInfo(url);
+            const singer = document.getElementById('djYoutubeSinger').value.trim().slice(0, 40);
+            const error = document.getElementById('djYoutubeError');
+            if (!info?.videoId || !singer) { error.textContent = 'Informe um link válido do YouTube e quem vai cantar.'; return; }
+            button.disabled = true; error.textContent = '';
+            try {
+                let title = document.getElementById('djYoutubeSongTitle').value.trim().slice(0, 120);
+                let artist = 'YouTube';
+                try {
+                    const response = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${info.videoId}`)}&format=json`);
+                    if (response.ok) { const metadata = await response.json(); title = String(metadata.title || title).slice(0, 120); artist = String(metadata.author_name || 'YouTube').slice(0, 100); }
+                } catch (metadataError) { console.info('Metadados do YouTube indisponíveis:', metadataError); }
+                title ||= 'Pedido do YouTube';
+                if (!Object.values(activeUsers).find(user => user.name === singer)) updateRecentSingers(singer);
+                incrementPeakHour();
+                enqueue({ id:`YT:${info.videoId}`, source:'youtube', youtubeId:info.videoId, youtubeUrl:`https://www.youtube.com/watch?v=${info.videoId}`, title, artist, singer, time:Date.now() }, false);
+                const requestKey = document.getElementById('djYoutubeModal').dataset.requestKey;
+                if (requestKey && currentRoomCode) await db.ref(`salas/${currentRoomCode}/pedidos/${requestKey}`).remove();
+                closeDjYoutubeModal(); showToast(`▶ YouTube adicionado pelo DJ: ${title}`);
+            } catch (youtubeError) { error.textContent = 'Não foi possível adicionar: ' + youtubeError.message; }
+            finally { button.disabled = false; }
+        });
     }
 
     function updateInteractionAdControl() {
@@ -3622,13 +3704,23 @@
 
         let playlistId = null;
 
+        try {
+            const parsed = new URL(String(url).trim());
+            if (parsed.hostname === 'youtu.be') videoId = parsed.pathname.slice(1).split('/')[0];
+            if (/(^|\.)youtube\.com$/.test(parsed.hostname)) {
+                videoId = parsed.searchParams.get('v') || (parsed.pathname.match(/^\/(?:embed|shorts|live)\/([\w-]{11})/) || [])[1] || videoId;
+                playlistId = parsed.searchParams.get('list');
+            }
+            if (videoId && !/^[\w-]{11}$/.test(videoId)) videoId = null;
+        } catch (_) { /* Compatibilidade com os formatos legados abaixo. */ }
+
         // Extrair Video ID
 
         const vRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
 
         const vMatch = url.match(vRegExp);
 
-        if (vMatch && vMatch[2].length === 11) videoId = vMatch[2];
+        if (!videoId && vMatch && vMatch[2].length === 11) videoId = vMatch[2];
 
         // Extrair Playlist ID
 
@@ -3636,7 +3728,7 @@
 
         const pMatch = url.match(pRegExp);
 
-        if (pMatch) playlistId = pMatch[1];
+        if (!playlistId && pMatch) playlistId = pMatch[1];
 
         return { videoId, playlistId };
 
@@ -4477,18 +4569,28 @@
 
         if (!currentRoomCode) return;
 
+        songSearchRequests.clear();
+        renderSongSearchRequests();
+
         const requestsRef = db.ref('salas/' + currentRoomCode + '/pedidos');
 
         // Desativa listener anterior para evitar duplicatas (vazamento de memória)
 
         requestsRef.off('child_added');
         requestsRef.off('child_changed');
+        requestsRef.off('child_removed');
 
         // Escuta novos pedidos
 
         const handleMobileRequest = async (snapshot) => {
 
             let req = snapshot.val();
+            if (req?.kind === 'song_search') {
+                if (!req.processed) songSearchRequests.set(snapshot.key, req);
+                else songSearchRequests.delete(snapshot.key);
+                renderSongSearchRequests();
+                return;
+            }
             if (req?.kind === 'social') { SocialHost.handle(req, snapshot.key); return; }
             if (req?.kind === 'challenge') { ChallengeHost.handle(req, snapshot.key); return; }
             if (req?.processed) return;
@@ -4515,19 +4617,8 @@
             if (req && !req.processed) {
 
                 if (req.source === 'youtube') {
-                    const info = extractYoutubeInfo(req.youtubeUrl || '');
-                    const videoId = info?.videoId || (/^[\w-]{11}$/.test(String(req.youtubeId || '')) ? req.youtubeId : '');
-                    if (!videoId || !req.singer) return;
-                    const entry = {
-                        id: `YT:${videoId}`, source: 'youtube', youtubeId: videoId,
-                        youtubeUrl: `https://www.youtube.com/watch?v=${videoId}`,
-                        title: String(req.title || 'Pedido do YouTube').slice(0, 120), artist: String(req.artist || 'YouTube').slice(0, 100),
-                        singer: req.singer, singerUid: req.singerUid || null, requesterUid: req.requesterUid || req.singerUid || null,
-                        time: Number(req.timestamp) || Date.now()
-                    };
-                    enqueue(entry, false);
-                    requestsRef.child(snapshot.key).update({ processed: true, youtubeStatus: 'queued' });
-                    showToast(`▶ ${req.singer} pediu no YouTube: ${entry.title}`);
+                    console.warn('Pedido direto do YouTube ignorado: somente o DJ pode adicionar vídeos.');
+                    requestsRef.child(snapshot.key).remove().catch(console.warn);
                     return;
                 }
 
@@ -4569,7 +4660,11 @@
         requestsRef.on('child_added', handleMobileRequest);
         requestsRef.on('child_changed', snapshot => {
             const req = snapshot.val();
+            if (req?.kind === 'song_search') { handleMobileRequest(snapshot); return; }
             if (req?.challengeId && !req.processed) handleMobileRequest(snapshot);
+        });
+        requestsRef.on('child_removed', snapshot => {
+            if (songSearchRequests.delete(snapshot.key)) renderSongSearchRequests();
         });
 
         // Limpeza periódica de pedidos processados (opcional, para não pesar o DB)

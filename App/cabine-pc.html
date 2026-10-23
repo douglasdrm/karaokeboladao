@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="party-social.css?v=15">
     <link rel="stylesheet" href="cabin-layout.css?v=5">
     <link rel="stylesheet" href="cabine-pc-v2.css?v=9">
-    <link rel="stylesheet" href="cabine-pc-overlays.css?v=8">
+    <link rel="stylesheet" href="cabine-pc-overlays.css?v=9">
     <link rel="stylesheet" href="show-style.css?v=7">
     <link rel="stylesheet" href="karaoke-theme.css?v=4">
     <link rel="stylesheet" href="playback-theme.css?v=5">
@@ -107,8 +107,10 @@
         <aside class="sidebar-search panel active-tab" id="tab-catalog">
             <div class="catalog-header">
                 <div><span class="panel-eyebrow">MÚSICAS</span><h3>Escolher música</h3></div>
-                <button id="btnShuffle" class="btn-small" title="Música Aleatória"><i
-                        class="fas fa-random"></i></button>
+                <div class="catalog-header-actions">
+                    <button id="btnDjYoutube" class="btn-small" title="Adicionar música do YouTube" aria-label="Adicionar música do YouTube"><i class="fab fa-youtube"></i></button>
+                    <button id="btnShuffle" class="btn-small" title="Música Aleatória"><i class="fas fa-random"></i></button>
+                </div>
             </div>
 
             <!-- CARD DE ESTATÍSTICAS DO DJ (v17) -->
@@ -122,6 +124,10 @@
                 <i class="fas fa-search" aria-hidden="true"></i>
                 <input type="text" id="songSearch" placeholder="Música, artista ou código">
             </div>
+            <section id="songSearchRequests" class="song-search-requests" hidden>
+                <div class="song-search-requests-heading"><strong>Pedidos para procurar</strong><span id="songSearchRequestCount">0</span></div>
+                <div id="songSearchRequestList"></div>
+            </section>
             <div class="song-list" id="songList"></div>
         </aside>
 
@@ -304,6 +310,23 @@
                 <div class="modal-footer">
                     <button id="modalCancel" class="btn-modal secondary">CANCELAR</button>
                     <button id="modalConfirm" class="btn-modal primary">CONFIRMAR</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="djYoutubeModal" class="modal-overlay" style="display:none;">
+            <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="djYoutubeTitle">
+                <span class="pc-modal-eyebrow">SOMENTE O DJ</span>
+                <h2 id="djYoutubeTitle">Adicionar do YouTube</h2>
+                <div class="dj-youtube-form">
+                    <label>Link do vídeo<input id="djYoutubeUrl" type="url" placeholder="https://youtu.be/..." autocomplete="url"></label>
+                    <label>Nome da música<input id="djYoutubeSongTitle" type="text" maxlength="120" placeholder="Preenchido pelo YouTube quando possível"></label>
+                    <label>Quem vai cantar?<input id="djYoutubeSinger" type="text" maxlength="40" placeholder="Nome do cantor"></label>
+                    <p id="djYoutubeError" class="challenge-feedback" role="alert"></p>
+                </div>
+                <div class="modal-footer">
+                    <button id="djYoutubeCancel" class="btn-modal secondary">CANCELAR</button>
+                    <button id="djYoutubeConfirm" class="btn-modal primary">ADICIONAR À FILA</button>
                 </div>
             </div>
         </div>
@@ -546,7 +569,7 @@
     <script src="party-social.js?v=8"></script>
     <script src="challenge-core.js?v=3"></script>
     <script src="challenges.js?v=7" defer></script>
-    <script src="audience-host.js?v=1" defer></script><script src="app.js?v=7.1" defer></script>
+    <script src="audience-host.js?v=1" defer></script><script src="app.js?v=7.2" defer></script>
     <script src="tour-host.js" defer></script>
 </body>
 

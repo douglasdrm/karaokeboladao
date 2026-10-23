@@ -45,6 +45,13 @@
         catalogStatus: document.getElementById('mobileDjCatalogStatus'),
         songSearch: document.getElementById('mobileDjSongSearch'),
         songResults: document.getElementById('mobileDjSongResults'),
+        searchRequests: document.getElementById('mobileDjSearchRequests'),
+        searchRequestCount: document.getElementById('mobileDjSearchRequestCount'),
+        searchRequestList: document.getElementById('mobileDjSearchRequestList'),
+        youtubeForm: document.getElementById('mobileDjYoutubeForm'),
+        youtubeUrl: document.getElementById('mobileDjYoutubeUrl'),
+        youtubeTitle: document.getElementById('mobileDjYoutubeTitle'),
+        youtubeSinger: document.getElementById('mobileDjYoutubeSinger'),
         songSheet: document.getElementById('mobileDjSongSheet'),
         selectedTitle: document.getElementById('mobileDjSelectedTitle'),
         selectedArtist: document.getElementById('mobileDjSelectedArtist'),
@@ -72,6 +79,7 @@
     let controllerPresenceRef = null;
     let controllerConnectionRef = null;
     let controllerConnectionHandler = null;
+    let searchRequests = {};
     const roomListeners = [];
 
     function showOnly(target) {
@@ -117,6 +125,8 @@
         currentRoom = '';
         currentNowPlaying = null;
         currentQueue = [];
+        searchRequests = {};
+        renderSearchRequests();
         setHostConnected(false);
     }
 
@@ -205,6 +215,32 @@
             .replace(/[\u0300-\u036f]/g, '')
             .toLowerCase()
             .trim();
+    }
+
+    function youtubeId(value) {
+        try {
+            const url = new URL(String(value || '').trim());
+            if (url.hostname === 'youtu.be') return /^[\w-]{11}$/.test(url.pathname.slice(1)) ? url.pathname.slice(1) : '';
+            if (!/(^|\.)youtube\.com$/.test(url.hostname)) return '';
+            const id = url.searchParams.get('v') || (url.pathname.match(/^\/(?:embed|shorts)\/([\w-]{11})/) || [])[1] || '';
+            return /^[\w-]{11}$/.test(id) ? id : '';
+        } catch { return ''; }
+    }
+
+    function renderSearchRequests() {
+        if (!elements.searchRequests) return;
+        const items = Object.entries(searchRequests).filter(([, request]) => request?.kind === 'song_search' && !request.processed);
+        elements.searchRequests.hidden = items.length === 0;
+        elements.searchRequestCount.textContent = String(items.length);
+        elements.searchRequestList.replaceChildren();
+        items.sort((a,b) => Number(a[1].timestamp||0)-Number(b[1].timestamp||0)).forEach(([key, request]) => {
+            const card = document.createElement('article'); card.className = 'mobile-search-request'; card.dataset.requestKey = key;
+            const query = document.createElement('strong'); query.textContent = request.query || 'Música não informada';
+            const sender = document.createElement('small'); sender.textContent = `Pedido de ${request.singer || 'Participante'}`;
+            const actions = document.createElement('div'); actions.className = 'mobile-search-request-actions';
+            for (const [action,label] of [['catalog','Buscar'],['youtube','YouTube'],['dismiss','×']]) { const button=document.createElement('button');button.type='button';button.dataset.requestAction=action;button.textContent=label;actions.append(button); }
+            card.append(query,sender,actions);elements.searchRequestList.append(card);
+        });
     }
 
     function processCatalog(items) {
@@ -452,6 +488,7 @@
             const count = snapshot.numChildren();
             elements.audienceCount.textContent = `${count} ${count === 1 ? 'pessoa' : 'pessoas'}`;
         });
+        listen(base.child('pedidos'), 'value', snapshot => { searchRequests = snapshot.val() || {}; renderSearchRequests(); });
         showOnly(elements.dashboard);
     }
 
@@ -585,6 +622,41 @@
         if (!button || button.disabled) return;
         const song = catalog.find((item) => item.id === button.dataset.catalogSong);
         if (song) openSongSheet(song);
+    });
+
+    elements.searchRequestList.addEventListener('click', async event => {
+        const button = event.target.closest('[data-request-action]');
+        const card = button?.closest('[data-request-key]');
+        if (!button || !card) return;
+        const request = searchRequests[card.dataset.requestKey]; if (!request) return;
+        if (button.dataset.requestAction === 'catalog') {
+            elements.songSearch.value = request.query || '';
+            elements.songSearch.dispatchEvent(new Event('input'));
+            elements.songSearch.scrollIntoView({behavior:'smooth',block:'center'});
+            elements.songSearch.focus();
+        } else if (button.dataset.requestAction === 'youtube') {
+            elements.youtubeTitle.value = request.query || '';
+            elements.youtubeSinger.value = request.singer || '';
+            elements.youtubeForm.dataset.requestKey = card.dataset.requestKey;
+            elements.youtubeUrl.focus();
+        } else if (button.dataset.requestAction === 'dismiss') {
+            await db.ref(`salas/${currentRoom}/pedidos/${card.dataset.requestKey}`).remove();
+        }
+    });
+
+    elements.youtubeForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        const id = youtubeId(elements.youtubeUrl.value);
+        const singer = elements.youtubeSinger.value.trim();
+        if (!id || !singer) { setFeedback('Informe um link válido e quem vai cantar.', true); return; }
+        const sent = await sendCommand('queue_add_youtube', {
+            youtubeId:id, youtubeUrl:`https://www.youtube.com/watch?v=${id}`,
+            title:elements.youtubeTitle.value.trim().slice(0,120), singer:singer.slice(0,40)
+        }, 'Vídeo do YouTube enviado para a fila.');
+        if (!sent) return;
+        const requestKey = elements.youtubeForm.dataset.requestKey;
+        if (requestKey) await db.ref(`salas/${currentRoom}/pedidos/${requestKey}`).remove();
+        elements.youtubeForm.reset(); delete elements.youtubeForm.dataset.requestKey;
     });
 
     document.querySelectorAll('[data-close-song-sheet]').forEach((button) => {

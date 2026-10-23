@@ -110,6 +110,21 @@
     border: 1px solid var(--pc-dialog-line); border-radius: 10px; color: var(--pc-dialog-text); background: #090c14;
 }
 .cabin-pc-page .host-action-details { scrollbar-width: thin; scrollbar-color: rgba(156,91,255,.35) transparent; }
+.cabin-pc-page .catalog-header-actions { display: flex; gap: 6px; }
+.cabin-pc-page #btnDjYoutube { color: #ff6b6b; }
+.cabin-pc-page .song-search-requests { margin: 9px 0; padding: 10px; border: 1px solid rgba(255,122,0,.25); border-radius: 12px; background: rgba(255,122,0,.035); }
+.cabin-pc-page .song-search-requests-heading { display: flex; justify-content: space-between; color: #f2f3f7; font-size: .68rem; }
+.cabin-pc-page .song-search-request { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--pc-dialog-line); }
+.cabin-pc-page .song-search-request strong,.cabin-pc-page .song-search-request small { display: block; overflow-wrap: anywhere; }
+.cabin-pc-page .song-search-request strong { font-size: .72rem; }
+.cabin-pc-page .song-search-request small { margin-top: 3px; color: var(--pc-dialog-muted); font-size: .6rem; }
+.cabin-pc-page .song-search-request-actions { display: flex; gap: 5px; margin-top: 7px; }
+.cabin-pc-page .song-search-request-actions button { min-height: 30px; padding: 0 8px; border: 1px solid var(--pc-dialog-line); border-radius: 7px; color: #d8dbe5; background: rgba(255,255,255,.04); font-size: .6rem; cursor: pointer; }
+.cabin-pc-page .song-search-request-actions button:first-child { color: #15100b; border-color: var(--pc-dialog-yellow); background: var(--pc-dialog-yellow); }
+.cabin-pc-page .dj-youtube-form { display: grid; gap: 12px; margin-top: 18px; }
+.cabin-pc-page .dj-youtube-form label { display: grid; gap: 6px; color: #d8dbe5; font-size: .72rem; font-weight: 700; }
+.cabin-pc-page .dj-youtube-form input { min-height: 44px; }
+.cabin-pc-page #djYoutubeError { min-height: 1.2em; margin: 0; }
 
 @media (max-width: 1180px), (max-height: 760px) {
     .cabin-pc-page #settingsModal { padding: 12px !important; }

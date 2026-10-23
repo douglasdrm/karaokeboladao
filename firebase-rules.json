@@ -34,7 +34,7 @@
         },
         "pedidos": {
           "$request_id": {
-            ".write": "auth != null && root.child('users').child(auth.uid).child('isBanned').val() !== true && root.child('salas').child($room_id).child('info/hostId').exists() && root.child('salas').child($room_id).child('active_users').child(auth.uid).exists() && !data.exists() && newData.hasChildren(['id','singer','singerUid','processed','timestamp']) && newData.child('singerUid').val() === auth.uid && newData.child('singer').isString() && newData.child('processed').val() === false && newData.child('timestamp').isNumber()"
+            ".write": "auth != null && root.child('users').child(auth.uid).child('isBanned').val() !== true && root.child('salas').child($room_id).child('info/hostId').exists() && root.child('salas').child($room_id).child('active_users').child(auth.uid).exists() && !data.exists() && newData.hasChildren(['id','singer','singerUid','processed','timestamp']) && newData.child('singerUid').val() === auth.uid && newData.child('singer').isString() && newData.child('processed').val() === false && newData.child('timestamp').isNumber() && newData.child('source').val() !== 'youtube'"
           }
         },
         "now_playing": {

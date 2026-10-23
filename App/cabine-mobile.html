@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0E0A14">
     <title>Cabine no celular | Karaoke Party</title>
     <link rel="icon" type="image/png" href="../Assets/brand/favicon-64.png">
-    <link rel="stylesheet" href="cabine-entry.css?v=12">
+    <link rel="stylesheet" href="cabine-entry.css?v=13">
     <link rel="stylesheet" href="karaoke-theme.css?v=4">
     <link rel="stylesheet" href="playback-theme.css?v=4">
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
@@ -129,6 +129,17 @@
                 </label>
                 <div id="mobileDjCatalogStatus" class="mobile-catalog-status" role="status">Sincronizando o catálogo da festa…</div>
                 <ul id="mobileDjSongResults" class="mobile-song-results" aria-label="Resultados do catálogo"></ul>
+                <section id="mobileDjSearchRequests" class="mobile-search-requests" hidden>
+                    <div class="mobile-search-requests-heading"><strong>Pedidos para procurar</strong><span id="mobileDjSearchRequestCount">0</span></div>
+                    <div id="mobileDjSearchRequestList"></div>
+                </section>
+                <form id="mobileDjYoutubeForm" class="mobile-youtube-form">
+                    <p class="eyebrow">YOUTUBE · SOMENTE O DJ</p>
+                    <label>Link do vídeo<input id="mobileDjYoutubeUrl" type="url" autocomplete="url" placeholder="https://youtu.be/..." required></label>
+                    <label>Nome da música<input id="mobileDjYoutubeTitle" type="text" maxlength="120" placeholder="Opcional"></label>
+                    <label>Quem vai cantar?<input id="mobileDjYoutubeSinger" type="text" maxlength="40" required></label>
+                    <button type="submit" data-catalog-action>Adicionar à fila</button>
+                </form>
             </section>
 
             <section class="mobile-queue-card" aria-labelledby="mobileQueueTitle">
@@ -190,6 +201,6 @@
         </section>
     </div>
 
-    <script src="cabine-mobile.js?v=13" defer></script>
+    <script src="cabine-mobile.js?v=14" defer></script>
 </body>
 </html>
