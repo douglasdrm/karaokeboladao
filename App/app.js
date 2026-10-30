@@ -4531,14 +4531,14 @@
         }
 
         // Corta a fila dinamicamente com base no espaço disponível
-        const nexts = queue.slice(1, qtdProximos + 1);
+        const nexts = queue.slice(1, document.body.classList.contains('cabin-pc-page') ? 7 : qtdProximos + 1);
 
         const isLandscape = window.innerHeight < 500;
         const usePCLayout = true; // Layout HORIZONTAL PC em todas as telas
 
         if (usePCLayout) {
             // Layout HORIZONTAL Dashboard/PC (Conforme Referência)
-            let html = `<div class="fs-label-header">FILA DE ESPERA</div>`;
+            let html = `<div class="fs-label-header">FILA DE ESPERA · ${queue.length - 1} AGUARDANDO</div>`;
 
             html += `<div class="fs-row-container">`;
 

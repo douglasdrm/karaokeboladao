@@ -427,8 +427,10 @@ body.cabin-pc-page .vu-meter-bar {
     #audienceStage #playerContainer
 ) .fs-queue-box {
     top: 4px !important;
-    width: min(1100px, calc(100vw - clamp(280px, 24vw, 360px))) !important;
-    min-width: min(640px, calc(100vw - 32px)) !important;
+    left: 50% !important;
+    right: auto !important;
+    width: min(1100px, calc(100% - 2 * clamp(210px, 22vw, 340px))) !important;
+    min-width: 0 !important;
     max-width: 1100px !important;
     box-sizing: border-box !important;
     padding: 7px clamp(18px, 1.8vw, 30px) 9px !important;
@@ -503,10 +505,48 @@ body.cabin-pc-page .vu-meter-bar {
     height: 34px !important;
 }
 
+/* Reserva espaco real para a marca e o slogan. A segunda tela decide
+   quantos itens mostrar pela propria largura, independente da cabine. */
+:is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .video-overlay-banner {
+    box-sizing: border-box;
+    padding-inline: clamp(16px, 3vw, 50px);
+}
+:is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .banner-left img {
+    width: clamp(165px, 16vw, 260px);
+    height: auto;
+    max-height: 64px;
+    object-fit: contain;
+}
+:is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .banner-right {
+    max-width: clamp(150px, 16vw, 260px);
+}
+:is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .banner-right span {
+    font-size: clamp(12px, 1.1vw, 18px);
+}
+:is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .fs-row-container { gap: 10px !important; }
+:is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .fs-col-pc { flex: 1 1 0; opacity: 1; }
+:is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .fs-col-pc.current { flex: 1.25 1 0; }
+:is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .fs-info-pc { min-width: 0; flex: 1; }
+:is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) :is(.fs-name-pc, .fs-song-pc) {
+    max-width: 100% !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap !important;
+}
+:is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .fs-col-pc:not(.current) .fs-name-pc { color: #e0dce8 !important; }
+:is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .fs-divider-v-pc { flex: 0 0 1px; }
+:is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .fs-row-container > :nth-child(n+6) { display: none !important; }
+@media (min-width: 1800px) {
+    :is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .fs-row-container > :nth-child(6),
+    :is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .fs-row-container > :nth-child(7) { display: flex !important; }
+}
+@media (max-width: 1100px) {
+    :is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .fs-row-container > :nth-child(n+4) { display: none !important; }
+}
 @media (max-width: 900px) {
-    :is(body.cabin-pc-page #playerContainer:fullscreen,body.cabin-pc-page #playerContainer.is-native-fullscreen,#audienceStage #playerContainer) .fs-queue-box {
-        width: calc(100vw - 24px) !important;
-        min-width: 0 !important;
+    :is(body.cabin-pc-page #playerContainer:fullscreen, body.cabin-pc-page #playerContainer.is-native-fullscreen, #audienceStage #playerContainer) .fs-queue-box {
+        top: 84px !important;
+        width: calc(100% - 24px) !important;
     }
 }
 
